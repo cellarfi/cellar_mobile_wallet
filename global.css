@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles for dark theme */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #0a0a0b;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Custom component styles */
+@layer components {
+  .card-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.1) 0%,
+      rgba(16, 185, 129, 0.05) 100%
+    );
+  }
+
+  .glass-effect {
+    background: rgba(26, 26, 31, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glow-border {
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  }
+
+  .shadow-glow {
+    --tw-shadow-color: rgba(99, 102, 241, 0.3);
+    -rn-shadow-color: var(--tw-shadow-color);
+    @rn-move -rn-shadow-offset-width \&shadow-offset\.width;
+    -rn-shadow-offset-width: 0;
+    @rn-move -rn-shadow-offset-height \&shadow-offset\.height;
+    -rn-shadow-offset-height: 0;
+    -rn-shadow-radius: 20px;
+    -rn-shadow-opacity: 1px;
+  }
+
+  .crypto-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  }
+
+  .success-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  }
+
+  .danger-gradient {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  }
+}
