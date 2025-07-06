@@ -16,7 +16,9 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellarfi.so",
-      "associatedDomains": ["webcredentials:cellar.so"],
+      "associatedDomains": [
+        "webcredentials:cellar.so"
+      ],
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -48,6 +50,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "decc1bab-c4f5-4f15-96ee-646d836ebc81"
+      }
     }
   }
 }
