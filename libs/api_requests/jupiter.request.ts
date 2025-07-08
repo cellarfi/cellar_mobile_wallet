@@ -58,6 +58,8 @@ export const jupiterRequests = {
 
       return apiResponse(true, 'Order executed successfully', res.data)
     } catch (err: any) {
+      console.log('Error executing Jupiter order:', err?.message)
+      console.log('Error executing Jupiter order:', err?.response)
       console.log('Error executing Jupiter order:', err?.response?.data)
       return apiResponse(
         false,
