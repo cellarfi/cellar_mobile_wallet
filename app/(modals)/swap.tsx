@@ -183,6 +183,7 @@ export default function SwapScreen() {
         const parsedToken: BirdEyeTokenItem = JSON.parse(inputTokenParam)
         console.log('Preselecting input token:', parsedToken)
         setInputToken(parsedToken)
+        setHasSetDefaultToken(true) // Mark that we have set a token
         // Clear the parameter to avoid re-triggering
         router.setParams({ inputToken: undefined })
       } catch (error) {
@@ -233,6 +234,9 @@ export default function SwapScreen() {
   // USDC mint address
   const USDC_MINT = getSplTokenAddress('usdc')
 
+  // Track if we've already set a default token to prevent resets
+  const [hasSetDefaultToken, setHasSetDefaultToken] = useState(false)
+
   // Select default input token (SOL first, then USDC, then first available) - but only if no token preselected
   useEffect(() => {
     // Don't run default selection if we have a preselected input token parameter
@@ -240,6 +244,12 @@ export default function SwapScreen() {
       return
     }
 
+    // Don't run if we've already set a default - this prevents resets
+    if (hasSetDefaultToken) {
+      return
+    }
+
+    // Only run if we have available tokens and no input token is currently set
     if (availableTokens.length > 0 && !inputToken) {
       // First try to find SOL
       const nativeSol = availableTokens.find(
@@ -251,6 +261,7 @@ export default function SwapScreen() {
       if (nativeSol) {
         console.log('Setting default input token to SOL:', nativeSol)
         setInputToken(nativeSol)
+        setHasSetDefaultToken(true)
         return
       }
 
@@ -263,6 +274,7 @@ export default function SwapScreen() {
         if (usdc) {
           console.log('Setting default input token to USDC:', usdc)
           setInputToken(usdc)
+          setHasSetDefaultToken(true)
           return
         }
       }
@@ -273,8 +285,9 @@ export default function SwapScreen() {
         availableTokens[0]
       )
       setInputToken(availableTokens[0])
+      setHasSetDefaultToken(true)
     }
-  }, [availableTokens, inputToken, inputTokenParam, USDC_MINT])
+  }, [availableTokens, inputTokenParam, USDC_MINT, hasSetDefaultToken])
 
   // Filter input tokens based on search
   const filteredInputTokens = useMemo(() => {
@@ -395,6 +408,7 @@ export default function SwapScreen() {
 
       if (response.success && response.data) {
         setJupiterQuote(response.data)
+        console.log('Jupiter quote:', response.data)
         setQuoteError(null)
         // Update output amount based on Jupiter quote for accuracy
         const quotedOutputAmount =
@@ -606,6 +620,7 @@ export default function SwapScreen() {
       className='flex-row items-center bg-dark-200 rounded-2xl p-4 mb-3'
       onPress={() => {
         setInputToken(token)
+        setHasSetDefaultToken(true) // Mark that user has selected a token
         setShowInputTokenModal(false)
         setInputSearchQuery('')
       }}
@@ -673,6 +688,7 @@ export default function SwapScreen() {
     setInsufficientBalance(false)
     setQuoteError(null)
     setTxSignature('')
+    setHasSetDefaultToken(false) // Reset the default token flag
     // Navigate back immediately, portfolio refresh continues in background
     router.back()
   }, [])
