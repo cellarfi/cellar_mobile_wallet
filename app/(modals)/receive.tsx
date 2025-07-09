@@ -78,7 +78,7 @@ export default function ReceiveScreen() {
   const shareAddress = async () => {
     try {
       await Share.share({
-        message: `My wallet address: ${walletAddress}`,
+        message: `${walletAddress}`,
         title: 'Wallet Address',
       })
     } catch (error) {
@@ -162,14 +162,6 @@ export default function ReceiveScreen() {
               <Text className='text-white font-semibold text-lg'>
                 Wallet Address
               </Text>
-              <View className='flex-row gap-2'>
-                <TouchableOpacity
-                  onPress={() => router.push('/(modals)/qr-scanner')}
-                  className='w-10 h-10 bg-dark-300 rounded-full justify-center items-center'
-                >
-                  <Ionicons name='scan' size={18} color='#6366f1' />
-                </TouchableOpacity>
-              </View>
             </View>
 
             {/* Address Display */}
@@ -185,6 +177,7 @@ export default function ReceiveScreen() {
                 text={copied ? 'Copied!' : 'Copy Address'}
                 onPress={copyToClipboard}
                 disabled={copied}
+                shallowGradient
               >
                 <Animated.View
                   style={{
@@ -280,14 +273,23 @@ export default function ReceiveScreen() {
           {/* Warning */}
           <View className='bg-warning-500/10 border border-warning-500/20 rounded-2xl p-4 mb-6'>
             <View className='flex-row items-start'>
-              <Ionicons name='warning' size={20} color='#f59e0b' />
               <View className='flex-1 ml-3'>
                 <Text className='text-warning-400 font-medium mb-1'>
-                  Important
+                  ⚠️ Solana Address Only
                 </Text>
                 <Text className='text-sm text-gray-400 leading-5'>
-                  Only send compatible tokens to this address. Sending
-                  incompatible tokens may result in permanent loss.
+                  This address only accepts SOL and SPL tokens on the Solana
+                  network.
+                  {'\n\n'}
+                  <Text className='text-warning-400 font-medium'>
+                    Never send:
+                  </Text>
+                  {'\n'}• Bitcoin, Ethereum, or other blockchain tokens{'\n'}•
+                  Tokens from exchanges without network verification{'\n\n'}
+                  <Text className='text-red-400 font-medium'>
+                    Funds sent from incompatible networks will be permanently
+                    lost and cannot be recovered.
+                  </Text>
                 </Text>
               </View>
             </View>

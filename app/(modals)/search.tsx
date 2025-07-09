@@ -203,10 +203,12 @@ export default function SearchScreen() {
       }
 
       // Return to the calling screen with the selected token
-      router.push({
-        pathname: `/(modals)/${returnTo}` as any,
-        params: { [returnParam]: JSON.stringify(tokenResult) },
-      })
+      router.back()
+
+      // Set the parameters after going back to preserve the existing state
+      setTimeout(() => {
+        router.setParams({ [returnParam]: JSON.stringify(tokenResult) })
+      }, 100)
     }
   }
 
