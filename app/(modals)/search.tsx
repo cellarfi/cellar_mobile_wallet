@@ -53,6 +53,46 @@ export default function SearchScreen() {
     null
   )
 
+  // URL validation function
+  const isValidUrl = (string: string) => {
+    try {
+      // Check for common URL patterns
+      const urlRegex =
+        /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+      const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+
+      // Remove protocol if present for domain checking
+      const withoutProtocol = string.replace(/^https?:\/\//, '')
+
+      return urlRegex.test(string) || domainRegex.test(withoutProtocol)
+    } catch (error) {
+      return false
+    }
+  }
+
+  // Handle URL submission (when user presses enter or submits)
+  const handleUrlSubmit = () => {
+    if (!searchQuery.trim()) return
+
+    if (isValidUrl(searchQuery.trim())) {
+      let finalUrl = searchQuery.trim()
+
+      // Add https:// if no protocol is specified
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = 'https://' + finalUrl
+      }
+
+      // Navigate to browser with the URL
+      router.push({
+        pathname: '/(modals)/browser' as any,
+        params: { url: finalUrl, title: 'Browser' },
+      })
+    } else {
+      // If not a URL, perform regular token search
+      performSearch(searchQuery)
+    }
+  }
+
   // Convert trending tokens to SearchResult format
   const trendingTokensForSearch = useMemo(() => {
     if (!trending?.tokens) return []
@@ -157,7 +197,16 @@ export default function SearchScreen() {
       clearTimeout(debounceTimeout.current)
     }
 
-    // Set new timeout for debounced search
+    // Check if it's a valid URL - if so, don't auto-search, wait for user to submit
+    if (isValidUrl(text.trim())) {
+      // Don't perform token search for URLs, let user press enter to navigate
+      setSearchResults([])
+      setError(null)
+      setIsLoading(false)
+      return
+    }
+
+    // Set new timeout for debounced search (only for non-URLs)
     debounceTimeout.current = setTimeout(() => {
       performSearch(text)
     }, 500)
@@ -323,6 +372,32 @@ export default function SearchScreen() {
     }
 
     if (searchQuery.trim() && searchResults.length === 0) {
+      // Check if it's a valid URL
+      if (isValidUrl(searchQuery.trim())) {
+        return (
+          <View className='items-center py-12'>
+            <Ionicons name='globe-outline' size={48} color='#6366f1' />
+            <Text className='text-white text-lg font-semibold mt-4'>
+              Ready to Browse
+            </Text>
+            <Text className='text-gray-400 text-center mt-2 mb-4'>
+              Press Enter or tap "Open" to navigate to:
+            </Text>
+            <Text className='text-primary-400 text-center font-mono text-sm mb-6'>
+              {searchQuery.startsWith('http')
+                ? searchQuery
+                : `https://${searchQuery}`}
+            </Text>
+            <TouchableOpacity
+              onPress={handleUrlSubmit}
+              className='bg-primary-500 rounded-2xl px-6 py-3'
+            >
+              <Text className='text-white font-medium'>Open in Browser</Text>
+            </TouchableOpacity>
+          </View>
+        )
+      }
+
       return (
         <View className='items-center py-12'>
           <Ionicons name='search-outline' size={48} color='#666672' />
@@ -376,36 +451,61 @@ export default function SearchScreen() {
         {/* Search Bar */}
         <View className='px-6 mb-4'>
           <View className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'>
-            <Ionicons name='search' size={20} color='#666672' />
+            <Ionicons
+              name={
+                isValidUrl(searchQuery.trim()) && searchQuery.trim()
+                  ? 'globe'
+                  : 'search'
+              }
+              size={20}
+              color={
+                isValidUrl(searchQuery.trim()) && searchQuery.trim()
+                  ? '#6366f1'
+                  : '#666672'
+              }
+            />
             <TextInput
               className='flex-1 text-white ml-3 text-lg'
               placeholder={
                 !searchQuery.trim() && trending?.tokens?.length
-                  ? 'Search trending tokens or type new ones...'
-                  : 'Search tokens...'
+                  ? 'Search tokens or enter URL (jup.ag, magiceden.io)...'
+                  : 'Search tokens or enter URL...'
               }
               placeholderTextColor='#666672'
               value={searchQuery}
               onChangeText={handleSearchChange}
+              onSubmitEditing={handleUrlSubmit}
               autoFocus
               autoCapitalize='none'
               autoCorrect={false}
+              returnKeyType='go'
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchQuery('')
-                  setSearchResults([])
-                  setError(null)
-                  // Clear the debounce timeout to prevent any pending searches
-                  if (debounceTimeout.current) {
-                    clearTimeout(debounceTimeout.current)
-                  }
-                }}
-                className='ml-2'
-              >
-                <Ionicons name='close-circle' size={20} color='#666672' />
-              </TouchableOpacity>
+              <View className='flex-row items-center'>
+                {/* URL indicator */}
+                {isValidUrl(searchQuery.trim()) && (
+                  <TouchableOpacity
+                    onPress={handleUrlSubmit}
+                    className='bg-primary-500 rounded-xl px-3 py-1 mr-2'
+                  >
+                    <Text className='text-white text-xs font-medium'>Open</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchQuery('')
+                    setSearchResults([])
+                    setError(null)
+                    // Clear the debounce timeout to prevent any pending searches
+                    if (debounceTimeout.current) {
+                      clearTimeout(debounceTimeout.current)
+                    }
+                  }}
+                  className='ml-2'
+                >
+                  <Ionicons name='close-circle' size={20} color='#666672' />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>
@@ -417,14 +517,18 @@ export default function SearchScreen() {
             <View className='mb-3'>
               <View className='flex-row items-center justify-between'>
                 <Text className='text-gray-400 text-sm font-medium'>
-                  {searchQuery.trim() ? 'Search Results' : 'Trending Tokens'}
+                  {searchQuery.trim()
+                    ? isValidUrl(searchQuery.trim())
+                      ? 'Tokens • Enter URL to browse'
+                      : 'Search Results'
+                    : 'Trending Tokens'}
                   {/* {tokensToShow.length > 0 && (
                     <Text className='text-gray-500'>
                       {' '}
                       ({tokensToShow.length})
                     </Text>
                   )} */}
-                  {searchQuery.trim() && (
+                  {searchQuery.trim() && !isValidUrl(searchQuery.trim()) && (
                     <Text className='text-gray-500'> • Verified first</Text>
                   )}
                 </Text>

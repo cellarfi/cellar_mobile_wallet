@@ -11,6 +11,7 @@ import { socialPosts } from '@/constants/App'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useTrending } from '@/hooks/useTrending'
+import { useAuthStore } from '@/store/authStore'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
@@ -28,6 +29,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 const { width } = Dimensions.get('window')
 
 export default function HomeScreen() {
+  const { profile } = useAuthStore()
   const [refreshing, setRefreshing] = useState(false)
   const { portfolio, isLoading, isRefetching, error, refetch } = usePortfolio()
   const {
@@ -68,9 +70,21 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
-          <View>
-            <Text className='text-gray-400 text-sm'>Good morning</Text>
-            <Text className='text-white text-2xl font-bold'>Seeker</Text>
+          <View className='flex-row items-center gap-2'>
+            <TouchableOpacity
+              onPress={() => router.push('/profile')}
+              className='bg-dark-200 rounded-full p-2'
+            >
+              <Ionicons name='person' size={24} color='white' />
+            </TouchableOpacity>
+            <View>
+              <Text className='text-gray-400 text-sm'>
+                {profile?.tag_name ? `@${profile?.tag_name}` : ''}
+              </Text>
+              <Text className='text-white text-lg font-bold'>
+                {profile?.display_name || ''}
+              </Text>
+            </View>
           </View>
           <View className='flex-row gap-3'>
             <TouchableOpacity

@@ -209,7 +209,15 @@ export default function ProfileScreen() {
       <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
-          <Text className='text-white text-2xl font-bold'>Profile</Text>
+          <View className='flex-row items-center gap-2'>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className='bg-dark-200 rounded-full p-2'
+            >
+              <Ionicons name='arrow-back' size={24} color='white' />
+            </TouchableOpacity>
+            <Text className='text-white text-2xl font-bold'>Profile</Text>
+          </View>
           <TouchableOpacity className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'>
             <Ionicons name='qr-code' size={20} color='#6366f1' />
           </TouchableOpacity>
