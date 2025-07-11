@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const createUserSchema = z.object({
   id: z.string(),
@@ -8,8 +8,8 @@ export const createUserSchema = z.object({
   profile_picture_url: z.string().url().optional(),
   about: z.string().optional(),
   referral_code: z.string().optional(),
-})
-export type CreateUserDto = z.infer<typeof createUserSchema>
+});
+export type CreateUserDto = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z
   .object({
@@ -26,12 +26,12 @@ export const updateUserSchema = z
         !data.profile_picture_url &&
         !data.about
       ) {
-        return false
+        return false;
       }
-      return true
+      return true;
     },
     {
       message: 'At least one field must be provided for update',
     }
-  )
-export type UpdateUserDto = z.infer<typeof updateUserSchema>
+  );
+export type UpdateUserDto = z.infer<typeof updateUserSchema>;

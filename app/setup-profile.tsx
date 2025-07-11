@@ -41,12 +41,8 @@ const setupProfileSchema = z.object({
     .refine((val) => !val.startsWith('_') && !val.endsWith('_'), {
       message: 'Tag name cannot start or end with underscore',
     }),
-  referral_code: z
-    .string()
-    .optional()
-    .refine((val) => !val || val.length >= 3, {
-      message: 'Referral code must be at least 3 characters if provided',
-    }),
+  about: z.string().max(160, 'Bio must be 160 characters or less').optional(),
+  referral_code: z.string().optional(),
 });
 
 const SetupProfile = () => {
@@ -56,6 +52,7 @@ const SetupProfile = () => {
   const [formData, setFormData] = useState({
     display_name: '',
     tag_name: '',
+    about: '',
     referral_code: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -178,6 +175,7 @@ const SetupProfile = () => {
         email: emailAccount.address,
         display_name: formData.display_name.trim(),
         tag_name: formData.tag_name.trim().toLowerCase(),
+        about: formData.about.trim() || undefined,
         referral_code: formData.referral_code.trim() || undefined,
       };
 
@@ -285,34 +283,54 @@ const SetupProfile = () => {
 
               {/* Tag Name Input */}
               <View>
-                <CustomTextInput
-                  label="Tag Name"
-                  icon="at-outline"
-                  placeholder="Enter your tag name"
-                  value={formData.tag_name}
-                  onChangeText={(text) => updateFormData('tag_name', text)}
-                  autoCapitalize="none"
-                  returnKeyType="next"
-                  maxLength={20}
-                />
-                <View className="flex-row items-center justify-between mt-1">
-                  <Text className="text-gray-500 text-xs">
-                    This will be your unique identifier (like @
-                    {formData.tag_name || 'username'})
-                  </Text>
-                  {isCheckingTag ? (
-                    <Text className="text-yellow-500 text-xs">Checking...</Text>
-                  ) : tagNameAvailable === true ? (
-                    <Text className="text-green-500 text-xs">Available!</Text>
-                  ) : tagNameAvailable === false ? (
-                    <Text className="text-red-500 text-xs">Not available</Text>
-                  ) : null}
+                <View className="mb-4">
+                  <CustomTextInput
+                    label="Tag Name"
+                    icon="at-outline"
+                    placeholder="Enter your tag name"
+                    value={formData.tag_name}
+                    onChangeText={(text) => updateFormData('tag_name', text)}
+                    autoCapitalize="none"
+                    returnKeyType="next"
+                    maxLength={20}
+                  />
+                  <View className="flex-row justify-between mt-1">
+                    <Text className="text-gray-500 text-xs">
+                      This will be your unique identifier (like @
+                      {formData.tag_name || 'username'})
+                    </Text>
+                    {isCheckingTag ? (
+                      <Text className="text-yellow-500 text-xs">
+                        Checking...
+                      </Text>
+                    ) : tagNameAvailable === true ? (
+                      <Text className="text-green-500 text-xs">Available!</Text>
+                    ) : tagNameAvailable === false ? (
+                      <Text className="text-red-500 text-xs">
+                        Not available
+                      </Text>
+                    ) : null}
+                  </View>
+                  {errors.tag_name && (
+                    <Text className="text-red-500 text-sm mt-1">
+                      {errors.tag_name}
+                    </Text>
+                  )}
                 </View>
-                {errors.tag_name && (
-                  <Text className="text-red-500 text-sm mt-1">
-                    {errors.tag_name}
-                  </Text>
-                )}
+
+                <View className="mb-4">
+                  <CustomTextInput
+                    label="Bio (Optional)"
+                    icon="pencil-outline"
+                    placeholder="Tell us about yourself..."
+                    value={formData.about}
+                    onChangeText={(text) => updateFormData('about', text)}
+                    multiline
+                    numberOfLines={3}
+                    maxLength={160}
+                    returnKeyType="next"
+                  />
+                </View>
               </View>
 
               {/* Referral Code Input */}
