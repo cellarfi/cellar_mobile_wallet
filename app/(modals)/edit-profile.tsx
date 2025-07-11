@@ -39,6 +39,7 @@ const editProfileSchema = z.object({
     .refine((val) => !val.startsWith('_') && !val.endsWith('_'), {
       message: 'Tag name cannot start or end with underscore',
     }),
+  about: z.string().max(160, 'Bio must be 160 characters or less').optional(),
 });
 
 const EditProfileModal = () => {
@@ -46,6 +47,7 @@ const EditProfileModal = () => {
   const [formData, setFormData] = useState({
     display_name: '',
     tag_name: '',
+    about: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +62,7 @@ const EditProfileModal = () => {
       setFormData({
         display_name: profile.display_name || '',
         tag_name: profile.tag_name || '',
+        about: profile.about || '',
       });
     }
   }, [profile]);
@@ -126,35 +129,37 @@ const EditProfileModal = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    if (!profile) return;
-
-    // Don't submit if tag name is being checked
-    if (isCheckingTag) {
-      Alert.alert('Please wait', 'Checking tag name availability...');
-      return;
-    }
 
     setIsLoading(true);
     try {
-      const response = await userRequests.updateProfile({
-        display_name: formData.display_name.trim(),
-        tag_name: formData.tag_name.trim().toLowerCase(),
-      });
+      const updateData: any = {};
+
+      // Only include fields that have changed
+      if (formData.display_name !== profile?.display_name) {
+        updateData.display_name = formData.display_name.trim();
+      }
+
+      if (formData.tag_name !== profile?.tag_name) {
+        updateData.tag_name = formData.tag_name.trim().toLowerCase();
+      }
+
+      if (formData.about !== profile?.about) {
+        updateData.about = formData.about.trim() || null;
+      }
+
+      // If no changes, just close the modal
+      if (Object.keys(updateData).length === 0) {
+        router.back();
+        return;
+      }
+
+      const response = await userRequests.updateProfile(updateData);
 
       if (response.success && response.data) {
-        // Update profile in store
         setProfile(response.data);
-
-        // Show success message
-        Alert.alert('Success', 'Your profile has been updated successfully');
-
-        // Go back to profile
-        router.dismiss();
+        router.back();
       } else {
-        Alert.alert(
-          'Error',
-          response.message || 'Failed to update profile. Please try again.'
-        );
+        Alert.alert('Error', response.message || 'Failed to update profile');
       }
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -228,7 +233,7 @@ const EditProfileModal = () => {
           >
             <View className="gap-6">
               {/* Display Name Input */}
-              <View>
+              <View className="mb-6">
                 <CustomTextInput
                   label="Display Name"
                   icon="person-outline"
@@ -237,6 +242,7 @@ const EditProfileModal = () => {
                   onChangeText={(text) => updateFormData('display_name', text)}
                   autoCapitalize="words"
                   returnKeyType="next"
+                  maxLength={50}
                 />
                 {errors.display_name && (
                   <Text className="text-red-500 text-sm mt-1">
@@ -273,6 +279,26 @@ const EditProfileModal = () => {
                 {errors.tag_name && (
                   <Text className="text-red-500 text-sm mt-1">
                     {errors.tag_name}
+                  </Text>
+                )}
+              </View>
+
+              {/* Bio Input */}
+              <View className="mb-6">
+                <CustomTextInput
+                  label="Bio (Optional)"
+                  icon="pencil-outline"
+                  placeholder="Tell us about yourself..."
+                  value={formData.about}
+                  onChangeText={(text) => updateFormData('about', text)}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={160}
+                  returnKeyType="next"
+                />
+                {errors.about && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {errors.about}
                   </Text>
                 )}
               </View>
