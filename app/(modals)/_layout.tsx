@@ -23,6 +23,7 @@ export default function ModalsLayout() {
       {/* <Stack.Screen name='security-settings' /> */}
       {/* <Stack.Screen name='notification-settings' /> */}
       <Stack.Screen name='qr-scanner' />
+      <Stack.Screen name='browser' />
       {/* <Stack.Screen name='share-profile' /> */}
     </Stack>
   )
