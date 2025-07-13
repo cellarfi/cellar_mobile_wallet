@@ -4,6 +4,9 @@ export const Keys = {
   PRIVY_IDENTITY_TOKEN: 'privy_identity_token',
 }
 
+// Number of days required between tag name updates
+export const TAG_NAME_UPDATE_RATE_LIMIT = 7
+
 export const blurHashPlaceholder =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
