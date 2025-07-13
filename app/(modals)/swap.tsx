@@ -691,9 +691,10 @@ export default function SwapScreen() {
     setInsufficientBalance(false);
     setQuoteError(null);
     setTxSignature('');
-    setHasSetDefaultToken(false); // Reset the default token flag
-    // Navigate back immediately, portfolio refresh continues in background
-    router.back();
+    setHasSetDefaultToken(false);
+
+    // Navigate back home immediately, portfolio refresh continues in background
+    router.push('/');
   }, []);
 
   return (
