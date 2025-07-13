@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Mock user data
 const userData = {
   name: 'Alex Seeker',
-  username: '@alexseeker',
+  tag_name: '@alexseeker',
   email: 'alex@cellar.so',
   phone: '+1 (555) 123-4567',
   avatar: '🎯',

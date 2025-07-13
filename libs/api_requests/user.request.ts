@@ -108,6 +108,42 @@ export const userRequests = {
   },
 
   /**
+   * Get a user by their tag name
+   * @param tagName The tag name to lookup (without @ symbol)
+   */
+  getUserByTagName: async (tagName: string) => {
+    try {
+      const api = httpRequest();
+      const response = await api.get(
+        `/users/tag_name/${encodeURIComponent(tagName)}?include=wallets`
+      );
+
+      return apiResponse<User>(
+        true,
+        'User found successfully',
+        response.data?.data
+      );
+    } catch (err: any) {
+      console.log('Error finding user by tag name:', err?.response?.data);
+      if (err?.response?.status === 404) {
+        return apiResponse<User>(
+          false,
+          `User with tag name @${tagName} not found`,
+          undefined
+        );
+      }
+      return apiResponse<User>(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error finding user by tag name',
+        undefined
+      );
+    }
+  },
+
+  /**
    * Delete the current user's profile
    */
   deleteUser: async () => {

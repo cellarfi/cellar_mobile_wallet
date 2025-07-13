@@ -3,8 +3,20 @@ export interface User {
   email: string;
   display_name: string;
   tag_name: string;
+  tag_name_updated_at: Date;
   profile_picture_url: string | null;
   about: string | null;
+  wallets?: Wallet[];
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface Wallet {
+  id: string;
+  user_id: string;
+  chain_type: string;
+  address: string;
+  is_default: boolean;
   created_at: Date;
   updated_at: Date;
 }

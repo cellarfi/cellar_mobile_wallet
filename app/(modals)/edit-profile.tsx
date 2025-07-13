@@ -1,12 +1,13 @@
 import CustomButton from '@/components/ui/CustomButton';
 import CustomTextInput from '@/components/ui/CustomTextInput';
+import { TAG_NAME_UPDATE_RATE_LIMIT } from '@/constants/App';
 import { useDebouncedCallback } from '@/hooks/useDebounce';
 import { userRequests } from '@/libs/api_requests/user.request';
 import { useAuthStore } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -56,7 +57,42 @@ const EditProfileModal = () => {
     null
   );
 
-  // Initialize form with current profile data
+  // State for tag name update rate limiting
+  const [isTagNameRateLimited, setIsTagNameRateLimited] = useState(false);
+  const [tagNameUpdateAvailableDate, setTagNameUpdateAvailableDate] =
+    useState<Date | null>(null);
+
+  // Format date to display to user
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  // Check if tag name updates are rate limited
+  const checkTagNameRateLimit = useCallback(() => {
+    if (!profile || !profile.tag_name_updated_at) return;
+
+    // Get the date of the last tag name update
+    const lastUpdateDate = new Date(profile.tag_name_updated_at);
+
+    // Calculate the date when tag name updates will be allowed again
+    const availableDate = new Date(lastUpdateDate);
+    availableDate.setDate(availableDate.getDate() + TAG_NAME_UPDATE_RATE_LIMIT);
+
+    // Get current date for comparison
+    const currentDate = new Date();
+
+    // Check if we're still within the rate limit period
+    const isLimited = currentDate < availableDate;
+
+    setIsTagNameRateLimited(isLimited);
+    setTagNameUpdateAvailableDate(isLimited ? availableDate : null);
+  }, [profile]);
+
+  // Initialize form with current profile data and check rate limiting
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -64,8 +100,11 @@ const EditProfileModal = () => {
         tag_name: profile.tag_name || '',
         about: profile.about || '',
       });
+
+      // Check if tag name updates are rate limited
+      checkTagNameRateLimit();
     }
-  }, [profile]);
+  }, [profile, checkTagNameRateLimit]);
 
   // Debounced tag name check
   const debouncedCheckTagName = useDebouncedCallback(
@@ -262,20 +301,34 @@ const EditProfileModal = () => {
                   autoCapitalize="none"
                   returnKeyType="done"
                   maxLength={20}
+                  editable={!isTagNameRateLimited}
                 />
-                <View className="flex-row items-center justify-between mt-1">
-                  <Text className="text-gray-500 text-xs">
-                    This will be your unique identifier (like @
-                    {formData.tag_name || 'username'})
+                {!isTagNameRateLimited && (
+                  <View className="flex-row items-center justify-between mt-1">
+                    <Text className="text-gray-500 text-xs">
+                      This will be your unique identifier (like @
+                      {formData.tag_name || 'tag_name'})
+                    </Text>
+                    {isCheckingTag ? (
+                      <Text className="text-yellow-500 text-xs">
+                        Checking...
+                      </Text>
+                    ) : tagNameAvailable === true ? (
+                      <Text className="text-green-500 text-xs">Available!</Text>
+                    ) : tagNameAvailable === false ? (
+                      <Text className="text-red-500 text-xs">
+                        Not available
+                      </Text>
+                    ) : null}
+                  </View>
+                )}
+                {isTagNameRateLimited && tagNameUpdateAvailableDate && (
+                  <Text className="text-gray-500 text-xs mt-1">
+                    Tag name can only be updated every{' '}
+                    {TAG_NAME_UPDATE_RATE_LIMIT} days. Available again on{' '}
+                    {formatDate(tagNameUpdateAvailableDate)}
                   </Text>
-                  {isCheckingTag ? (
-                    <Text className="text-yellow-500 text-xs">Checking...</Text>
-                  ) : tagNameAvailable === true ? (
-                    <Text className="text-green-500 text-xs">Available!</Text>
-                  ) : tagNameAvailable === false ? (
-                    <Text className="text-red-500 text-xs">Not available</Text>
-                  ) : null}
-                </View>
+                )}
                 {errors.tag_name && (
                   <Text className="text-red-500 text-sm mt-1">
                     {errors.tag_name}

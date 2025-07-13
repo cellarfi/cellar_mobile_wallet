@@ -297,7 +297,7 @@ const SetupProfile = () => {
                   <View className="flex-row justify-between mt-1">
                     <Text className="text-gray-500 text-xs">
                       This will be your unique identifier (like @
-                      {formData.tag_name || 'username'})
+                      {formData.tag_name || 'tag_name'})
                     </Text>
                     {isCheckingTag ? (
                       <Text className="text-yellow-500 text-xs">
