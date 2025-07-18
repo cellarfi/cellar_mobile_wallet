@@ -5,6 +5,9 @@ const { withNativeWind } = require('nativewind/metro')
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname)
 
+// config.resolver.assetExts.push('txt')
+// config.resolver.assetExts.push('raw')
+
 const resolveRequestWithPackageExports = (context, moduleName, platform) => {
   // Package exports in `isows` are incorrect, so we need to disable them
   if (moduleName === 'isows') {
@@ -37,7 +40,8 @@ const resolveRequestWithPackageExports = (context, moduleName, platform) => {
 config.resolver.resolveRequest = resolveRequestWithPackageExports
 config.resolver.extraNodeModules = {
   ...config.resolver.extraNodeModules,
-  crypto: require.resolve('react-native-get-random-values'),
+  // crypto: require.resolve('react-native-get-random-values'),
+  crypto: require.resolve('crypto'),
 }
 
 module.exports = withNativeWind(config, { input: './global.css' })

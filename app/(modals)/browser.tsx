@@ -1,4 +1,8 @@
+import solanaSdk from '@/assets/solanaSdk-1.95.4.min.js.raw'
+import { useRandomSecret } from '@/hooks/useRandomSecret'
+import { getInjectedScriptString } from '@/libs/dappScript'
 import { Ionicons } from '@expo/vector-icons'
+import { WebView, WebViewMessageEvent } from '@metamask/react-native-webview'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
@@ -6,6 +10,7 @@ import {
   Alert,
   FlatList,
   Modal,
+  Platform,
   StatusBar,
   Text,
   TextInput,
@@ -13,8 +18,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { WebView } from 'react-native-webview'
-
+// import { WebView, WebViewMessageEvent } from 'react-native-webview'
 interface Tab {
   id: string
   url: string
@@ -30,12 +34,25 @@ export default function BrowserScreen() {
     url?: string
     title?: string
   }>()
+  // const {
+  //   fileContent: solanaSdk,
+  //   loading: solanaSdkLoading,
+  //   error: solanaSdkError,
+  // } = useExpoAsset(require('@/assets/solanasdk.txt'))
+  const secret = useRandomSecret()
+  // console.log('solanaSdk', solanaSdk)
+  // console.log('solanaSdkLoading', solanaSdkLoading)
+  // console.log('solanaSdkError', solanaSdkError)
+  // console.log('secret', secret)
 
   const [tabs, setTabs] = useState<Tab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
   const [showTabManager, setShowTabManager] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [isEditingUrl, setIsEditingUrl] = useState(false)
+
+  // const wallet = new CellarWalletAdapter()
+  // const connection = new Connection(clusterApiUrl('mainnet-beta'))
 
   const webViewRefs = useRef<{ [key: string]: WebView }>({})
 
@@ -154,6 +171,15 @@ export default function BrowserScreen() {
     if (activeTab) {
       const webView = webViewRefs.current[activeTab.id]
       webView?.reload()
+    }
+  }
+
+  const handleMessage = async (event: WebViewMessageEvent) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data)
+      console.log('handleMessage data', data)
+    } catch (error: any) {
+      console.error('Error handling WebView message:', error)
     }
   }
 
@@ -347,9 +373,9 @@ export default function BrowserScreen() {
                 onLoadProgress={(event) =>
                   updateTab(tab.id, { progress: event.nativeEvent.progress })
                 }
-                onLoadEnd={() =>
+                onLoadEnd={() => {
                   updateTab(tab.id, { isLoading: false, progress: 1 })
-                }
+                }}
                 onNavigationStateChange={(navState) => {
                   updateTab(tab.id, {
                     canGoBack: navState.canGoBack,
@@ -361,6 +387,19 @@ export default function BrowserScreen() {
                     setUrlInput(navState.url)
                   }
                 }}
+                onMessage={handleMessage}
+                injectedJavaScript={getInjectedScriptString(
+                  secret,
+                  Platform.OS,
+                  solanaSdk
+                )}
+                injectedJavaScriptBeforeContentLoaded={`
+    window.onerror = function(message, sourcefile, lineno, colno, error) {
+      alert("Message: " + message + " - Source: " + sourcefile + " Line: " + lineno + ":" + colno);
+      return true;
+    };
+    true;
+  `}
                 onError={() => {
                   updateTab(tab.id, { isLoading: false, progress: 0 })
                   Alert.alert('Error', 'Failed to load page')

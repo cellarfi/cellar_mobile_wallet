@@ -41,6 +41,18 @@ const categories = [
 
 const featuredDApps: DApp[] = [
   {
+    id: '0',
+    name: 'Airbills Pay',
+    description: 'Pay your bills with crypto',
+    url: 'https://app.airbillspay.com/',
+    icon: 'https://app.airbillspay.com/favicon.ico',
+    category: 'tools',
+    isHot: true,
+    verified: true,
+    rating: 4.8,
+    users: '1M+',
+  },
+  {
     id: '1',
     name: 'Jupiter',
     description: 'Best price swaps across all DEXs',

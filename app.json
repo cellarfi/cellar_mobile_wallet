@@ -16,9 +16,7 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
-      "associatedDomains": [
-        "webcredentials:cellar.so"
-      ],
+      "associatedDomains": ["webcredentials:cellar.so"],
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -46,8 +44,7 @@
           }
         }
       ],
-      "expo-font",
-      "expo-web-browser"
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

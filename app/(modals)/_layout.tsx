@@ -1,12 +1,18 @@
-import { Stack } from 'expo-router';
+import { Stack } from 'expo-router'
 
 type ModalScreen = {
-  name: string;
+  name: string
   options?: {
-    presentation?: 'modal' | 'transparentModal' | 'containedModal' | 'containedTransparentModal' | 'fullScreenModal' | 'formSheet';
-    headerShown?: boolean;
-  };
-};
+    presentation?:
+      | 'modal'
+      | 'transparentModal'
+      | 'containedModal'
+      | 'containedTransparentModal'
+      | 'fullScreenModal'
+      | 'formSheet'
+    headerShown?: boolean
+  }
+}
 
 const modalScreens: ModalScreen[] = [
   { name: 'token-detail' },
@@ -24,7 +30,7 @@ const modalScreens: ModalScreen[] = [
   { name: 'notification-settings' },
   { name: 'qr-scanner' },
   { name: 'browser' },
-];
+]
 
 export default function ModalsLayout() {
   return (
@@ -43,5 +49,5 @@ export default function ModalsLayout() {
         />
       ))}
     </Stack>
-  );
+  )
 }
