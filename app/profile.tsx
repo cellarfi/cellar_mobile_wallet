@@ -1,4 +1,6 @@
+import PointsDisplay from '@/components/PointsDisplay';
 import { useAuthContext } from '@/contexts/AuthProvider';
+import { usePoints } from '@/hooks/usePoints';
 import { usePortfolio } from '@/hooks/usePortfolio';
 import { formatNumber } from '@/libs/string.helpers';
 import { useAuthStore } from '@/store/authStore';
@@ -57,6 +59,11 @@ const menuSections = [
         icon: 'notifications-outline',
         title: 'Notifications',
         action: 'notifications',
+      },
+      {
+        icon: 'trophy-outline',
+        title: 'Leaderboard',
+        action: 'leaderboard',
       },
     ],
   },
@@ -117,16 +124,25 @@ const menuSections = [
 export default function ProfileScreen() {
   const { profile } = useAuthStore();
   const { portfolio } = usePortfolio();
+  const { userPoints, isLoading } = usePoints();
+
+  // For pagination in points history
+  const [historyPage, setHistoryPage] = useState(0);
+  const historyLimit = 10;
 
   const [preferences, setPreferences] = useState(userData.preferences);
   // const { logout } = usePrivy()
   const { logout } = useAuthContext();
+
+  // State variables for UI
 
   useEffect(() => {
     if (!profile) {
       router.replace('/setup-profile');
     }
   }, [profile]);
+
+  // Points history modal is now accessible via PointsDisplay component
 
   const handleMenuAction = (action: string) => {
     switch (action) {
@@ -144,6 +160,9 @@ export default function ProfileScreen() {
         break;
       case 'address-book':
         router.push('/(modals)/address-book');
+        break;
+      case 'leaderboard':
+        router.push('/leaderboard' as any);
         break;
       default:
         Alert.alert('Coming Soon', `${action} feature will be available soon!`);
@@ -197,10 +216,15 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const StatCard = ({ label, value }: any) => (
+  const StatCard = ({ label, value, extra }: any) => (
     <View className="items-center">
       <Text className="text-white text-xl font-bold">{value}</Text>
       <Text className="text-gray-400 text-sm">{label}</Text>
+      {extra && (
+        <View className="bg-primary-500/30 rounded-full px-2 py-0.5 mt-1">
+          <Text className="text-primary-300 text-xs font-medium">{extra}</Text>
+        </View>
+      )}
     </View>
   );
 
@@ -246,6 +270,9 @@ export default function ProfileScreen() {
                   {/* {userData.verified && ( */}
                   <Ionicons name="checkmark-circle" size={24} color="white" />
                   {/* )} */}
+                  <View className="ml-2">
+                    <PointsDisplay size="small" showLabel={false} />
+                  </View>
                 </View>
                 <Text className="text-white/80 text-lg mb-1">
                   @{profile?.tag_name}
@@ -270,9 +297,18 @@ export default function ProfileScreen() {
                 label="Portfolio"
                 value={'$' + formatNumber(portfolio?.totalUsd || 0)}
               />
+              <View className="items-center">
+                {isLoading ? (
+                  <Text className="text-white text-xl font-bold">...</Text>
+                ) : (
+                  <Text className="text-white text-xl font-bold">
+                    {userPoints?.level || 0}
+                  </Text>
+                )}
+                <Text className="text-gray-400 text-sm">Level</Text>
+              </View>
               <StatCard label="Wallets" value={userData.stats.wallets} />
               <StatCard label="Followers" value={userData.stats.followers} />
-              <StatCard label="Posts" value={userData.stats.posts} />
             </View>
           </LinearGradient>
         </View>
