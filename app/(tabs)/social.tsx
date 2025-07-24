@@ -1,397 +1,690 @@
-import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
-import React, { useState } from 'react'
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FlatList,
   RefreshControl,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-
-// Mock data
-const socialPosts = [
-  {
-    id: 1,
-    user: {
-      username: '@cryptowhale',
-      displayName: 'Crypto Whale',
-      avatar: '🐋',
-      verified: true,
-      followers: '125K',
-    },
-    content:
-      'SOL looking bullish after breaking $200 resistance! 🚀 The ecosystem is thriving with new projects launching daily. What are your thoughts on the current price action?',
-    images: [],
-    timestamp: '2h ago',
-    likes: 342,
-    comments: 28,
-    tips: {
-      amount: 156.5,
-      currency: 'USDC',
-    },
-    isLiked: false,
-    isTipped: false,
-  },
-  {
-    id: 2,
-    user: {
-      username: '@defi_trader',
-      displayName: 'DeFi Trader',
-      avatar: '💎',
-      verified: false,
-      followers: '45K',
-    },
-    content:
-      'New liquidity mining opportunity on Raydium. APY looks interesting 👀\n\nRAY/SOL pool showing 85% APY right now. DYOR but this could be a good short-term opportunity for yield farmers.',
-    images: [],
-    timestamp: '4h ago',
-    likes: 189,
-    comments: 42,
-    tips: {
-      amount: 89.2,
-      currency: 'USDC',
-    },
-    isLiked: true,
-    isTipped: false,
-  },
-  {
-    id: 3,
-    user: {
-      username: '@nft_collector',
-      displayName: 'NFT Collector',
-      avatar: '🎨',
-      verified: true,
-      followers: '89K',
-    },
-    content:
-      'Just snagged this rare Mad Lad! 🦍 Floor is pumping hard and I think we are still early. The utility roadmap for 2024 looks incredibly promising.',
-    images: ['🦍'],
-    timestamp: '6h ago',
-    likes: 567,
-    comments: 73,
-    tips: {
-      amount: 234.8,
-      currency: 'USDC',
-    },
-    isLiked: false,
-    isTipped: true,
-  },
-]
-
-const trendingTopics = [
-  { tag: '#Solana', posts: '12.5K' },
-  { tag: '#DeFi', posts: '8.9K' },
-  { tag: '#NFTs', posts: '6.2K' },
-  { tag: '#JupiterDAO', posts: '4.1K' },
-  { tag: '#MadLads', posts: '3.8K' },
-]
-
-const suggestedUsers = [
-  {
-    username: '@solana',
-    displayName: 'Solana',
-    avatar: '◉',
-    verified: true,
-    followers: '2.1M',
-    isFollowing: false,
-  },
-  {
-    username: '@raydium',
-    displayName: 'Raydium',
-    avatar: '⚡',
-    verified: true,
-    followers: '456K',
-    isFollowing: true,
-  },
-]
+  Image,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SocialFiRequests } from "@/libs/api_requests/socialfi.request";
+import { useSocialEventsStore } from "@/store/socialEventsStore";
+import { SuggestedAccounts } from "@/types/socialfi.interface";
+import { useAuthStore } from "@/store/authStore";
+import Header from "@/components/core/social/Header";
+import Tabs from "@/components/core/social/Tabs";
+import { Posts } from "@/types/posts.interface";
+import { PostsRequests } from "@/libs/api_requests/posts.request";
+import PostCard from "@/components/core/social/PostCard";
+import { followsRequests } from "@/libs/api_requests/follows.request";
 
 export default function SocialScreen() {
-  const [activeTab, setActiveTab] = useState<'feed' | 'trending' | 'following'>(
-    'feed'
-  )
-  const [refreshing, setRefreshing] = useState(false)
-  const [postText, setPostText] = useState('')
+  const [activeTab, setActiveTab] = useState<"feed" | "trending" | "following">(
+    "feed"
+  );
+  const [refreshing, setRefreshing] = useState(false);
+  const [socialPosts, setSocialPosts] = useState<Posts[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trendingPosts, setTrendingPosts] = useState<Posts[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(false);
+  const [errorTrending, setErrorTrending] = useState<string | null>(null);
+  const [suggestedAccounts, setSuggestedAccounts] = useState<
+    SuggestedAccounts[]
+  >([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [errorSuggestions, setErrorSuggestions] = useState<string | null>(null);
+  const [personalizedPosts, setPersonalizedPosts] = useState<Posts[]>([]);
+  const [loadingPersonalized, setLoadingPersonalized] = useState(false);
+  const [errorPersonalized, setErrorPersonalized] = useState<string | null>(
+    null
+  );
+  const [trendingTopics, setTrendingTopics] = useState<
+    { tag: string; count: number }[]
+  >([]);
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [errorTopics, setErrorTopics] = useState<string | null>(null);
+  const [postTypeFilter, setPostTypeFilter] = useState<
+    "ALL" | "REGULAR" | "DONATION" | "TOKEN_CALL"
+  >("ALL");
+  const { profile } = useAuthStore();
+  const [paginationData, setPaginationData] = useState<{
+    pagination: {
+      page: number;
+      pageSize: number;
+      totalPosts: number;
+      totalPages: number;
+    };
+  } | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMorePages, setHasMorePages] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [renderedPostsCount, setRenderedPostsCount] = useState(0);
 
-  const onRefresh = () => {
-    setRefreshing(true)
-    setTimeout(() => setRefreshing(false), 2000)
-  }
+  const refreshFeed = useSocialEventsStore((state) => state.refreshFeed);
+  const resetRefresh = useSocialEventsStore((state) => state.resetRefresh);
+  const triggerRefresh = useSocialEventsStore((state) => state.triggerRefresh);
 
-  const handleLike = (postId: number) => {
-    // Handle like functionality
-    console.log('Like post:', postId)
-  }
+  const fetchPosts = async (page = 1, append = false) => {
+    if (page === 1) {
+      setLoading(true);
+      setError(null);
+    } else {
+      setIsLoadingMore(true);
+    }
 
-  const handleTip = (postId: number) => {
-    // Navigate to tip modal
-    router.push('/(modals)/tip-user')
-  }
+    try {
+      const res = await PostsRequests.getPosts(String(page));
+      if (res.success) {
+        const newPosts = res.data || [];
+        if (append) {
+          setSocialPosts((prev) => [...prev, ...newPosts]);
+        } else {
+          setSocialPosts(newPosts);
+        }
+        setPaginationData(res.data.pagination || null);
 
-  const handleComment = (postId: number) => {
-    // Navigate to comments
-    router.push('/(modals)/post-comments')
-  }
+        // Check if there are more pages
+        if (res.data.pagination) {
+          setHasMorePages(page < res.data.pagination.totalPages);
+        }
+      } else {
+        setError(res.message || "Failed to fetch posts");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to fetch posts");
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
 
-  const PostCard = ({ post }: any) => (
-    <View className='bg-dark-200 rounded-2xl p-4 mb-4'>
-      {/* User Header */}
-      <View className='flex-row items-center justify-between mb-3'>
-        <View className='flex-row items-center flex-1'>
-          <View className='w-12 h-12 bg-primary-500/20 rounded-full justify-center items-center mr-3'>
-            <Text className='text-lg'>{post.user.avatar}</Text>
-          </View>
-          <View className='flex-1'>
-            <View className='flex-row items-center'>
-              <Text className='text-white font-semibold mr-2'>
-                {post.user.displayName}
-              </Text>
-              {post.user.verified && (
-                <Ionicons name='checkmark-circle' size={16} color='#6366f1' />
-              )}
-            </View>
-            <Text className='text-gray-400 text-sm'>
-              {post.user.username} • {post.timestamp}
-            </Text>
-          </View>
-        </View>
-        <TouchableOpacity className='p-2'>
-          <Ionicons name='ellipsis-horizontal' size={20} color='#666672' />
-        </TouchableOpacity>
-      </View>
+  const fetchTrendingPosts = async (page = 1, append = false) => {
+    setLoadingTrending(true);
+    setErrorTrending(null);
 
-      {/* Content */}
-      <Text className='text-white leading-6 mb-3'>{post.content}</Text>
+    if (page === 1) {
+      setLoading(true);
+      setError(null);
+    } else {
+      setIsLoadingMore(true);
+    }
 
-      {/* Images */}
-      {post.images.length > 0 && (
-        <View className='mb-3'>
-          <View className='w-full h-48 bg-dark-300 rounded-xl justify-center items-center'>
-            <Text className='text-6xl'>{post.images[0]}</Text>
-          </View>
-        </View>
-      )}
+    try {
+      const res = await PostsRequests.trendingPosts(String(page));
+      if (res.success) {
+        const newPosts = res.data || [];
 
-      {/* Engagement Stats */}
-      <View className='flex-row items-center justify-between py-3 border-t border-dark-300'>
-        <View className='flex-row items-center gap-6'>
-          <TouchableOpacity
-            onPress={() => handleLike(post.id)}
-            className='flex-row items-center'
-          >
-            <Ionicons
-              name={post.isLiked ? 'heart' : 'heart-outline'}
-              size={22}
-              color={post.isLiked ? '#ef4444' : '#666672'}
-            />
-            <Text className='text-gray-400 text-sm ml-2'>{post.likes}</Text>
-          </TouchableOpacity>
+        if (append) {
+          setTrendingPosts((prev) => [...prev, ...newPosts]);
+        } else {
+          setTrendingPosts(newPosts);
+        }
 
-          <TouchableOpacity
-            onPress={() => handleComment(post.id)}
-            className='flex-row items-center'
-          >
-            <Ionicons name='chatbubble-outline' size={20} color='#666672' />
-            <Text className='text-gray-400 text-sm ml-2'>{post.comments}</Text>
-          </TouchableOpacity>
+        // Set pagination Data
+        setPaginationData(res.data.pagination || null);
 
-          <TouchableOpacity className='flex-row items-center'>
-            <Ionicons name='arrow-redo-outline' size={20} color='#666672' />
-            <Text className='text-gray-400 text-sm ml-2'>Share</Text>
-          </TouchableOpacity>
-        </View>
+        // Check if there are more pages
+        if (res.data.pagination) {
+          setHasMorePages(page < res.data.pagination.totalPages);
+        }
+      } else {
+        setErrorTrending(res.message || "Failed to fetch trending posts");
+      }
+    } catch (err: any) {
+      setErrorTrending(err?.message || "Failed to fetch trending posts");
+    } finally {
+      setLoading(false);
+      setLoadingTrending(false);
+    }
+  };
 
-        <TouchableOpacity
-          onPress={() => handleTip(post.id)}
-          className={`flex-row items-center px-3 py-2 rounded-xl ${
-            post.isTipped ? 'bg-success-500/20' : 'bg-dark-300'
-          }`}
-        >
-          <Ionicons
-            name='cash'
-            size={18}
-            color={post.isTipped ? '#10b981' : '#666672'}
-          />
-          <Text
-            className={`text-sm ml-2 font-medium ${
-              post.isTipped ? 'text-success-400' : 'text-gray-400'
-            }`}
-          >
-            ${post.tips.amount}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  )
+  const fetchSuggestedAccounts = async () => {
+    setLoadingSuggestions(true);
+    setErrorSuggestions(null);
+    try {
+      const res = await followsRequests.getSuggestedAccounts();
+      if (res.success) {
+        setSuggestedAccounts(res.data || []);
+        setPaginationData(res.data.pagination || null);
+      } else {
+        setErrorSuggestions(res.message || "Failed to fetch suggestions");
+      }
+    } catch (err: any) {
+      setErrorSuggestions(err?.message || "Failed to fetch suggestions");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const fetchTrendingTopics = async () => {
+    setLoadingTopics(true);
+    setErrorTopics(null);
+    try {
+      const res = await SocialFiRequests.getPopularHashtags();
+      if (res.success) {
+        setTrendingTopics(res.data || []);
+        setPaginationData(res.data.pagination || null);
+      } else {
+        setErrorTopics(res.message || "Failed to fetch trending topics");
+      }
+    } catch (err: any) {
+      setErrorTopics(err?.message || "Failed to fetch trending topics");
+    } finally {
+      setLoadingTopics(false);
+    }
+  };
+
+  const fetchPersonalizedPosts = async (page = 1, append = false) => {
+    setLoadingPersonalized(true);
+    setErrorPersonalized(null);
+    try {
+      const res = await PostsRequests.followingPosts(String(page));
+      if (res.success) {
+        const newPosts = res.data || [];
+        if (append) {
+          setPersonalizedPosts((prev) => [...prev, ...newPosts]);
+        } else {
+          setPersonalizedPosts(res.data || []);
+        }
+
+        // Set Pagination Data
+        setPaginationData(res.data.pagination || null);
+
+        // Check if there are more pages
+        if (res.data.pagination) {
+          setHasMorePages(page < res.data.pagination.totalPages);
+        }
+      } else {
+        setErrorPersonalized(
+          res.message || "Failed to fetch personalized posts"
+        );
+      }
+    } catch (err: any) {
+      setErrorPersonalized(
+        err?.message || "Failed to fetch personalized posts"
+      );
+    } finally {
+      setLoadingPersonalized(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+    fetchTrendingTopics();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "trending") {
+      fetchTrendingPosts();
+      fetchTrendingTopics();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (refreshFeed) {
+      fetchPosts();
+      resetRefresh();
+    }
+  }, [refreshFeed]);
+
+  useEffect(() => {
+    if (activeTab === "following") {
+      fetchSuggestedAccounts();
+      fetchPersonalizedPosts();
+    }
+  }, [activeTab, profile?.id]);
+
+  // Track when 10 posts have been rendered
+  useEffect(() => {
+    const filteredPosts = filterPosts(getCurrentPosts());
+    if (filteredPosts.length >= 10 && renderedPostsCount < 10) {
+      setRenderedPostsCount(10);
+      console.log("10 posts have been rendered!");
+      // Your state increment logic here
+    }
+  }, [
+    socialPosts,
+    trendingPosts,
+    personalizedPosts,
+    activeTab,
+    postTypeFilter,
+  ]);
+
+  const getCurrentPosts = () => {
+    switch (activeTab) {
+      case "feed":
+        return socialPosts;
+      case "trending":
+        return trendingPosts;
+      case "following":
+        return personalizedPosts;
+      default:
+        return [];
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    setHasMorePages(true);
+
+    if (activeTab === "feed") {
+      await fetchPosts(1, false);
+    } else if (activeTab === "trending") {
+      await fetchTrendingPosts();
+    } else if (activeTab === "following") {
+      await fetchPersonalizedPosts();
+    }
+    setRefreshing(false);
+  };
+
+  // Handle pagination for feed tab
+  const handleEndReached = useCallback(() => {
+    if (hasMorePages && !isLoadingMore) {
+      console.log("User reached the end, loading more posts...");
+      //let nextPage = currentPage
+      //if(currentPage < p){
+        const nextPage = currentPage + 1;
+      //} 
+      setCurrentPage(nextPage);
+      if(activeTab == 'feed'){
+        fetchPosts(nextPage, true);
+      } else if (activeTab == 'trending'){
+         fetchTrendingPosts(nextPage, true)
+      } else {
+         fetchPersonalizedPosts(nextPage, true)
+      }
+    }
+  }, [activeTab, hasMorePages, isLoadingMore, currentPage]);
+
+  const handleLike = async (postId: string) => {
+    console.log("Handle Like for", postId);
+    const currentPosts = getCurrentPosts();
+    const post = currentPosts.find((post) => post.id === postId);
+    if (!post) return;
+
+    const updatedPost = {
+      ...post,
+      like: {
+        ...post?.like,
+        status: !post?.like?.status,
+      },
+      _count: {
+        ...post._count,
+        like: post?.like?.status ? post._count.like - 1 : post._count.like + 1,
+      },
+    };
+
+    // Optimistically update the UI based on active tab
+    const updatePosts = (prevPosts: Posts[]) =>
+      prevPosts.map((p) => (p.id === postId ? updatedPost : p));
+
+    if (activeTab === "feed") {
+      setSocialPosts(updatePosts);
+    } else if (activeTab === "trending") {
+      setTrendingPosts(updatePosts);
+    } else if (activeTab === "following") {
+      setPersonalizedPosts(updatePosts);
+    }
+
+    try {
+      if (post?.like?.status) {
+        const response = await PostsRequests.unlikePost(post.like.id, postId);
+        if (!response.success) {
+          throw new Error("Failed to unlike post");
+        }
+      } else {
+        const response = await PostsRequests.likePost(postId);
+        if (!response.success) {
+          throw new Error("Failed to like post");
+        }
+
+        // Update the like id with the response data
+        const updateLikeId = (prevPosts: Posts[]) =>
+          prevPosts.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  like: { ...p.like, id: response.data.id },
+                }
+              : p
+          );
+
+        if (activeTab === "feed") {
+          setSocialPosts(updateLikeId);
+        } else if (activeTab === "trending") {
+          setTrendingPosts(updateLikeId);
+        } else if (activeTab === "following") {
+          setPersonalizedPosts(updateLikeId);
+        }
+      }
+      triggerRefresh();
+    } catch (error) {
+      // Revert the changes if the API call fails
+      const revertPosts = (prevPosts: Posts[]) =>
+        prevPosts.map((p) => (p.id === postId ? post : p));
+
+      if (activeTab === "feed") {
+        setSocialPosts(revertPosts);
+      } else if (activeTab === "trending") {
+        setTrendingPosts(revertPosts);
+      } else if (activeTab === "following") {
+        setPersonalizedPosts(revertPosts);
+      }
+      alert("Failed to update like status");
+    }
+  };
+
+  const handleFollow = async (userId: string) => {
+    setSuggestedAccounts((prev) =>
+      prev.map((user) =>
+        user.id === userId ? { ...user, following: !user.following } : user
+      )
+    );
+    try {
+      const res = await followsRequests.followUser(userId);
+      if (!res.success) {
+        setSuggestedAccounts((prev) =>
+          prev.map((user) =>
+            user.id === userId ? { ...user, following: !user.following } : user
+          )
+        );
+        alert(res.message || "Failed to follow/unfollow");
+      } else {
+        fetchSuggestedAccounts();
+        fetchPersonalizedPosts();
+      }
+    } catch (err: any) {
+      setSuggestedAccounts((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, following: !user.following } : user
+        )
+      );
+      alert("Failed to follow/unfollow");
+    }
+  };
+
+  const handleHashtagPress = (tag: string) => {
+    router.push({
+      pathname: "/(modals)/hashtag-posts",
+      params: { hashtag: tag },
+    });
+  };
 
   const TrendingCard = ({ topic }: any) => (
-    <TouchableOpacity className='bg-dark-200 rounded-2xl p-4 mr-3 w-40'>
-      <Text className='text-primary-400 font-semibold text-lg mb-1'>
-        {topic.tag}
+    <TouchableOpacity
+      className="bg-dark-200 rounded-2xl p-4 mr-3 w-40"
+      onPress={() => handleHashtagPress(topic.tag)}
+    >
+      <Text className="text-primary-400 font-semibold text-lg mb-1">
+        #{topic.tag ?? ""}
       </Text>
-      <Text className='text-gray-400 text-sm'>{topic.posts} posts</Text>
+      <Text className="text-gray-400 text-sm">{topic.count ?? 0} posts</Text>
     </TouchableOpacity>
-  )
+  );
 
-  const UserCard = ({ user }: any) => (
-    <View className='bg-dark-200 rounded-2xl p-4 mr-3 w-48'>
-      <View className='flex-row items-center justify-between mb-3'>
-        <View className='w-12 h-12 bg-primary-500/20 rounded-full justify-center items-center'>
-          <Text className='text-lg'>{user.avatar}</Text>
+  const UserCard = ({ user }: { user: SuggestedAccounts }) => (
+    <View className="bg-dark-200 rounded-2xl p-4 mr-3 w-48">
+      <View className="flex-row items-center justify-between mb-3">
+        <View className="w-12 h-12 bg-primary-500/20 rounded-full justify-center items-center">
+          {user.profile_picture_url ? (
+            <Image
+              source={{ uri: user.profile_picture_url }}
+              style={{ width: 48, height: 48, borderRadius: 24 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-lg text-white">
+              {user.display_name?.[0]?.toUpperCase() ?? "?"}
+            </Text>
+          )}
         </View>
         <TouchableOpacity
           className={`px-3 py-1 rounded-xl ${
-            user.isFollowing ? 'bg-gray-600' : 'bg-primary-500'
+            user.following ? "bg-gray-600" : "bg-primary-500"
           }`}
+          onPress={() => handleFollow(user.id)}
         >
-          <Text className='text-white text-sm font-medium'>
-            {user.isFollowing ? 'Following' : 'Follow'}
+          <Text className="text-white text-sm font-medium">
+            {user.following ? "Following" : "Follow"}
           </Text>
         </TouchableOpacity>
       </View>
-      <View className='flex-row items-center mb-1'>
-        <Text className='text-white font-semibold mr-2'>
-          {user.displayName}
+      <View className="flex-row items-center mb-1">
+        <Text className="text-white font-semibold mr-2">
+          {user.display_name ?? ""}
         </Text>
-        {user.verified && (
-          <Ionicons name='checkmark-circle' size={14} color='#6366f1' />
-        )}
       </View>
-      <Text className='text-gray-400 text-sm mb-2'>{user.username}</Text>
-      <Text className='text-gray-500 text-xs'>{user.followers} followers</Text>
+      <Text className="text-gray-400 text-sm mb-2">@{user.tag_name ?? ""}</Text>
+      <Text className="text-gray-500 text-xs">
+        {user._count?.followers ?? 0} followers
+      </Text>
     </View>
-  )
+  );
+
+  const filterPosts = (posts: Posts[]) => {
+    if (postTypeFilter === "ALL") return posts;
+    return posts.filter((post) => post.post_type === postTypeFilter);
+  };
+
+  const renderPostItem = ({ item }: { item: Posts }) => (
+    <PostCard key={item.id} post={item} onLike={handleLike} />
+  );
+
+  const renderFooter = () => {
+    if (!isLoadingMore ) return null;
+
+    return (
+      <View className="flex-1 justify-center items-center py-4">
+        <ActivityIndicator color="#6366f1" />
+      </View>
+    );
+  };
+
+  // Header component with all the UI above posts
+  const renderListHeader = () => (
+    <View>
+      {/* Post Composer Trigger */}
+      <TouchableOpacity
+        className="bg-dark-200 rounded-xl p-3 mb-6 mx-6 flex-row items-center border border-dark-300"
+        activeOpacity={0.85}
+        onPress={() => router.push("/(modals)/create-post")}
+      >
+        <View className="w-9 h-9 bg-dark-300 rounded-full justify-center items-center mr-3">
+          <Ionicons name="pencil" size={16} color="#6366f1" />
+        </View>
+        <Text className="text-gray-400 font-medium flex-1">
+          What's happening in crypto?
+        </Text>
+        <View className="px-3 py-1.5 bg-dark-300 rounded-lg">
+          <Text className="text-primary-500 text-xs font-medium">Post</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Tabs */}
+      <View className="px-6">
+        <Tabs
+          tabs={["feed", "trending", "following"]}
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setCurrentPage(1)
+            setPostTypeFilter("ALL");
+            setCurrentPage(1);
+            setHasMorePages(true);
+          }}
+        />
+      </View>
+
+      {/* Post Type Filter */}
+      <View className="flex-row justify-center mb-4 mt-2 px-6">
+        {[
+          { label: "All", value: "ALL" },
+          { label: "Regular", value: "REGULAR" },
+          { label: "Donation", value: "DONATION" },
+          { label: "Token Call", value: "TOKEN_CALL" },
+        ].map((type) => (
+          <TouchableOpacity
+            key={type.value}
+            className={`px-3 py-1 mx-1 rounded-full ${
+              postTypeFilter === type.value ? "bg-primary-500" : "bg-dark-200"
+            }`}
+            onPress={() => setPostTypeFilter(type.value as any)}
+            activeOpacity={0.85}
+          >
+            <Text
+              className={`text-xs font-semibold ${
+                postTypeFilter === type.value ? "text-white" : "text-gray-400"
+              }`}
+            >
+              {type.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Following tab specific content */}
+      {activeTab === "following" && (
+        <View className="px-6">
+          <Text className="text-white text-lg font-semibold mb-4">
+            Suggested for You
+          </Text>
+          {loadingSuggestions ? (
+            <View className="flex-1 justify-center items-center mt-4">
+              <Text className="text-white">Loading suggestions...</Text>
+            </View>
+          ) : errorSuggestions ? (
+            <View className="flex-1 justify-center items-center mt-4">
+              <Text className="text-white">Error: {errorSuggestions}</Text>
+            </View>
+          ) : suggestedAccounts.length === 0 ? (
+            <View className="flex-1 justify-center items-center mt-4">
+              <Text className="text-white">No suggestions found.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={suggestedAccounts}
+              renderItem={({ item }) => <UserCard user={item} />}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 24 }}
+              keyExtractor={(item) => item.id}
+            />
+          )}
+
+          <Text className="text-white text-lg font-semibold mb-4 mt-6">
+            From People You Follow
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const getCurrentData = () => {
+    const posts = filterPosts(getCurrentPosts());
+
+    if (activeTab === "feed") {
+      return {
+        data: posts,
+        loading: loading,
+        error: error,
+        emptyMessage: "No posts yet.",
+      };
+    } else if (activeTab === "trending") {
+      return {
+        data: posts,
+        loading: loadingTrending,
+        error: errorTrending,
+        emptyMessage: "No trending posts yet.",
+      };
+    } else {
+      return {
+        data: posts,
+        loading: loadingPersonalized,
+        error: errorPersonalized,
+        emptyMessage: "No personalized posts found.",
+      };
+    }
+  };
+
+  const {
+    data,
+    loading: currentLoading,
+    error: currentError,
+    emptyMessage,
+  } = getCurrentData();
+
+  if (currentLoading && data.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 bg-dark-50" edges={["top"]}>
+        <Header
+          title="Social"
+          onSearch={() => router.push("/(modals)/find-posts")}
+        />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator color="#6366f1" />
+          <Text className="text-white">Loading Posts</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (currentError && data.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 bg-dark-50" edges={["top"]}>
+        <Header
+          title="Social"
+          onSearch={() => router.push("/(modals)/find-posts")}
+        />
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-white">Error: {currentError}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
-      <View className='flex-1'>
-        {/* Header */}
-        <View className='flex-row items-center justify-between px-6 py-4'>
-          <Text className='text-white text-2xl font-bold'>Social</Text>
-          <View className='flex-row gap-3'>
-            <TouchableOpacity className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'>
-              <Ionicons name='search' size={20} color='#6366f1' />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/(modals)/create-post')}
-              className='w-10 h-10 bg-primary-500 rounded-full justify-center items-center'
-            >
-              <Ionicons name='add' size={20} color='white' />
-            </TouchableOpacity>
+    <SafeAreaView className="flex-1 bg-dark-50" edges={["top"]}>
+      <Header
+        title="Social"
+        onSearch={() => router.push("/(modals)/find-posts")}
+      />
+
+      {data.length === 0 ? (
+        <View className="flex-1">
+          {renderListHeader()}
+          <View className="flex-1 justify-center items-center px-6">
+            <Text className="text-white">{emptyMessage}</Text>
           </View>
         </View>
-
-        {/* Tabs */}
-        <View className='px-6 mb-4'>
-          <View className='flex-row bg-dark-200 rounded-2xl p-1'>
-            {(['feed', 'trending', 'following'] as const).map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                className={`flex-1 py-3 rounded-xl ${
-                  activeTab === tab ? 'bg-primary-500' : ''
-                }`}
-              >
-                <Text
-                  className={`text-center font-medium capitalize ${
-                    activeTab === tab ? 'text-white' : 'text-gray-400'
-                  }`}
-                >
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Content */}
-        <ScrollView
-          className='flex-1 px-6'
+      ) : (
+        <FlatList
+          data={data}
+          renderItem={renderPostItem}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderListHeader}
+          ListFooterComponent={renderFooter}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.1}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor='#6366f1'
+              tintColor="#6366f1"
             />
           }
-        >
-          {activeTab === 'feed' && (
-            <View>
-              {/* Quick Post */}
-              <View className='bg-dark-200 rounded-2xl p-4 mb-6'>
-                <View className='flex-row items-center mb-3'>
-                  <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-3'>
-                    <Text>🎯</Text>
-                  </View>
-                  <Text className='text-white font-medium'>
-                    Share your thoughts...
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => router.push('/(modals)/create-post')}
-                  className='bg-dark-300 rounded-xl px-4 py-3'
-                >
-                  <Text className='text-gray-400'>
-                    What is happening in crypto today?
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Posts */}
-              {socialPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </View>
-          )}
-
-          {activeTab === 'trending' && (
-            <View>
-              <Text className='text-white text-lg font-semibold mb-4'>
-                Trending Topics
-              </Text>
-              <FlatList
-                data={trendingTopics}
-                renderItem={({ item }) => <TrendingCard topic={item} />}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 24 }}
-              />
-
-              <Text className='text-white text-lg font-semibold mb-4 mt-6'>
-                Trending Posts
-              </Text>
-              {socialPosts.slice(0, 2).map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </View>
-          )}
-
-          {activeTab === 'following' && (
-            <View>
-              <Text className='text-white text-lg font-semibold mb-4'>
-                Suggested for You
-              </Text>
-              <FlatList
-                data={suggestedUsers}
-                renderItem={({ item }) => <UserCard user={item} />}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 24 }}
-              />
-
-              <Text className='text-white text-lg font-semibold mb-4 mt-6'>
-                From People You Follow
-              </Text>
-              {socialPosts.slice(1, 3).map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </View>
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
     </SafeAreaView>
-  )
+  );
 }

@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     console.log('Getting Privy access token...', privyIsReady, !!privyUser)
     if (privyIsReady && privyUser && getIdentityToken) {
       const token = await getIdentityToken()
-      // console.log('Privy identity token:', token)
+      console.log('Privy identity token:', token)
       if (token) {
         await SecureStore.setItemAsync(Keys.PRIVY_IDENTITY_TOKEN, token)
       }
