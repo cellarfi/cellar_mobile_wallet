@@ -25,7 +25,6 @@ export const userRequests = {
           "Error fetching user profile",
         undefined
       );
-      );
     }
   },
 
@@ -41,7 +40,6 @@ export const userRequests = {
         true,
         "User created successfully",
         response.data?.data
-      );
       );
     } catch (err: any) {
       console.log('Error creating user:', err?.response?.data?.data);
@@ -164,7 +162,6 @@ export const userRequests = {
           "Error deleting user",
         null
       );
-      );
     }
   },
 
@@ -201,7 +198,7 @@ export const userRequests = {
       console.log(response.data.data);
       return apiResponse(
         true,
-        "User created successfully",
+        "User profile fetched successfully",
         response.data?.data
       );
     } catch (err: any) {
@@ -234,17 +231,17 @@ export const userRequests = {
       const response = await api.get(`/users/search?query=${encodeURIComponent(query)}`);
       return apiResponse<SearchUsers>(
         true,
-        "User created successfully",
+        "Users found successfully",
         response.data?.data
       );
     } catch (err: any) {
-      console.log("Error getting user:", err?.response?.data?.data);
+      console.log("Error searching users:", err?.response?.data?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error getting user",
+          "Error searching users",
         undefined
       );
     }

@@ -41,7 +41,6 @@ export const PostsRequests = {
     try {
       const api = httpRequest();
       const response = await api.get(`/posts?${new URLSearchParams({ page: page, pageSize: '10' })}`);
-      console.log(response.data.data);
       return apiResponse<Posts>(
         true,
         "posts fetched successfully",
@@ -153,7 +152,6 @@ export const PostsRequests = {
     try {
       const api = httpRequest();
       const response = await api.post(`/posts/likes/${id}`);
-      console.log(response.data);
       return apiResponse(true, "post liked successfully", response.data.data);
     } catch (err: any) {
       return apiResponse(

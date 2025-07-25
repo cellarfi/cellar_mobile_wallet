@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import { SearchedPost } from "@/types/posts.interface";
 import CommentInputCard from "./CommentInputCard";
 import { commentsRequests } from "@/libs/api_requests/comments.request";
+import { PostsRequests } from "@/libs/api_requests/posts.request";
 
 function formatAmount(amount: string | null) {
   if (!amount) return "0";
@@ -130,6 +131,31 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const likeFunction = async () => {
+      if(likeStatus == true){
+        setLikeCount((prev) =>
+          likeStatus ? Math.max(prev - 1, 0) : prev - 1
+        );
+        setLikeStatus(false)
+        await PostsRequests.unlikePost(post.like.id, post.id);
+        //setLikeStatus(false);
+        return;
+      } else {
+        try {
+          await PostsRequests.likePost(post.id);
+          setLikeStatus((prev) => !prev);
+          setLikeCount((prev) =>
+            likeStatus ? Math.max(prev - 1, 0) : prev + 1
+          );
+        } catch (e) {
+          setLikeStatus((prev) => !prev);
+          setLikeCount((prev) =>
+            likeStatus ? likeCount + 1 : Math.max(likeCount - 1, 0)
+          );
+        }
+      }
+  }
+
   // User header
   const userHeader = (
     <View className="flex-row items-center mb-2">
@@ -197,20 +223,7 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
     <View className="flex-row items-center mt-2 gap-x-6">
       <TouchableOpacity
         className="flex-row items-center"
-        onPress={async () => {
-          setLikeStatus((prev) => !prev);
-          setLikeCount((prev) =>
-            likeStatus ? Math.max(prev - 1, 0) : prev + 1
-          );
-          try {
-            await commentsRequests.likeComment(post.id);
-          } catch (e) {
-            setLikeStatus((prev) => !prev);
-            setLikeCount((prev) =>
-              likeStatus ? likeCount + 1 : Math.max(likeCount - 1, 0)
-            );
-          }
-        }}
+        onPress={() => likeFunction()}
         activeOpacity={0.7}
       >
         <Ionicons
@@ -259,8 +272,21 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
 
   return (
     <View className="bg-dark-200 rounded-2xl p-5 mb-4 border border-dark-300">
-      {userHeader}
-      {contentBlock}
+      {/* Make the whole card pressable to open post-details modal */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() =>
+          router.push({
+            pathname: "/(modals)/post-details",
+            params: { postId: post.id },
+          })
+        }
+        className=""
+        style={{ flex: 1 }}
+      >
+        {userHeader}
+        {contentBlock}
+      </TouchableOpacity>
       {engagementRow}
       {showCommentInput && (
         <CommentInputCard

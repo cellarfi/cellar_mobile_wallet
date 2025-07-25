@@ -17,7 +17,6 @@ export const commentsRequests = {
         text: text,
         parent_id: parentId,
       });
-      console.log(response.data.data)
       return apiResponse(true, "Comment created", response.data.data);
     } catch (err: any) {
       return apiResponse(
@@ -78,7 +77,6 @@ export const commentsRequests = {
       const response = await api.post("/posts/comments/like", {
         id: commentId,
       });
-      console.log(response.data);
       return apiResponse(true, "Comment Liked/Unliked", response.data.data);
     } catch (err: any) {
       return apiResponse(
