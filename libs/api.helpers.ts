@@ -21,7 +21,7 @@ export const httpRequest = (setLoading?: (loading: boolean) => void) => {
   const api: AxiosInstance = axios.create({
     baseURL: ENV.SERVER_URL,
   })
-  console.log('ENV.SERVER_URL', ENV.SERVER_URL)
+  // console.log('ENV.SERVER_URL', ENV.SERVER_URL)
 
   // We set an interceptor for each request to
   // include Bearer token to the request if user is logged in
@@ -37,7 +37,7 @@ export const httpRequest = (setLoading?: (loading: boolean) => void) => {
 
     // Log the full request URL
     const fullUrl = `${config.baseURL}${config.url}`
-    console.log('Full HTTP Request URL:', fullUrl)
+    // console.log('Full HTTP Request URL:', fullUrl)
     // console.log('Request Method:', config.method?.toUpperCase())
     // console.log('Request Headers:', config.headers)
     // if (config.data) {

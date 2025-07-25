@@ -72,7 +72,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name='trading'
         options={{
-          title: 'Trading',
+          title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
             <View
               className={`p-1.5 rounded-lg ${
@@ -80,7 +80,8 @@ export default function TabLayout() {
               }`}
             >
               <Ionicons
-                name={focused ? 'trending-up' : 'trending-up-outline'}
+                name={focused ? 'telescope' : 'telescope-outline'}
+                // name={focused ? 'trending-up' : 'trending-up-outline'}
                 size={22}
                 color={color}
               />
@@ -108,9 +109,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='profile'
+        name='explore'
         options={{
-          title: 'Profile',
+          title: 'Browse',
           tabBarIcon: ({ color, focused }) => (
             <View
               className={`p-1.5 rounded-lg ${
@@ -118,7 +119,7 @@ export default function TabLayout() {
               }`}
             >
               <Ionicons
-                name={focused ? 'person' : 'person-outline'}
+                name={focused ? 'compass' : 'compass-outline'}
                 size={22}
                 color={color}
               />

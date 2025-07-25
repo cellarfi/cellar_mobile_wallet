@@ -1,12 +1,11 @@
+import { useClipboard } from '@/libs/clipboard';
 import { Transaction } from '@/types/transaction.interface';
 import { Ionicons } from '@expo/vector-icons';
 import { formatWalletAddress } from '@privy-io/expo';
-import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import { Image } from 'react-native';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Alert,
   ScrollView,
@@ -25,7 +24,7 @@ export const TransactionDetailsModal: React.FC<
   TransactionDetailsModalProps
 > = ({ transaction }) => {
   const insets = useSafeAreaInsets();
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { copyToClipboard, copiedField, setCopiedField } = useClipboard(null);
 
   const getStatusColor = () => {
     switch (transaction.status) {
@@ -109,20 +108,10 @@ export const TransactionDetailsModal: React.FC<
   };
 
   // Copy to clipboard with animation and haptic feedback
-  const copyToClipboard = async (text: string, field: string) => {
-    try {
-      await Clipboard.setStringAsync(text);
-      // Haptic feedback
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setCopiedField(field);
-
-      // Reset the copied state after 2 seconds
-      setTimeout(() => {
-        setCopiedField(null);
-      }, 2000);
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-    }
+  const handleCopy = async (text: string, field: string) => {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCopiedField(field);
+    await copyToClipboard(text);
   };
 
   // Open transaction in Solana Explorer
@@ -190,10 +179,9 @@ export const TransactionDetailsModal: React.FC<
             style={{ backgroundColor: `${getIconColor()}20` }}
           >
             {transaction.logoURI ? (
-              <Image
-                source={{ uri: transaction.logoURI }}
-                className="w-10 h-10 rounded-full"
-              />
+              <View className="w-12 h-12 rounded-full bg-dark-200 items-center justify-center">
+                <Ionicons name="wallet-outline" size={24} color="#9CA3AF" />
+              </View>
             ) : (
               <Ionicons name={getIconName()} size={32} color={getIconColor()} />
             )}
@@ -287,14 +275,10 @@ export const TransactionDetailsModal: React.FC<
               </Text>
               <TouchableOpacity
                 className="ml-2 p-2"
-                onPress={() => copyToClipboard(transaction.id, 'txid')}
+                onPress={() => handleCopy(transaction.id, 'txid')}
               >
                 <Ionicons
-                  name={
-                    copiedField === 'txid'
-                      ? 'checkmark-outline'
-                      : 'copy-outline'
-                  }
+                  name={copiedField === 'txid' ? 'checkmark' : 'copy-outline'}
                   size={18}
                   color="#6366f1"
                 />
@@ -326,7 +310,7 @@ export const TransactionDetailsModal: React.FC<
                     className="ml-2 p-2"
                     onPress={() =>
                       transaction.senderAddress &&
-                      copyToClipboard(transaction.senderAddress, 'sender')
+                      handleCopy(transaction.senderAddress, 'sender')
                     }
                   >
                     <Ionicons
@@ -359,7 +343,9 @@ export const TransactionDetailsModal: React.FC<
                     className="ml-2 p-2"
                     onPress={() =>
                       transaction.recipientAddress &&
-                      copyToClipboard(transaction.recipientAddress, 'recipient')
+                      copyToClipboard(transaction.recipientAddress, {
+                        field: 'recipient',
+                      })
                     }
                   >
                     <Ionicons

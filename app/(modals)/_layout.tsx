@@ -1,4 +1,30 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
+
+type ModalScreen = {
+  name: string;
+  options?: {
+    presentation?: 'modal' | 'transparentModal' | 'containedModal' | 'containedTransparentModal' | 'fullScreenModal' | 'formSheet';
+    headerShown?: boolean;
+  };
+};
+
+const modalScreens: ModalScreen[] = [
+  { name: 'token-detail' },
+  { name: 'send' },
+  { name: 'receive' },
+  { name: 'swap' },
+  { name: 'buy-crypto' },
+  { name: 'nft-detail' },
+  { name: 'wallet-switcher' },
+  { name: 'post-comments' },
+  { name: 'qr-code' },
+  { name: 'share-profile' },
+  { name: 'manage-wallets' },
+  { name: 'security-settings' },
+  { name: 'notification-settings' },
+  { name: 'qr-scanner' },
+  { name: 'browser' },
+];
 
 export default function ModalsLayout() {
   return (
@@ -6,24 +32,16 @@ export default function ModalsLayout() {
       screenOptions={{
         presentation: "modal",
         headerShown: false,
+        animation: 'slide_from_bottom',
       }}
     >
-      <Stack.Screen name="token-detail" />
-      <Stack.Screen name="send" />
-      <Stack.Screen name="receive" />
-      <Stack.Screen name="swap" />
-      <Stack.Screen name="buy-crypto" />
-      <Stack.Screen name="nft-detail" />
-      <Stack.Screen name="wallet-switcher" />
-      <Stack.Screen name="create-post" />
-      {/* <Stack.Screen name='tip-user' /> */}
-      <Stack.Screen name="post-comments" />
-      {/* <Stack.Screen name='edit-profile' /> */}
-      <Stack.Screen name="manage-wallets" />
-      {/* <Stack.Screen name='security-settings' /> */}
-      {/* <Stack.Screen name='notification-settings' /> */}
-      <Stack.Screen name="qr-scanner" />
-      {/* <Stack.Screen name='share-profile' /> */}
+      {modalScreens.map((screen) => (
+        <Stack.Screen
+          key={screen.name}
+          name={screen.name as any}
+          options={screen.options}
+        />
+      ))}
     </Stack>
   );
 }

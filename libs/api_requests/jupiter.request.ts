@@ -35,7 +35,10 @@ export const jupiterRequests = {
       console.log('Error fetching Jupiter order quote:', err?.response?.data)
       return apiResponse<JupiterQuoteOrderResponse>(
         false,
-        err?.response?.data?.message || err?.message || 'Error occurred.',
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error occurred.',
         err
       )
     }
@@ -58,10 +61,15 @@ export const jupiterRequests = {
 
       return apiResponse(true, 'Order executed successfully', res.data)
     } catch (err: any) {
+      console.log('Error executing Jupiter order:', err?.message)
+      console.log('Error executing Jupiter order:', err?.response)
       console.log('Error executing Jupiter order:', err?.response?.data)
       return apiResponse(
         false,
-        err?.response?.data?.message || err?.message || 'Error occurred.',
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error occurred.',
         err
       )
     }

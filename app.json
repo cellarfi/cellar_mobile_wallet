@@ -15,7 +15,7 @@
     "ios": {
       "usesAppleSignIn": true,
       "supportsTablet": true,
-      "bundleIdentifier": "com.cellarfi.so",
+      "bundleIdentifier": "com.cellar.so",
       "associatedDomains": [
         "webcredentials:cellar.so"
       ],
@@ -46,7 +46,8 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

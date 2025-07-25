@@ -4,6 +4,7 @@ import { NFTsTab, NFTsTabRef } from '@/components/core/wallet/NFTsTab'
 import { TokensTab, TokensTabRef } from '@/components/core/wallet/TokensTab'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { PortfolioSummary } from '@/components/PortfolioSummary'
+import { usePortfolio } from '@/hooks/usePortfolio'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
@@ -23,6 +24,9 @@ export default function WalletScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const { tab } = useLocalSearchParams()
 
+  // Add portfolio hook to subscribe to portfolio data changes
+  const { refetch: refetchPortfolio } = usePortfolio()
+
   // Refs for each tab component
   const tokensTabRef = useRef<TokensTabRef>(null)
   const nftsTabRef = useRef<NFTsTabRef>(null)
@@ -31,18 +35,22 @@ export default function WalletScreen() {
   const onRefresh = async () => {
     setRefreshing(true)
     try {
-      // Only refresh the currently active tab
-      switch (activeTab) {
-        case 'tokens':
-          tokensTabRef.current?.refetch()
-          break
-        case 'nfts':
-          nftsTabRef.current?.refetch()
-          break
-        case 'history':
-          historyTabRef.current?.refetch()
-          break
-      }
+      // Refresh portfolio summary and the currently active tab
+      await Promise.all([
+        refetchPortfolio(),
+        (() => {
+          switch (activeTab) {
+            case 'tokens':
+              return tokensTabRef.current?.refetch()
+            case 'nfts':
+              return nftsTabRef.current?.refetch()
+            case 'history':
+              return historyTabRef.current?.refetch()
+            default:
+              return Promise.resolve()
+          }
+        })(),
+      ])
     } finally {
       setRefreshing(false)
     }

@@ -9,14 +9,14 @@ export const userRequests = {
   getProfile: async () => {
     try {
       const api = httpRequest();
-      const response = await api.get("/users/me");
+      const response = await api.get('/users/me');
       return apiResponse<User>(
         true,
         "User profile fetched successfully",
         response.data?.data
       );
     } catch (err: any) {
-      console.log("Error fetching user profile:", err?.response?.data?.data);
+      console.log('Error fetching user profile:', err?.response?.data?.data);
       return apiResponse<User>(
         false,
         err?.response?.data?.error ||
@@ -24,6 +24,7 @@ export const userRequests = {
           err?.message ||
           "Error fetching user profile",
         undefined
+      );
       );
     }
   },
@@ -35,14 +36,15 @@ export const userRequests = {
   createUser: async (userData: CreateUserDto) => {
     try {
       const api = httpRequest();
-      const response = await api.post("/users", userData);
+      const response = await api.post('/users', userData);
       return apiResponse<User>(
         true,
         "User created successfully",
         response.data?.data
       );
+      );
     } catch (err: any) {
-      console.log("Error creating user:", err?.response?.data?.data);
+      console.log('Error creating user:', err?.response?.data?.data);
       return apiResponse<User>(
         false,
         err?.response?.data?.error ||
@@ -55,20 +57,48 @@ export const userRequests = {
   },
 
   /**
+   * Check if a tag name already exists
+   * @param tagName The tag name to check
+   */
+  checkTagNameExists: async (tagName: string) => {
+    try {
+      const api = httpRequest();
+      const response = await api.get(
+        `/users/exists/tag_name/${encodeURIComponent(tagName)}`
+      );
+      return apiResponse<{ exists: boolean }>(
+        true,
+        'Tag name check successful',
+        response.data
+      );
+    } catch (err: any) {
+      console.log('Error checking tag name:', err?.response?.data);
+      return apiResponse<{ exists: boolean }>(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error checking tag name',
+        { exists: false }
+      );
+    }
+  },
+
+  /**
    * Update the current user's profile
    * @param userData The user data to update
    */
   updateProfile: async (userData: UpdateUserDto) => {
     try {
       const api = httpRequest();
-      const response = await api.patch("/users/me", userData);
+      const response = await api.patch('/users/me', userData);
       return apiResponse<User>(
         true,
         "User profile updated successfully",
         response.data?.data
       );
     } catch (err: any) {
-      console.log("Error updating user profile:", err?.response?.data);
+      console.log('Error updating user profile:', err?.response?.data);
       return apiResponse<User>(
         false,
         err?.response?.data?.error ||
@@ -81,15 +111,51 @@ export const userRequests = {
   },
 
   /**
+   * Get a user by their tag name
+   * @param tagName The tag name to lookup (without @ symbol)
+   */
+  getUserByTagName: async (tagName: string) => {
+    try {
+      const api = httpRequest();
+      const response = await api.get(
+        `/users/tag_name/${encodeURIComponent(tagName)}?include=wallets`
+      );
+
+      return apiResponse<User>(
+        true,
+        'User found successfully',
+        response.data?.data
+      );
+    } catch (err: any) {
+      console.log('Error finding user by tag name:', err?.response?.data);
+      if (err?.response?.status === 404) {
+        return apiResponse<User>(
+          false,
+          `User with tag name @${tagName} not found`,
+          undefined
+        );
+      }
+      return apiResponse<User>(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error finding user by tag name',
+        undefined
+      );
+    }
+  },
+
+  /**
    * Delete the current user's profile
    */
   deleteUser: async () => {
     try {
       const api = httpRequest();
-      const response = await api.delete("/users/me");
-      return apiResponse(true, "User deleted successfully", response.data);
+      const response = await api.delete('/users/me');
+      return apiResponse(true, 'User deleted successfully', response.data);
     } catch (err: any) {
-      console.log("Error deleting user:", err?.response?.data?.data);
+      console.log('Error deleting user:', err?.response?.data?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
@@ -97,6 +163,7 @@ export const userRequests = {
           err?.message ||
           "Error deleting user",
         null
+      );
       );
     }
   },
