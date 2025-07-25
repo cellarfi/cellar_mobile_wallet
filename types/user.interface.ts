@@ -56,3 +56,30 @@ export interface Session {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface UserProfile {
+  user: {
+    id: string;
+    display_name: string;
+    tag_name: string;
+    profile_picture_url: string;
+    _count: {
+      followers: number;
+      following: number;
+      post: number
+    };
+    post: {
+      id: string;
+      content: string;
+      created_at: Date;
+    }[];
+  };
+  following: boolean;
+}
+
+export interface SearchUsers {
+  id: string,
+  display_name: string,
+  tag_name: string,
+  profile_picture_url: string
+}

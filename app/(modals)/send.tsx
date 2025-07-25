@@ -10,6 +10,7 @@ import { useAddress } from '@/hooks/useAddress';
 import { useDebouncedCallback } from '@/hooks/useDebounce';
 import { usePortfolio } from '@/hooks/usePortfolio';
 import { userRequests } from '@/libs/api_requests/user.request';
+import { donationRequest } from '@/libs/api_requests/donation.request'
 import {
   calculateFee,
   getConnection,
@@ -104,15 +105,19 @@ export default function SendScreen() {
     currentAmount,
     currentMemo,
     currentIsUsdMode,
+    donation,
+    postId,
   } = useLocalSearchParams<{
-    recipient?: string;
-    scannedAddress?: string;
-    selectedToken?: string;
-    currentRecipient?: string;
-    currentAmount?: string;
-    currentMemo?: string;
-    currentIsUsdMode?: string;
-  }>();
+    recipient?: string
+    scannedAddress?: string
+    selectedToken?: string
+    currentRecipient?: string
+    currentAmount?: string
+    currentMemo?: string
+    currentIsUsdMode?: string
+    donation?: 'true' | 'false'
+    postId?: string
+  }>()
 
   // Debug route parameters
   useEffect(() => {
@@ -636,8 +641,29 @@ export default function SendScreen() {
 
     setStep('confirm');
     // Calculate fee when moving to confirm step
-    await calculateTransactionFee();
-  };
+    await calculateTransactionFee()
+  }
+
+  const createDonation = async () => {
+    try {
+      const entry = {
+        post_id: postId || '',
+        amount: Number(amount),
+        token_symbol: selectedToken?.symbol,
+        transaction_id: txSignature,
+        wallet_address: recipient,
+        message: currentMemo,
+        donor_user_id: user?.id
+      }
+
+      const response = await donationRequest.createDonation(entry)
+      if (!response.success) {
+        console.error('Failed to create donation:', response.message)
+      }
+    } catch (error) {
+      console.error('Error creating donation:', error)
+    }
+  }
 
   const handleConfirmSend = async () => {
     if (!selectedToken || !recipient || !tokenAmount || !activeWallet) {
@@ -678,9 +704,15 @@ export default function SendScreen() {
       });
 
       // Success - show success modal
-      setTxSignature(result.signature);
-      setShowLoadingModal(false);
-      setShowSuccessModal(true);
+      setTxSignature(result.signature)
+
+      // Check if this is a donation then create a donation record is true
+      if(donation === 'true'){
+        await createDonation()
+      }
+      
+      setShowLoadingModal(false)
+      setShowSuccessModal(true)
 
       // Trigger background portfolio refresh
       refetchPortfolio();
