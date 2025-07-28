@@ -1,3 +1,4 @@
+import { POINT_SOURCES } from '@/constants/App';
 import { usePoints } from '@/hooks/usePoints';
 import { PointTransaction } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,11 +28,13 @@ const PointsHistoryModal = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
-
   // Get level thresholds
-  const getLevelThresholds = (level: number): { current: number; next: number } => {
-    const thresholds = [0, 100, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
+  const getLevelThresholds = (
+    level: number
+  ): { current: number; next: number } => {
+    const thresholds = [
+      0, 100, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
+    ];
     return {
       current: thresholds[level - 1] || 0,
       next: thresholds[level] || 100000, // Max threshold for level 10
@@ -41,7 +44,7 @@ const PointsHistoryModal = () => {
   // Calculate progress to next level
   const calculateProgress = (balance: number, level: number): number => {
     if (level >= 10) return 100; // Max level reached
-    
+
     const { current, next } = getLevelThresholds(level);
     const progress = ((balance - current) / (next - current)) * 100;
     return Math.max(0, Math.min(100, progress));
@@ -56,11 +59,6 @@ const PointsHistoryModal = () => {
         if (resetPagination) {
           setHistoryPage(0);
         }
-
-        console.log('Loading points history with params:', {
-          limit: historyLimit,
-          offset: resetPagination ? 0 : historyPage * historyLimit,
-        });
 
         await fetchPointsHistory({
           limit: historyLimit,
@@ -77,7 +75,7 @@ const PointsHistoryModal = () => {
         setIsLoadingHistory(false);
       }
     },
-    [fetchPointsHistory, historyLimit, historyPage]
+    [fetchPointsHistory, historyPage]
   );
 
   // Load more points history (pagination)
@@ -130,9 +128,9 @@ const PointsHistoryModal = () => {
 
   // Group transactions by date
   const getGroupedTransactions = (): TransactionGroup[] => {
-    if (!pointsHistory?.points) return [];
+    if (!pointsHistory?.data) return [];
 
-    const grouped = pointsHistory.points.reduce(
+    const grouped = pointsHistory.data.reduce(
       (acc: Record<string, PointTransaction[]>, transaction) => {
         const date = format(parseISO(transaction.created_at), 'yyyy-MM-dd');
         if (!acc[date]) {
@@ -165,7 +163,12 @@ const PointsHistoryModal = () => {
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
           <Text className="text-white text-xl font-bold">Points History</Text>
-          <View className="w-10" />
+          <TouchableOpacity
+            onPress={() => router.push('/leaderboard')}
+            className="w-10 h-10 items-center justify-center rounded-full"
+          >
+            <Ionicons name="trophy" size={24} color="gold" />
+          </TouchableOpacity>
         </View>
 
         {/* Points Summary */}
@@ -192,11 +195,11 @@ const PointsHistoryModal = () => {
             <View className="mx-3 h-2 bg-dark-300 rounded-full overflow-hidden">
               <View
                 className="h-full bg-primary-500"
-                style={{ 
+                style={{
                   width: `${calculateProgress(
-                    userPoints?.balance || 0, 
+                    userPoints?.balance || 0,
                     userPoints?.level || 1
-                  )}%` 
+                  )}%`,
                 }}
               />
             </View>
@@ -241,8 +244,13 @@ const PointsHistoryModal = () => {
                 </View>
                 {item.transactions.map((transaction) => {
                   const isIncrement = transaction.action === 'increment';
-                  const description = transaction.metadata?.description || transaction.source || 'Points transaction';
-                  
+                  const description =
+                    transaction.metadata?.description ||
+                    POINT_SOURCES[
+                      transaction.source as keyof typeof POINT_SOURCES
+                    ].label ||
+                    'Points transaction';
+
                   return (
                     <View
                       key={transaction.id}

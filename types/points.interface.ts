@@ -32,7 +32,7 @@ export interface PointTransaction {
  * Points History Response
  */
 export interface PointsHistoryResponse {
-  points: PointTransaction[];
+  data: PointTransaction[];
   pagination: {
     total: number;
     offset: number;

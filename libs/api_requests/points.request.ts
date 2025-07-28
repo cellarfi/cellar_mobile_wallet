@@ -81,7 +81,7 @@ export const pointsRequests = {
       return apiResponse<PointsHistoryResponse>(
         true,
         'Points history fetched successfully',
-        response.data?.data
+        response.data
       );
     } catch (err: any) {
       console.log('Error fetching points history:', err?.response?.data?.data);

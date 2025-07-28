@@ -1,11 +1,14 @@
-import { userRequests } from '@/libs/api_requests/user.request';
 import { pointsRequests } from '@/libs/api_requests/points.request';
+import { userRequests } from '@/libs/api_requests/user.request';
 import { User, UserPoint } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   SafeAreaView,
   ScrollView,
@@ -20,6 +23,7 @@ const UserProfileModal = () => {
   const [userPoints, setUserPoints] = useState<UserPoint | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Level calculation function
   const calculateLevel = (balance: number): number => {
@@ -52,6 +56,19 @@ const UserProfileModal = () => {
     return badges[Math.min(level - 1, badges.length - 1)] || badges[0];
   };
 
+  // Copy wallet address handler
+  const handleCopyWallet = async (address: string) => {
+    try {
+      await Clipboard.setStringAsync(address);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      console.error('Failed to copy wallet address:', e);
+      Alert.alert('Error', 'Failed to copy wallet address');
+    }
+  };
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!tag_name) return;
@@ -62,10 +79,10 @@ const UserProfileModal = () => {
       try {
         // Remove @ symbol if present
         const cleanTagName = tag_name.replace('@', '');
-        
+
         // Fetch user data
         const userResponse = await userRequests.getUserByTagName(cleanTagName);
-        
+
         if (!userResponse.success || !userResponse.data) {
           setError(userResponse.message || 'User not found');
           return;
@@ -75,7 +92,9 @@ const UserProfileModal = () => {
 
         // Fetch user points
         try {
-          const pointsResponse = await pointsRequests.getUserPoints(userResponse.data.id);
+          const pointsResponse = await pointsRequests.getUserPoints(
+            userResponse.data.id
+          );
           if (pointsResponse.success && pointsResponse.data) {
             setUserPoints(pointsResponse.data);
           }
@@ -172,7 +191,7 @@ const UserProfileModal = () => {
                   <Ionicons name="person" size={40} color="#9ca3af" />
                 </View>
               )}
-              
+
               {/* Level Badge */}
               {userPoints && (
                 <View className="absolute -bottom-2 -right-2 bg-dark-100 rounded-full p-2 border-2 border-dark-50">
@@ -189,9 +208,7 @@ const UserProfileModal = () => {
             <Text className="text-white text-2xl font-bold mt-4">
               {user.display_name}
             </Text>
-            <Text className="text-gray-400 text-lg">
-              @{user.tag_name}
-            </Text>
+            <Text className="text-gray-400 text-lg">@{user.tag_name}</Text>
 
             {/* About */}
             {user.about && (
@@ -248,7 +265,9 @@ const UserProfileModal = () => {
                   <View
                     key={wallet.id}
                     className={`flex-row items-center justify-between py-3 ${
-                      index < user.wallets!.length - 1 ? 'border-b border-dark-300' : ''
+                      index < user.wallets!.length - 1
+                        ? 'border-b border-dark-300'
+                        : ''
                     }`}
                   >
                     <View className="flex-1">
@@ -269,9 +288,29 @@ const UserProfileModal = () => {
                           </View>
                         )}
                       </View>
-                      <Text className="text-gray-400 text-sm mt-1 ml-6">
-                        {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-                      </Text>
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-gray-400 text-sm mt-1">
+                          {wallet.address.slice(0, 6)}...
+                          {wallet.address.slice(-4)}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => handleCopyWallet(wallet.address)}
+                        >
+                          {copied ? (
+                            <Ionicons
+                              name="checkmark"
+                              size={16}
+                              color="green"
+                            />
+                          ) : (
+                            <Ionicons
+                              name="copy-outline"
+                              size={16}
+                              color="white"
+                            />
+                          )}
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 ))}
