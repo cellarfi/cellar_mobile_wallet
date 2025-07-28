@@ -24,6 +24,8 @@ const modalScreens: ModalScreen[] = [
   { name: 'notification-settings' },
   { name: 'qr-scanner' },
   { name: 'browser' },
+  { name: 'points-history' },
+  { name: 'user-profile/[tag_name]' },
 ];
 
 export default function ModalsLayout() {
