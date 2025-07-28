@@ -10,9 +10,6 @@ import {
 } from '@/dto/chain.dto'
 import { signRequest } from '@/libs/chains.helper'
 
-// import { useDappSignRequests } from './useDappSignRequests'
-// import { useSolanaSignRequests } from './useSolanaSignRequests'
-
 import { eventEmitter } from '@/libs/EventEmitter.lib'
 import { useAuthStore } from '@/store/authStore'
 import { useWebviewStore } from '@/store/webviewStore'
@@ -28,6 +25,7 @@ import type {
 } from '@/types/solana_type'
 import { router } from 'expo-router'
 import type { WebView, WebViewMessageEvent } from 'react-native-webview'
+import { useSolanaSignRequests } from './useSolanaSignRequests'
 
 export const useDappMethods = (
   webViewRef: RefObject<{ [key: string]: WebView }>,
@@ -44,11 +42,11 @@ export const useDappMethods = (
   // }, [hasPermissions])
 
   // const { revokePermissions, savePermission } = useDappPermissionMutations()
-  // const {
-  //   signSolanaMessage,
-  //   signSolanaTransaction,
-  //   signAndSendSolanaTransaction,
-  // } = useSolanaSignRequests()
+  const {
+    signSolanaMessage,
+    signSolanaTransaction,
+    signAndSendSolanaTransaction,
+  } = useSolanaSignRequests()
 
   const postMessage = useCallback(
     (responseOrEvent: WebViewResponse | WebViewEvent) => {
@@ -172,6 +170,8 @@ export const useDappMethods = (
             const parsedParams = solSignMessageParamsSchema.parse(
               request.params
             )
+
+            const signature = await signSolanaMessage(parsedParams[0])
             // const signature = await signSolanaMessage({
             //   wallet: solanaWallet,
             //   pageInfo,
@@ -184,11 +184,11 @@ export const useDappMethods = (
             // if (signature === null) {
             //   return decline(requestId)
             // }
+            console.log('sol_signMessage signature', signature)
 
-            // return respond(requestId, {
-            //   result: { signature, publicKey: address },
-            // })
-            return
+            return respond(requestId, {
+              result: { signature, publicKey: activeWallet?.address || '' },
+            })
           } catch (error) {
             if (error instanceof ZodError) {
               return decline(
@@ -208,8 +208,12 @@ export const useDappMethods = (
             const parsedParams = solSignTransactionsParamsSchema.parse(
               request.params
             )
-            console.log('sol_signTransactions parsedParams', parsedParams)
-            console.log('sol_signTransactions parsedParams', request)
+            // console.log('sol_signTransactions parsedParams', parsedParams)
+            // console.log('sol_signTransactions parsedParams', request)
+            const signedTransactions = await signSolanaTransaction({
+              params: parsedParams,
+              method: request.method,
+            })
             // const signedTransactions = await signSolanaTransaction({
             //   wallet: solanaWallet,
             //   pageInfo,
@@ -220,16 +224,15 @@ export const useDappMethods = (
             //   method: request.method,
             // })
 
-            // if (signedTransactions === null) {
-            //   return decline(requestId)
-            // }
+            if (signedTransactions === null) {
+              return decline(requestId)
+            }
 
-            // return respond(requestId, {
-            //   result: signedTransactions.map((t) =>
-            //     Buffer.from(t, 'base64').toString('hex')
-            //   ),
-            // })
-            return
+            return respond(requestId, {
+              result: signedTransactions.map((t: any) =>
+                Buffer.from(t, 'base64').toString('hex')
+              ),
+            })
           } catch (error) {
             if (error instanceof ZodError) {
               return decline(
@@ -249,6 +252,11 @@ export const useDappMethods = (
             const parsedParams = solSignTransactionsParamsSchema.parse(
               request.params
             )
+
+            const signatures = await signAndSendSolanaTransaction({
+              params: parsedParams,
+              method: request.method,
+            })
             // const signatures = await signAndSendSolanaTransaction({
             //   wallet: solanaWallet,
             //   pageInfo,
@@ -259,17 +267,16 @@ export const useDappMethods = (
             //   method: request.method,
             // })
 
-            // if (signatures === null) {
-            //   return decline(requestId)
-            // }
+            if (signatures === null) {
+              return decline(requestId)
+            }
 
-            // return respond(requestId, {
-            //   result: signatures.map((signature) => ({
-            //     publicKey: address,
-            //     signature,
-            //   })),
-            // })
-            return
+            return respond(requestId, {
+              result: signatures.map((signature: any) => ({
+                publicKey: activeWallet?.address || '',
+                signature,
+              })),
+            })
           } catch (error) {
             if (error instanceof ZodError) {
               return decline(

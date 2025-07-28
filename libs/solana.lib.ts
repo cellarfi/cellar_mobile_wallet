@@ -4,6 +4,7 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from '@solana/web3.js'
 import bs58 from 'bs58'
 
@@ -119,3 +120,17 @@ export const isValidBase58PrivateKey = (key: string): boolean => {
 export const SUPPORTED_NETWORKS = ['solana', 'soon', 'sonic'] as const
 
 export type Network = (typeof SUPPORTED_NETWORKS)[number]
+
+export function serializeInstruction(inst: TransactionInstruction) {
+  return {
+    keys: inst.keys.map((key) => {
+      return {
+        pubkey: key.pubkey.toString(),
+        isSigner: key.isSigner,
+        isWritable: key.isWritable,
+      }
+    }),
+    programId: inst.programId.toString(),
+    data: inst.data.toString('base64'),
+  }
+}

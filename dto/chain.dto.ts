@@ -9,3 +9,7 @@ export const solSignMessageParamsSchema = z.tuple([
 export const solSignTransactionsParamsSchema = z
   .array(z.tuple([z.string().min(1).transform(fromHex), z.boolean()]))
   .min(1)
+
+export type SolSignTransactionParams = z.infer<
+  typeof solSignTransactionsParamsSchema
+>

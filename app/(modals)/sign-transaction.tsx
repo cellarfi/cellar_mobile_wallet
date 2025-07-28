@@ -1,30 +1,41 @@
 import { eventEmitter } from '@/libs/EventEmitter.lib'
 import { ConnectionModalAction } from '@/types/app.interface'
 import { Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
 import { router, useLocalSearchParams } from 'expo-router'
 import React from 'react'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const PERMISSIONS = [
-  'See your balances and activities',
-  'Request approval for transactions',
-]
+type TokenChange = {
+  name: string
+  logoUrl: string
+  amount: number
+}
 
-export default function ConnectWalletModal() {
+export default function SignTransactionModal() {
   // Accept params from navigation (all as string)
-  const { logoUrl, websiteName, domain, isVerified } = useLocalSearchParams<{
-    logoUrl: string
-    websiteName: string
-    domain: string
-    isVerified: string
-  }>()
+  const { logoUrl, websiteName, domain, isVerified, tokenChanges, actionType } =
+    useLocalSearchParams<{
+      logoUrl: string
+      websiteName: string
+      domain: string
+      isVerified: string
+      tokenChanges: string // JSON stringified array
+      actionType: 'sign' | 'signAndSend'
+    }>()
+
+  let parsedTokenChanges: TokenChange[] = []
+  try {
+    parsedTokenChanges = tokenChanges ? JSON.parse(tokenChanges) : []
+  } catch (e) {
+    parsedTokenChanges = []
+  }
 
   const handleClose = (action: ConnectionModalAction) => {
-    // Emit event with action payload
-    eventEmitter.emit('wallet-connection-modal-closed', action)
-    // Navigate back to close the modal
+    eventEmitter.emit('sign-transaction-modal-closed', {
+      action,
+      tokenChanges: parsedTokenChanges,
+    })
     router.dismissAll()
   }
 
@@ -91,27 +102,47 @@ export default function ConnectWalletModal() {
               style={{ marginRight: 8 }}
             />
             <Text className='text-warning-400 text-xs flex-1'>
-              This dapp is not verified. Only connect if you trust this website.
+              This dapp is not verified. Only sign if you trust this website.
             </Text>
           </View>
         )}
 
-        {/* Permissions Section */}
+        {/* Token Changes Section */}
         <View className='mb-6'>
           <Text className='text-white text-base font-semibold mb-2'>
-            Permissions
+            Token Changes
           </Text>
-          {PERMISSIONS.map((perm) => (
-            <View key={perm} className='flex-row items-center mb-2'>
-              <Ionicons
-                name='checkmark-circle'
-                size={18}
-                color='#6366f1'
-                style={{ marginRight: 8 }}
-              />
-              <Text className='text-gray-200 text-sm'>{perm}</Text>
-            </View>
-          ))}
+          {parsedTokenChanges.length === 0 ? (
+            <Text className='text-gray-400 text-sm'>
+              No token changes detected.
+            </Text>
+          ) : (
+            parsedTokenChanges.map((token, idx) => (
+              <View
+                key={token.name + idx}
+                className='flex-row items-center mb-2'
+              >
+                <View className='w-8 h-8 bg-dark-300 rounded-full justify-center items-center mr-3 overflow-hidden'>
+                  {token.logoUrl ? (
+                    <Image
+                      source={{ uri: token.logoUrl }}
+                      style={{ width: 28, height: 28, borderRadius: 14 }}
+                      resizeMode='contain'
+                    />
+                  ) : (
+                    <Ionicons name='logo-bitcoin' size={18} color='#6366f1' />
+                  )}
+                </View>
+                <Text className='text-white text-sm flex-1'>{token.name}</Text>
+                <Text
+                  className={`text-sm font-semibold ${token.amount < 0 ? 'text-danger-400' : 'text-success-400'}`}
+                >
+                  {token.amount > 0 ? '+' : ''}
+                  {token.amount}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
 
         {/* Action Buttons */}
@@ -126,9 +157,18 @@ export default function ConnectWalletModal() {
             className='flex-1 bg-primary-500 rounded-xl py-4 items-center'
             onPress={() => handleClose('accept')}
           >
-            <Text className='text-white font-semibold'>Connect</Text>
+            <Text className='text-white font-semibold'>
+              {actionType === 'signAndSend'
+                ? 'Confirm Transaction'
+                : 'Sign Transaction'}
+            </Text>
           </TouchableOpacity>
         </View>
+        {actionType === 'signAndSend' && (
+          <Text className='text-gray-400 text-xs mt-2 text-center'>
+            This will sign and send your transaction to the Solana network.
+          </Text>
+        )}
       </View>
     </SafeAreaView>
   )

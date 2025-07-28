@@ -1,20 +1,13 @@
 import solanaSdk from '@/assets/solanaSdk-1.95.4.min.js.raw'
-import { SolanaRpcMethod } from '@/constants/App'
 import { useDappMethods } from '@/hooks/useDappMethods'
 import { useRandomSecret } from '@/hooks/useRandomSecret'
 import { getInjectedScriptString } from '@/libs/dappScript'
 import { useAuthStore } from '@/store/authStore'
 import { useWebviewStore } from '@/store/webviewStore'
 import { BrowserTab } from '@/types/app.interface'
-import {
-  RpcResponse,
-  SignedWebViewRequest,
-  WebViewEvent,
-  WebViewResponse,
-} from '@/types/solana_type'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -28,7 +21,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { WebView, WebViewMessageEvent } from 'react-native-webview'
+import { WebView } from 'react-native-webview'
 
 export default function BrowserScreen() {
   const { activeWallet } = useAuthStore()
@@ -36,27 +29,14 @@ export default function BrowserScreen() {
     url?: string
     title?: string
   }>()
-  // const {
-  //   fileContent: solanaSdk,
-  //   loading: solanaSdkLoading,
-  //   error: solanaSdkError,
-  // } = useExpoAsset(require('@/assets/solanasdk.txt'))
   const secret = useRandomSecret()
-  // console.log('solanaSdk', solanaSdk)
-  // console.log('solanaSdkLoading', solanaSdkLoading)
-  // console.log('solanaSdkError', solanaSdkError)
-  // console.log('secret', secret)
 
   const [tabs, setTabs] = useState<BrowserTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
   const [showTabManager, setShowTabManager] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [isEditingUrl, setIsEditingUrl] = useState(false)
-  // const [pageInfo, setPageInfo] = useState<PageInfo>()
-  const { pageInfo, setPageInfo, tab, setTab } = useWebviewStore()
-
-  // const wallet = new CellarWalletAdapter()
-  // const connection = new Connection(clusterApiUrl('mainnet-beta'))
+  const { setTab } = useWebviewStore()
 
   const webViewRefs = useRef<{ [key: string]: WebView }>({})
   const { onMessage, disconnect } = useDappMethods(webViewRefs, secret)
@@ -193,115 +173,6 @@ export default function BrowserScreen() {
     if (activeTab) {
       const webView = webViewRefs.current[activeTab.id]
       webView?.reload()
-    }
-  }
-
-  const postMessage = useCallback(
-    (responseOrEvent: WebViewResponse | WebViewEvent) => {
-      const isEvent = 'network' in responseOrEvent
-
-      console.log(`<-- sent ${isEvent ? 'event' : 'response'}`)
-      console.log('<--', responseOrEvent)
-      console.log('<--------')
-
-      if (webViewRefs.current[activeTab?.id || '']) {
-        const responseString = JSON.stringify(responseOrEvent)
-
-        webViewRefs.current[activeTab?.id || ''].postMessage(responseString)
-      }
-    },
-    [webViewRefs, activeTab?.id]
-  )
-
-  const respond = useCallback(
-    (requestId: string, result: RpcResponse = {}) =>
-      postMessage({ id: requestId, result }),
-    [postMessage]
-  )
-
-  const decline = useCallback(
-    (requestId: string, message?: string, code?: number) =>
-      respond(requestId, {
-        error: {
-          code: code ?? 4001,
-          message: message ?? 'User declined the request',
-        },
-      }),
-    [respond]
-  )
-
-  const solanaDisconnect = useCallback(() => {
-    const disconnectEvent: WebViewEvent = {
-      network: 'solana',
-      name: 'disconnect',
-      args: [],
-    }
-
-    postMessage(disconnectEvent)
-  }, [postMessage])
-
-  const handleMessage = async (event: WebViewMessageEvent) => {
-    try {
-      const message: SignedWebViewRequest = JSON.parse(event.nativeEvent.data)
-      console.log('handleMessage data:', message)
-
-      switch (message?.method) {
-        case 'log':
-          console.log('BROWSER LOG', message.context.message)
-          break
-
-        case 'post_page_info':
-          console.log('handleMessage post_page_info:', message)
-          setPageInfo(message.context)
-          break
-
-        case 'rpc_request':
-          const context = message?.context
-
-          switch (context?.method) {
-            case SolanaRpcMethod.sol_connect:
-              // Open the connect-wallet modal with dapp info
-              // const dappDomain = activeTab?.url || ''
-              // const dappName = activeTab?.title || dappDomain || 'Unknown Dapp'
-              // const logoUrl = pageInfo?.iconUrl || ''
-              router.push({
-                pathname: '/(modals)/connect-wallet',
-                params: {
-                  domain: tab?.url || '',
-                  websiteName: tab?.title || '',
-                  logoUrl: pageInfo?.iconUrl || '',
-                  isVerified: 'false',
-                },
-              })
-
-              // const connectEvent: WebViewEvent = { network: 'solana', name: 'connect', args: [new PublicKey(activeWallet?.address || '')] };
-              const connectEvent: WebViewEvent = {
-                network: 'solana',
-                name: 'connect',
-                args: [activeWallet?.address],
-              }
-              postMessage(connectEvent)
-              respond(message.id, {
-                result: {
-                  publicKey: activeWallet?.address,
-                },
-              })
-              break
-            case SolanaRpcMethod.sol_disconnect:
-              Alert.alert('disconnect', 'disconnect')
-              solanaDisconnect()
-              respond(message.id)
-              break
-            default:
-              break
-          }
-          break
-
-        default:
-          break
-      }
-    } catch (error: any) {
-      console.error('Error handling WebView message:', error)
     }
   }
 

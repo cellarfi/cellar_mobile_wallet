@@ -7,24 +7,30 @@ import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const PERMISSIONS = [
-  'See your balances and activities',
-  'Request approval for transactions',
-]
-
-export default function ConnectWalletModal() {
+export default function SignMessageModal() {
   // Accept params from navigation (all as string)
-  const { logoUrl, websiteName, domain, isVerified } = useLocalSearchParams<{
-    logoUrl: string
-    websiteName: string
-    domain: string
-    isVerified: string
-  }>()
+  const { logoUrl, websiteName, domain, isVerified, message } =
+    useLocalSearchParams<{
+      logoUrl: string
+      websiteName: string
+      domain: string
+      isVerified: string
+      message: string
+    }>()
+
+  // Helper to check and pretty-print JSON
+  let isJson = false
+  let prettyMessage = message
+  try {
+    const parsed = JSON.parse(message)
+    prettyMessage = JSON.stringify(parsed, null, 2)
+    isJson = true
+  } catch (e) {
+    isJson = false
+  }
 
   const handleClose = (action: ConnectionModalAction) => {
-    // Emit event with action payload
-    eventEmitter.emit('wallet-connection-modal-closed', action)
-    // Navigate back to close the modal
+    eventEmitter.emit('sign-message-modal-closed', { action, message })
     router.dismissAll()
   }
 
@@ -91,27 +97,27 @@ export default function ConnectWalletModal() {
               style={{ marginRight: 8 }}
             />
             <Text className='text-warning-400 text-xs flex-1'>
-              This dapp is not verified. Only connect if you trust this website.
+              This dapp is not verified. Only sign if you trust this website.
             </Text>
           </View>
         )}
 
-        {/* Permissions Section */}
+        {/* Message Section */}
         <View className='mb-6'>
           <Text className='text-white text-base font-semibold mb-2'>
-            Permissions
+            Message to Sign
           </Text>
-          {PERMISSIONS.map((perm) => (
-            <View key={perm} className='flex-row items-center mb-2'>
-              <Ionicons
-                name='checkmark-circle'
-                size={18}
-                color='#6366f1'
-                style={{ marginRight: 8 }}
-              />
-              <Text className='text-gray-200 text-sm'>{perm}</Text>
-            </View>
-          ))}
+          <View className='bg-dark-200 rounded-xl p-4'>
+            {isJson ? (
+              <Text className='text-gray-200 text-sm font-mono whitespace-pre-wrap'>
+                {prettyMessage}
+              </Text>
+            ) : (
+              <Text className='text-gray-200 text-sm break-words'>
+                {message}
+              </Text>
+            )}
+          </View>
         </View>
 
         {/* Action Buttons */}
@@ -126,7 +132,7 @@ export default function ConnectWalletModal() {
             className='flex-1 bg-primary-500 rounded-xl py-4 items-center'
             onPress={() => handleClose('accept')}
           >
-            <Text className='text-white font-semibold'>Connect</Text>
+            <Text className='text-white font-semibold'>Sign Message</Text>
           </TouchableOpacity>
         </View>
       </View>

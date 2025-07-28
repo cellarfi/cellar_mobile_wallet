@@ -15,6 +15,7 @@ export enum ClusterNetwork {
   Devnet = 'devnet',
   Custom = 'custom',
 }
+
 export function toWalletAdapterNetwork(
   cluster?: ClusterNetwork
 ): WalletAdapterNetwork | undefined {
@@ -30,7 +31,7 @@ export function toWalletAdapterNetwork(
   }
 }
 
-export const defaultClusters: Readonly<Cluster[]> = [
+export const defaultClusters: readonly Cluster[] = [
   {
     name: 'devnet',
     endpoint: clusterApiUrl('devnet'),
