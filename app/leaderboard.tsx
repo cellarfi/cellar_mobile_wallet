@@ -77,7 +77,7 @@ const LeaderboardScreen = () => {
         console.error('Error loading leaderboard:', error);
       }
     },
-    [fetchLeaderboard, selectedTimeFrame, itemsPerPage, page]
+    [fetchLeaderboard, page, selectedTimeFrame]
   );
 
   // Get leaderboard data when component mounts or time frame changes
