@@ -1,10 +1,20 @@
 import solanaSdk from '@/assets/solanaSdk-1.95.4.min.js.raw'
+import { SolanaRpcMethod } from '@/constants/App'
+import { useDappMethods } from '@/hooks/useDappMethods'
 import { useRandomSecret } from '@/hooks/useRandomSecret'
 import { getInjectedScriptString } from '@/libs/dappScript'
+import { useAuthStore } from '@/store/authStore'
+import { useWebviewStore } from '@/store/webviewStore'
+import { BrowserTab } from '@/types/app.interface'
+import {
+  RpcResponse,
+  SignedWebViewRequest,
+  WebViewEvent,
+  WebViewResponse,
+} from '@/types/solana_type'
 import { Ionicons } from '@expo/vector-icons'
-import { WebView, WebViewMessageEvent } from '@metamask/react-native-webview'
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -18,18 +28,10 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-// import { WebView, WebViewMessageEvent } from 'react-native-webview'
-interface Tab {
-  id: string
-  url: string
-  title: string
-  isLoading: boolean
-  progress: number
-  canGoBack: boolean
-  canGoForward: boolean
-}
+import { WebView, WebViewMessageEvent } from 'react-native-webview'
 
 export default function BrowserScreen() {
+  const { activeWallet } = useAuthStore()
   const { url: initialUrl, title: initialTitle } = useLocalSearchParams<{
     url?: string
     title?: string
@@ -45,16 +47,24 @@ export default function BrowserScreen() {
   // console.log('solanaSdkError', solanaSdkError)
   // console.log('secret', secret)
 
-  const [tabs, setTabs] = useState<Tab[]>([])
+  const [tabs, setTabs] = useState<BrowserTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
   const [showTabManager, setShowTabManager] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [isEditingUrl, setIsEditingUrl] = useState(false)
+  // const [pageInfo, setPageInfo] = useState<PageInfo>()
+  const { pageInfo, setPageInfo, tab, setTab } = useWebviewStore()
 
   // const wallet = new CellarWalletAdapter()
   // const connection = new Connection(clusterApiUrl('mainnet-beta'))
 
   const webViewRefs = useRef<{ [key: string]: WebView }>({})
+  const { onMessage, disconnect } = useDappMethods(webViewRefs, secret)
+  useEffect(() => {
+    return () => {
+      disconnect()
+    }
+  }, [disconnect])
 
   // Initialize with initial URL or empty tab
   useEffect(() => {
@@ -66,9 +76,11 @@ export default function BrowserScreen() {
   }, [initialUrl, initialTitle])
 
   const createNewTab = (url: string, title: string = 'New Tab') => {
-    const newTab: Tab = {
+    const newTab: BrowserTab = {
       id: Date.now().toString(),
       url: url === 'about:blank' ? '' : url,
+      baseUrl: url === 'about:blank' ? '' : new URL(url)?.origin || '',
+      domain: url === 'about:blank' ? '' : new URL(url)?.hostname || '',
       title,
       isLoading: false,
       progress: 0,
@@ -78,6 +90,7 @@ export default function BrowserScreen() {
 
     setTabs((prev) => [...prev, newTab])
     setActiveTabId(newTab.id)
+    setTab(newTab)
     setUrlInput(newTab.url)
   }
 
@@ -111,6 +124,7 @@ export default function BrowserScreen() {
       setActiveTabId(tabId)
       setUrlInput(tab.url)
       setShowTabManager(false)
+      setTab(tab)
     }
   }
 
@@ -128,12 +142,20 @@ export default function BrowserScreen() {
     let finalUrl = urlInput.trim()
 
     // Add https:// if no protocol is specified
-    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-      // Check if it looks like a domain
+    // if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+    //   // Check if it looks like a domain
+    //   if (finalUrl.includes('.') || finalUrl.includes('localhost')) {
+    //     finalUrl = 'https://' + finalUrl
+    //   } else {
+    //     // Treat as search query
+    //     finalUrl = `https://www.google.com/search?q=${encodeURIComponent(finalUrl)}`
+    //   }
+    // }
+
+    if (!/^https?:\/\//i.test(finalUrl)) {
       if (finalUrl.includes('.') || finalUrl.includes('localhost')) {
         finalUrl = 'https://' + finalUrl
       } else {
-        // Treat as search query
         finalUrl = `https://www.google.com/search?q=${encodeURIComponent(finalUrl)}`
       }
     }
@@ -174,10 +196,110 @@ export default function BrowserScreen() {
     }
   }
 
+  const postMessage = useCallback(
+    (responseOrEvent: WebViewResponse | WebViewEvent) => {
+      const isEvent = 'network' in responseOrEvent
+
+      console.log(`<-- sent ${isEvent ? 'event' : 'response'}`)
+      console.log('<--', responseOrEvent)
+      console.log('<--------')
+
+      if (webViewRefs.current[activeTab?.id || '']) {
+        const responseString = JSON.stringify(responseOrEvent)
+
+        webViewRefs.current[activeTab?.id || ''].postMessage(responseString)
+      }
+    },
+    [webViewRefs, activeTab?.id]
+  )
+
+  const respond = useCallback(
+    (requestId: string, result: RpcResponse = {}) =>
+      postMessage({ id: requestId, result }),
+    [postMessage]
+  )
+
+  const decline = useCallback(
+    (requestId: string, message?: string, code?: number) =>
+      respond(requestId, {
+        error: {
+          code: code ?? 4001,
+          message: message ?? 'User declined the request',
+        },
+      }),
+    [respond]
+  )
+
+  const solanaDisconnect = useCallback(() => {
+    const disconnectEvent: WebViewEvent = {
+      network: 'solana',
+      name: 'disconnect',
+      args: [],
+    }
+
+    postMessage(disconnectEvent)
+  }, [postMessage])
+
   const handleMessage = async (event: WebViewMessageEvent) => {
     try {
-      const data = JSON.parse(event.nativeEvent.data)
-      console.log('handleMessage data', data)
+      const message: SignedWebViewRequest = JSON.parse(event.nativeEvent.data)
+      console.log('handleMessage data:', message)
+
+      switch (message?.method) {
+        case 'log':
+          console.log('BROWSER LOG', message.context.message)
+          break
+
+        case 'post_page_info':
+          console.log('handleMessage post_page_info:', message)
+          setPageInfo(message.context)
+          break
+
+        case 'rpc_request':
+          const context = message?.context
+
+          switch (context?.method) {
+            case SolanaRpcMethod.sol_connect:
+              // Open the connect-wallet modal with dapp info
+              // const dappDomain = activeTab?.url || ''
+              // const dappName = activeTab?.title || dappDomain || 'Unknown Dapp'
+              // const logoUrl = pageInfo?.iconUrl || ''
+              router.push({
+                pathname: '/(modals)/connect-wallet',
+                params: {
+                  domain: tab?.url || '',
+                  websiteName: tab?.title || '',
+                  logoUrl: pageInfo?.iconUrl || '',
+                  isVerified: 'false',
+                },
+              })
+
+              // const connectEvent: WebViewEvent = { network: 'solana', name: 'connect', args: [new PublicKey(activeWallet?.address || '')] };
+              const connectEvent: WebViewEvent = {
+                network: 'solana',
+                name: 'connect',
+                args: [activeWallet?.address],
+              }
+              postMessage(connectEvent)
+              respond(message.id, {
+                result: {
+                  publicKey: activeWallet?.address,
+                },
+              })
+              break
+            case SolanaRpcMethod.sol_disconnect:
+              Alert.alert('disconnect', 'disconnect')
+              solanaDisconnect()
+              respond(message.id)
+              break
+            default:
+              break
+          }
+          break
+
+        default:
+          break
+      }
     } catch (error: any) {
       console.error('Error handling WebView message:', error)
     }
@@ -387,19 +509,26 @@ export default function BrowserScreen() {
                     setUrlInput(navState.url)
                   }
                 }}
-                onMessage={handleMessage}
+                // onMessage={handleMessage}
+                onMessage={onMessage}
+                injectedJavaScriptBeforeContentLoaded={`
+                    window.onerror = function(message, sourcefile, lineno, colno, error) {
+                      window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'js-error',
+                        message: message,
+                        sourcefile: sourcefile,
+                        lineno: lineno,
+                        colno: colno,
+                        error: error,
+                      }))
+                      return true;
+                    };
+                    true;`}
                 injectedJavaScript={getInjectedScriptString(
                   secret,
                   Platform.OS,
                   solanaSdk
                 )}
-                injectedJavaScriptBeforeContentLoaded={`
-    window.onerror = function(message, sourcefile, lineno, colno, error) {
-      alert("Message: " + message + " - Source: " + sourcefile + " Line: " + lineno + ":" + colno);
-      return true;
-    };
-    true;
-  `}
                 onError={() => {
                   updateTab(tab.id, { isLoading: false, progress: 0 })
                   Alert.alert('Error', 'Failed to load page')
@@ -408,7 +537,13 @@ export default function BrowserScreen() {
                 javaScriptEnabled
                 domStorageEnabled
                 startInLoadingState
-                userAgent='Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1'
+                pullToRefreshEnabled
+                // renderError={(errorName, errorDomain, errorDesc) => (
+                //   <WebViewError
+                //     message={errorDesc || errorName || 'Failed to load page'}
+                //     onRetry={() => reload()}
+                //   />
+                // )}
               />
             ) : (
               <View className='flex-1 justify-center items-center bg-dark-50'>

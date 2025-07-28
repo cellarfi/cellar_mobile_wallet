@@ -30,13 +30,14 @@ const modalScreens: ModalScreen[] = [
   { name: 'notification-settings' },
   { name: 'qr-scanner' },
   { name: 'browser' },
+  { name: 'connect-wallet', options: { presentation: 'transparentModal' } },
 ]
 
 export default function ModalsLayout() {
   return (
     <Stack
       screenOptions={{
-        presentation: "modal",
+        presentation: 'modal',
         headerShown: false,
         animation: 'slide_from_bottom',
       }}

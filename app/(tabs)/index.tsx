@@ -296,7 +296,7 @@ export default function HomeScreen() {
             </View>
           ) : transactions && transactions.length > 0 ? (
             <>
-              {transactions.slice(0, 3).map((transaction) => (
+              {transactions?.slice(0, 3)?.map((transaction) => (
                 <TransactionCard
                   key={transaction.id}
                   transaction={transaction}
@@ -329,7 +329,7 @@ export default function HomeScreen() {
               <Text className='text-primary-400 font-medium'>View All</Text>
             </TouchableOpacity>
           </View>
-          {socialPosts.map((post) => (
+          {socialPosts?.map((post) => (
             <SocialCard key={post.id} post={post} />
           ))}
         </View>

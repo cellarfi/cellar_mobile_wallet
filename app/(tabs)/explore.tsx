@@ -155,8 +155,12 @@ const Explore = () => {
 
   // Helper function to validate URLs
   const isValidUrl = (string: string) => {
+    // const urlRegex =
+    //   /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+    // const urlRegex =
+    //   /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
     const urlRegex =
-      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*(\?[\w\-=&%]*)*$/i
     return urlRegex.test(string.trim())
   }
   const [recentlyVisited] = useState<DApp[]>([
