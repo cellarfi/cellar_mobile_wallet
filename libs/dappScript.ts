@@ -714,4 +714,4 @@ export const getInjectedScriptString = (
     true;
   (function(){${solanaSdk}(${injectProviders.toString()})('${secret}','${platform}', solanaWeb3);})();`
 
-console.log('injected script:', injectProviders.toString().substring(0, 100))
+console.log('injected script: ', injectProviders.toString().substring(0, 100))

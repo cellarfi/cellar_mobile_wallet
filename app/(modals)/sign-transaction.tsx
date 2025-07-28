@@ -1,32 +1,55 @@
 import { eventEmitter } from '@/libs/EventEmitter.lib'
+import {
+  NATIVE_SOL_ADDRESS,
+  NATIVE_SOL_MINT,
+  WRAPPED_SOL_MINT,
+} from '@/libs/solana.lib'
+import { BalanceChange } from '@/service/TransactionAnalyzer2'
 import { ConnectionModalAction } from '@/types/app.interface'
 import { Ionicons } from '@expo/vector-icons'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { router, useLocalSearchParams } from 'expo-router'
 import React from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-type TokenChange = {
-  name: string
-  logoUrl: string
-  amount: number
-}
-
 export default function SignTransactionModal() {
   // Accept params from navigation (all as string)
-  const { logoUrl, websiteName, domain, isVerified, tokenChanges, actionType } =
-    useLocalSearchParams<{
-      logoUrl: string
-      websiteName: string
-      domain: string
-      isVerified: string
-      tokenChanges: string // JSON stringified array
-      actionType: 'sign' | 'signAndSend'
-    }>()
+  const {
+    logoUrl,
+    websiteName,
+    domain,
+    isVerified,
+    balanceChanges,
+    actionType,
+    activeWallet,
+  } = useLocalSearchParams<{
+    logoUrl: string
+    websiteName: string
+    domain: string
+    isVerified: string
+    balanceChanges: string // JSON stringified array
+    actionType: 'sign' | 'signAndSend'
+    activeWallet: string
+  }>()
 
-  let parsedTokenChanges: TokenChange[] = []
+  let parsedTokenChanges: BalanceChange[] = []
   try {
-    parsedTokenChanges = tokenChanges ? JSON.parse(tokenChanges) : []
+    parsedTokenChanges = balanceChanges ? JSON.parse(balanceChanges) : []
+    console.log('parsedTokenChanges', parsedTokenChanges)
+    parsedTokenChanges = parsedTokenChanges
+      .filter((change) => change.owner === activeWallet)
+      .map((change) => ({
+        ...change,
+        amount: [
+          NATIVE_SOL_MINT,
+          NATIVE_SOL_ADDRESS,
+          WRAPPED_SOL_MINT,
+        ].includes(change.mint)
+          ? change.amount / LAMPORTS_PER_SOL
+          : change.amount / Math.pow(10, 6),
+      }))
+    console.log('parsedTokenChanges', parsedTokenChanges)
   } catch (e) {
     parsedTokenChanges = []
   }
@@ -34,7 +57,7 @@ export default function SignTransactionModal() {
   const handleClose = (action: ConnectionModalAction) => {
     eventEmitter.emit('sign-transaction-modal-closed', {
       action,
-      tokenChanges: parsedTokenChanges,
+      // tokenChanges: parsedTokenChanges,
     })
     router.dismissAll()
   }
@@ -119,13 +142,13 @@ export default function SignTransactionModal() {
           ) : (
             parsedTokenChanges.map((token, idx) => (
               <View
-                key={token.name + idx}
+                key={token?.mint + idx}
                 className='flex-row items-center mb-2'
               >
                 <View className='w-8 h-8 bg-dark-300 rounded-full justify-center items-center mr-3 overflow-hidden'>
-                  {token.logoUrl ? (
+                  {token?.logoUrl ? (
                     <Image
-                      source={{ uri: token.logoUrl }}
+                      source={{ uri: token?.logoUrl }}
                       style={{ width: 28, height: 28, borderRadius: 14 }}
                       resizeMode='contain'
                     />
@@ -133,7 +156,9 @@ export default function SignTransactionModal() {
                     <Ionicons name='logo-bitcoin' size={18} color='#6366f1' />
                   )}
                 </View>
-                <Text className='text-white text-sm flex-1'>{token.name}</Text>
+                <Text className='text-white text-sm flex-1'>
+                  {token?.name || 'Unknown Name'}
+                </Text>
                 <Text
                   className={`text-sm font-semibold ${token.amount < 0 ? 'text-danger-400' : 'text-success-400'}`}
                 >
