@@ -59,9 +59,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const pathname = usePathname()
   const { url } = useGlobalSearchParams<{ url: string }>()
 
-  console.log('AuthProvider: pathname:', pathname)
-  console.log('AuthProvider: url:', url)
-
   // Privy hooks
   const {
     user: privyUser,
@@ -97,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Handle deep link changes
   useEffect(() => {
     if (url && pathname.includes('/browser')) {
-      console.log('AuthProvider: Deep link detected:', { url, pathname })
+      // console.log('AuthProvider: Deep link detected:', { url, pathname })
       setPendingDeepLink({ url, pathname })
     }
   }, [url, pathname])
@@ -105,10 +102,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Handle deep link navigation when user is already authenticated
   useEffect(() => {
     if (pendingDeepLink && isAuthenticated && user && !isNavigating) {
-      console.log(
-        'AuthProvider: Processing pending deep link:',
-        pendingDeepLink
-      )
+      // console.log(
+      //   'AuthProvider: Processing pending deep link:',
+      //   pendingDeepLink
+      // )
       router.replace({
         pathname: '/(modals)/browser',
         params: {
@@ -194,16 +191,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         InteractionManager.runAfterInteractions(() => {
           if (isAuthenticated && user) {
             // User is authenticated (either from Privy or cached), go to main app
-            console.log(
-              'AuthProvider: User authenticated, navigating to main app'
-            )
 
             // Check if we have a pending deep link
             if (pendingDeepLink) {
-              console.log(
-                'AuthProvider: Navigating to browser with deep link:',
-                pendingDeepLink
-              )
               router.replace({
                 pathname: '/(modals)/browser',
                 params: {
@@ -212,14 +202,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               })
               setPendingDeepLink(null) // Clear the pending deep link
             } else {
-              console.log('AuthProvider: Navigating to tabs (no deep link)')
               router.replace('/(tabs)')
             }
           } else {
             // User is not authenticated, go to auth flow
-            console.log(
-              'AuthProvider: User not authenticated, navigating to auth flow'
-            )
             router.replace('/(auth)')
           }
 

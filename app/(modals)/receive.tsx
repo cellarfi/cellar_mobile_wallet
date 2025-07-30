@@ -1,11 +1,11 @@
-import CustomButton from '@/components/ui/CustomButton';
-import { Images } from '@/constants/Images';
-import { useClipboard } from '@/libs/clipboard';
-import { Ionicons } from '@expo/vector-icons';
-import { getUserEmbeddedSolanaWallet, usePrivy } from '@privy-io/expo';
-import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import CustomButton from '@/components/ui/CustomButton'
+import { Images } from '@/constants/Images'
+import { useClipboard } from '@/libs/clipboard'
+import { Ionicons } from '@expo/vector-icons'
+import { getUserEmbeddedSolanaWallet, usePrivy } from '@privy-io/expo'
+import * as Haptics from 'expo-haptics'
+import { router } from 'expo-router'
+import React, { useCallback, useState } from 'react'
 import {
   Animated,
   ScrollView,
@@ -27,10 +27,10 @@ export default function ReceiveScreen() {
 
   // For demo purposes, we'll use a mock Solana address if no Ethereum wallet is found
   // In a real app, you'd want to get the actual Solana wallet address
-  const walletAddress =
-    account?.address || '7xKXtg2CWNfnN5p8RJ6N9W8BeFhJ4A2sP9dQvH3KwXhM'
-  const account = getUserEmbeddedSolanaWallet(user);
-  const walletAddress = account?.address || '';
+  // const walletAddress =
+  // account?.address || '7xKXtg2CWNfnN5p8RJ6N9W8BeFhJ4A2sP9dQvH3KwXhM'
+  const account = getUserEmbeddedSolanaWallet(user)
+  const walletAddress = account?.address || ''
 
   const handleCopyAddress = useCallback(async () => {
     // Haptic feedback
