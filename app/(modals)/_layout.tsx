@@ -33,7 +33,9 @@ const modalScreens: ModalScreen[] = [
   { name: 'connect-wallet', options: { presentation: 'transparentModal' } },
   { name: 'sign-message', options: { presentation: 'transparentModal' } },
   { name: 'sign-transaction', options: { presentation: 'transparentModal' } },
-]
+  { name: 'points-history' },
+  { name: 'user-profile/[tag_name]' },
+];
 
 export default function ModalsLayout() {
   return (

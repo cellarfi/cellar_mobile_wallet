@@ -31,6 +31,16 @@ import {
   JupiterQuoteOrderResponse,
 } from './jupiter_interface'
 import { PrivyWalletAccount } from './misc'
+import {
+  LeaderboardEntry,
+  LeaderboardFilterOptions,
+  LeaderboardResponse,
+  LeaderboardTimeFrame,
+  PointTransaction,
+  PointsHistoryFilterOptions,
+  PointsHistoryResponse,
+  UserPoint,
+} from './points.interface'
 import { Risk, RugResponse, TokenHolder } from './rug.interface'
 import { Session } from './session.interface'
 import { CreateUserDto, UpdateUserDto, User } from './user.interface'
@@ -66,6 +76,13 @@ export {
   JupiterExecuteOrderResponse,
   JupiterOrderRequest,
   JupiterQuoteOrderResponse,
+  LeaderboardEntry,
+  LeaderboardFilterOptions,
+  LeaderboardResponse,
+  LeaderboardTimeFrame,
+  PointTransaction,
+  PointsHistoryFilterOptions,
+  PointsHistoryResponse,
   PrivyWalletAccount,
   Risk,
   RugResponse,
@@ -73,4 +90,5 @@ export {
   TokenHolder,
   UpdateUserDto,
   User,
+  UserPoint,
 }
