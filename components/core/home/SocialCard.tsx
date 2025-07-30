@@ -19,7 +19,7 @@ interface SocialCardProps {
 
 export function SocialCard({ post, onLike, onTip }: SocialCardProps) {
   return (
-    <View className='bg-dark-200 rounded-2xl p-4 mb-3'>
+    <View className='bg-secondary-light rounded-2xl p-4 mb-3'>
       <View className='flex-row items-center justify-between mb-3'>
         <Text className='text-primary-400 font-medium'>{post.user}</Text>
         <Text className='text-gray-500 text-sm'>{post.timeAgo}</Text>

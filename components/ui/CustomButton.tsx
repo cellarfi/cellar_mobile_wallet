@@ -48,12 +48,13 @@ export default function CustomButton({
     | readonly [ColorValue, ColorValue, ...ColorValue[]]
     | undefined => {
     switch (type) {
+      // background: linear-gradient(90deg, #00C2CB 0%, #0B6979 100%);
       case 'primary':
         return isDisabled
-          ? ['#2d2d35', '#2d2d35']
+          ? ['#122C41', '#122C41']
           : shallowGradient
-            ? ['#6366f1', '#8b5cf6']
-            : ['#6366f1', '#8b5cf6', '#06b6d4']
+            ? ['#00C2CB', '#0B6979']
+            : ['#00C2CB', '#0B6979']
       case 'secondary':
         return undefined // Uses border styling instead
       case 'dark':
@@ -90,13 +91,14 @@ export default function CustomButton({
         )}
         <Text
           className={cn(
-            `text-center`,
+            `text-center text-[16px] font-bold`,
             type === 'secondary' || type === 'dark'
-              ? 'text-white'
+              ? 'text-secondary'
               : isDisabled
                 ? 'text-gray-500'
                 : 'text-white',
-            type === 'dark' ? 'font-medium' : 'text-lg font-semibold'
+            type === 'dark' ? 'font-medium' : 'font-semibold'
+            // type === 'dark' ? 'font-medium' : 'text-lg font-semibold'
           )}
         >
           {loading ? 'Loading...' : text}
@@ -123,8 +125,10 @@ export default function CustomButton({
       return (
         <View
           className={cn(
-            'py-4 border rounded-2xl flex-row justify-center items-center',
-            type === 'dark' ? 'bg-dark-200 border-dark-400' : 'border-gray-700',
+            'py-4 border rounded-full flex-row justify-center items-center',
+            type === 'dark'
+              ? 'bg-dark-200 border-dark-400'
+              : 'bg-primary-main border-secondary',
             className
           )}
           style={style}
@@ -140,11 +144,12 @@ export default function CustomButton({
     return (
       <LinearGradient
         colors={colors}
+        locations={[0, 1]}
         className={`py-4 rounded-2xl flex-row justify-center items-center ${className}`}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
         style={{
-          borderRadius: 16,
+          borderRadius: 50,
           paddingVertical: 16,
           paddingHorizontal: 16,
           ...style,

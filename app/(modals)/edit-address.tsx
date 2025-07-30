@@ -281,14 +281,14 @@ export default function EditAddressScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-100'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className='flex-1'
       >
         <View className='flex-row items-center p-4 border-b border-dark-300'>
           <TouchableOpacity onPress={() => router.dismiss()} className='mr-4'>
-            <Ionicons name='arrow-back' size={24} color='white' />
+            <Ionicons name='chevron-back' size={24} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-xl font-semibold flex-1'>
             {entryId ? 'Edit Address' : 'Add Address'}
@@ -324,7 +324,7 @@ export default function EditAddressScreen() {
           {/* Name Input */}
           <View className='mb-4'>
             <Text className='text-white text-sm mb-2 ml-1'>Name</Text>
-            <View className='bg-dark-200 rounded-2xl'>
+            <View className='bg-secondary-light rounded-2xl'>
               <TextInput
                 className='text-white p-4'
                 placeholder='Enter a name for this address'
@@ -338,7 +338,7 @@ export default function EditAddressScreen() {
           {/* Address Input */}
           <View className='mb-4'>
             <Text className='text-white text-sm mb-2 ml-1'>Wallet Address</Text>
-            <View className='bg-dark-200 rounded-2xl flex-row items-center'>
+            <View className='bg-secondary-light rounded-2xl flex-row items-center'>
               <TextInput
                 className='text-white p-4 flex-1'
                 placeholder='Enter wallet address'
@@ -376,7 +376,7 @@ export default function EditAddressScreen() {
             <Text className='text-white text-sm mb-2 ml-1'>
               Description (optional)
             </Text>
-            <View className='bg-dark-200 rounded-2xl'>
+            <View className='bg-secondary-light rounded-2xl'>
               <TextInput
                 className='text-white p-4'
                 placeholder='Add a description or note'
@@ -413,7 +413,7 @@ export default function EditAddressScreen() {
           </View> */}
 
           {/* Favorite Toggle */}
-          <View className='bg-dark-200 rounded-2xl mb-4'>
+          <View className='bg-secondary-light rounded-2xl mb-4'>
             <View className='flex-row items-center justify-between p-4'>
               <View className='flex-row items-center'>
                 <Ionicons name='star' size={20} color='#F9A826' />
@@ -435,7 +435,7 @@ export default function EditAddressScreen() {
             <Text className='text-white text-sm mb-2 ml-1'>
               Tags (optional)
             </Text>
-            <View className='bg-dark-200 rounded-2xl mb-2 flex-row items-center'>
+            <View className='bg-secondary-light rounded-2xl mb-2 flex-row items-center'>
               <TextInput
                 className='text-white p-4 flex-1'
                 placeholder='Add tag and press +'

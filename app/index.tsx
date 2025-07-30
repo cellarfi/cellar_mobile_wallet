@@ -1,31 +1,25 @@
-import CreativeLoader from '@/components/ui/CreativeLoader'
+import OnboardingBase from '@/components/OnboardingBase'
+import { Images } from '@/constants/Images'
 import { useAuthContext } from '@/contexts/AuthProvider'
-import { LinearGradient } from 'expo-linear-gradient'
-import { View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { Image, View } from 'react-native'
 
 const Index = () => {
   const { isInitialized, isLoading } = useAuthContext()
 
   // Show loading screen while AuthProvider determines auth state and navigates
-  if (!isInitialized || isLoading) {
-    return (
-      <SafeAreaView className='flex-1 bg-dark-50'>
-        <LinearGradient
-          colors={['#0a0a0b', '#1a1a1f', '#0a0a0b']}
-          style={{ flex: 1 }}
-        >
-          <View className='flex-1 justify-center items-center'>
-            <CreativeLoader />
-          </View>
-        </LinearGradient>
-      </SafeAreaView>
-    )
-  }
+  // if (!isInitialized || isLoading) {
+  return (
+    <OnboardingBase isSplash>
+      <View className='flex-1 justify-center items-center'>
+        <Image source={Images.whiteLogo} className='w-[85.99px] h-[100px]' />
+      </View>
+    </OnboardingBase>
+  )
+  // }
 
   // This component should rarely reach this point since AuthProvider
-  // handles navigation, but we return empty view as fallback
-  return <View></View>
+  // // handles navigation, but we return empty view as fallback
+  // return <View></View>
 }
 
 export default Index

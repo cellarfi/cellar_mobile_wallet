@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/Colors'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import React from 'react'
@@ -20,7 +21,7 @@ export function ActionButton({
     <TouchableOpacity onPress={onPress} className='flex-1 active:scale-95'>
       {gradient ? (
         <LinearGradient
-          colors={['#6366f1', '#8b5cf6']}
+          colors={['#122C41', '#1A2741']}
           style={{
             borderRadius: 16,
             padding: 16,
@@ -31,8 +32,8 @@ export function ActionButton({
           <Text className='text-white font-medium text-sm'>{title}</Text>
         </LinearGradient>
       ) : (
-        <View className='bg-dark-200 rounded-2xl p-4 items-center gap-2'>
-          <Ionicons name={icon} size={24} color='#6366f1' />
+        <View className='bg-secondary-light rounded-2xl p-4 items-center gap-2'>
+          <Ionicons name={icon} size={24} color={Colors.dark.text} />
           <Text className='text-white font-medium text-sm'>{title}</Text>
         </View>
       )}

@@ -251,10 +251,10 @@ export default function AddressBookScreen() {
   )
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-100'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <View className='flex-row items-center p-4 border-b border-dark-300'>
         <TouchableOpacity onPress={() => router.dismiss()} className='mr-4'>
-          <Ionicons name='arrow-back' size={24} color='white' />
+          <Ionicons name='chevron-back' size={24} color='white' />
         </TouchableOpacity>
         <Text className='text-white text-xl font-semibold flex-1'>
           {isSelectionMode ? 'Select Address' : 'Address Book'}
@@ -269,7 +269,7 @@ export default function AddressBookScreen() {
       <View className='p-4'>
         <View className='relative mb-4'>
           <TextInput
-            className='bg-dark-200 text-white px-10 py-3 rounded-2xl w-full'
+            className='bg-secondary-light text-white px-10 py-3 rounded-2xl w-full'
             placeholder='Search addresses...'
             placeholderTextColor='#6b7280'
             value={searchText}

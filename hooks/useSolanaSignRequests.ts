@@ -296,53 +296,117 @@ export const useSolanaSignRequests = () => {
         })
       })
 
+      if (args.method) throw new Error('Unknown error')
+
       const signedTransactions: string[] = []
 
       // Process each transaction in the params array
-      for (const [transactionBytes, requireAllSignatures] of args.params) {
-        // transactionBytes is already a Uint8Array from the fromHex transform in your schema
-        const transactionBuffer = transactionBytes
+      for (const [transactionBytes, isVersioned] of args.params) {
+        // transactionBytes is already a Uint8Array from the fromHex transform in the schema
+        // isVersioned tells us whether this is a VersionedTransaction or legacy Transaction
 
         let transaction: Transaction | VersionedTransaction
 
         try {
-          // Try to deserialize as VersionedTransaction first (newer format)
-          transaction = VersionedTransaction.deserialize(transactionBuffer)
-        } catch (versionedError) {
-          try {
-            // Fall back to legacy Transaction if VersionedTransaction fails
-            transaction = Transaction.from(transactionBuffer)
-          } catch (legacyError) {
-            console.error('Failed to deserialize transaction:', {
-              versionedError,
-              legacyError,
-            })
-            throw new Error('Invalid transaction format')
+          if (isVersioned) {
+            // Deserialize as VersionedTransaction
+            transaction = VersionedTransaction.deserialize(transactionBytes)
+          } else {
+            // Deserialize as legacy Transaction
+            transaction = Transaction.from(transactionBytes)
           }
+        } catch (error) {
+          console.error('Failed to deserialize transaction:', error)
+          throw new Error('Invalid transaction format')
         }
 
-        // Sign the transaction using Privy
-        const signedTransaction = await signAndSendTransaction(transaction)
+        console.log('Successfully recovered transaction:', transaction)
 
-        // Serialize the signed transaction back to base64
-        // let serializedTransaction: string
+        // Sign the transaction using Privy (same as signSolanaTransaction)
+        const signedTransaction = await signTransaction(transaction)
 
-        // if (signedTransaction instanceof VersionedTransaction) {
-        //   serializedTransaction = Buffer.from(
-        //     signedTransaction.serialize()
-        //   ).toString('base64')
-        // } else {
-        //   // Legacy Transaction
-        //   serializedTransaction = Buffer.from(
-        //     signedTransaction.serialize()
-        //   ).toString('base64')
-        // }
+        // Manually send the signed transaction to Solana
+        const connection = getConnection()
 
-        signedTransactions.push(signedTransaction)
+        // Ensure we have a Uint8Array for sendRawTransaction
+        let serializedForSending: Uint8Array
+        if (signedTransaction instanceof VersionedTransaction) {
+          serializedForSending = signedTransaction.serialize()
+        } else {
+          // Legacy Transaction.serialize() returns Buffer, convert to Uint8Array
+          const buffer = signedTransaction.serialize()
+          serializedForSending = new Uint8Array(buffer)
+        }
+
+        const txSignature =
+          await connection.sendRawTransaction(serializedForSending)
+
+        console.log('Transaction sent successfully, signature:', txSignature)
+
+        // Serialize the signed transaction back to base64 (similar to signSolanaTransaction)
+        let serializedTransaction: string
+        if (signedTransaction instanceof VersionedTransaction) {
+          serializedTransaction = Buffer.from(
+            signedTransaction.serialize()
+          ).toString('base64')
+        } else {
+          // Legacy Transaction
+          serializedTransaction = Buffer.from(
+            signedTransaction.serialize()
+          ).toString('base64')
+        }
+
+        signedTransactions.push(serializedTransaction)
       }
 
-      console.log('signedTransactions', signedTransactions)
       return signedTransactions
+      // // Process each transaction in the params array
+      // for (const [transactionBytes, requireAllSignatures] of args.params) {
+      //   // transactionBytes is already a Uint8Array from the fromHex transform in your schema
+      //   const transactionBuffer = transactionBytes
+
+      //   let transaction: Transaction | VersionedTransaction
+
+      //   try {
+      //     // Try to deserialize as VersionedTransaction first (newer format)
+      //     transaction = VersionedTransaction.deserialize(transactionBuffer)
+      //   } catch (versionedError) {
+      //     try {
+      //       // Fall back to legacy Transaction if VersionedTransaction fails
+      //       transaction = Transaction.from(transactionBuffer)
+      //     } catch (legacyError) {
+      //       console.error('Failed to deserialize transaction:', {
+      //         versionedError,
+      //         legacyError,
+      //       })
+      //       throw new Error('Invalid transaction format')
+      //     }
+      //   }
+
+      //   // Sign the transaction using Privy
+      //   const signedTransaction = await signAndSendTransaction(transaction)
+
+      //   // Serialize the signed transaction back to base64
+      //   // let serializedTransaction: string
+
+      //   // if (signedTransaction instanceof VersionedTransaction) {
+      //   //   serializedTransaction = Buffer.from(
+      //   //     signedTransaction.serialize()
+      //   //   ).toString('base64')
+      //   // } else {
+      //   //   // Legacy Transaction
+      //   //   serializedTransaction = Buffer.from(
+      //   //     signedTransaction.serialize()
+      //   //   ).toString('base64')
+      //   // }
+
+      //   signedTransactions.push(signedTransaction)
+      // }
+
+      // console.log('signedTransactions', signedTransactions)
+      // return signedTransactions
+
+      // Decode the Base64 string to a Buffer
 
       // const base64Transactions = args.params.map((param) =>
       //   Buffer.from(param[0]).toString('base64')

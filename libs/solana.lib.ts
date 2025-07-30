@@ -13,7 +13,9 @@ export const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111111'
 export const WRAPPED_SOL_MINT = 'So11111111111111111111111111111111111111112'
 
 export const getConnection = () => {
-  return new Connection(ENV.RPC_URL)
+  return new Connection(ENV.RPC_URL, {
+    commitment: 'confirmed',
+  })
 }
 
 export const sendNativeSol = async (

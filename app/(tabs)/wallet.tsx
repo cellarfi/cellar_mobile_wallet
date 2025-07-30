@@ -68,7 +68,7 @@ export default function WalletScreen() {
   }, [tab])
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <ScrollView
         className='flex-1'
         showsVerticalScrollIndicator={false}
@@ -156,13 +156,13 @@ export default function WalletScreen() {
 
         {/* Tabs */}
         <View className='px-6 mb-4'>
-          <View className='flex-row bg-dark-200 rounded-2xl p-1'>
+          <View className='flex-row bg-secondary-light rounded-2xl p-1'>
             {(['tokens', 'nfts', 'history'] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveTab(tab)}
                 className={`flex-1 py-3 rounded-xl ${
-                  activeTab === tab ? 'bg-primary-500' : ''
+                  activeTab === tab ? 'bg-secondary' : ''
                 }`}
               >
                 <Text

@@ -1,4 +1,6 @@
 import solanaSdk from '@/assets/solanaSdk-1.95.4.min.js.raw'
+import BrowserToolbar from '@/components/core/browser/BrowserToolbar'
+import { Colors } from '@/constants/Colors'
 import { useDappMethods } from '@/hooks/useDappMethods'
 import { useRandomSecret } from '@/hooks/useRandomSecret'
 import { getInjectedScriptString } from '@/libs/dappScript'
@@ -6,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useWebviewStore } from '@/store/webviewStore'
 import { BrowserTab } from '@/types/app.interface'
 import { Ionicons } from '@expo/vector-icons'
-import { router, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -16,7 +18,6 @@ import {
   Platform,
   StatusBar,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
@@ -29,6 +30,7 @@ export default function BrowserScreen() {
     url?: string
     title?: string
   }>()
+  console.log('initialUrl', initialUrl)
   const secret = useRandomSecret()
 
   const [tabs, setTabs] = useState<BrowserTab[]>([])
@@ -37,6 +39,7 @@ export default function BrowserScreen() {
   const [urlInput, setUrlInput] = useState('')
   const [isEditingUrl, setIsEditingUrl] = useState(false)
   const { setTab } = useWebviewStore()
+  const activeTab = tabs.find((tab) => tab.id === activeTabId)
 
   const webViewRefs = useRef<{ [key: string]: WebView }>({})
   const { onMessage, disconnect } = useDappMethods(webViewRefs, secret)
@@ -56,6 +59,7 @@ export default function BrowserScreen() {
   }, [initialUrl, initialTitle])
 
   const createNewTab = (url: string, title: string = 'New Tab') => {
+    console.log('createNewTab_______', url, title)
     const newTab: BrowserTab = {
       id: Date.now().toString(),
       url: url === 'about:blank' ? '' : url,
@@ -108,75 +112,19 @@ export default function BrowserScreen() {
     }
   }
 
-  const updateTab = (tabId: string, updates: Partial<Tab>) => {
+  const updateTab = (tabId: string, updates: Partial<BrowserTab>) => {
     setTabs((prev) =>
       prev.map((tab) => (tab.id === tabId ? { ...tab, ...updates } : tab))
     )
   }
 
-  const activeTab = tabs.find((tab) => tab.id === activeTabId)
-
-  const handleUrlSubmit = () => {
-    if (!urlInput.trim()) return
-
-    let finalUrl = urlInput.trim()
-
-    // Add https:// if no protocol is specified
-    // if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-    //   // Check if it looks like a domain
-    //   if (finalUrl.includes('.') || finalUrl.includes('localhost')) {
-    //     finalUrl = 'https://' + finalUrl
-    //   } else {
-    //     // Treat as search query
-    //     finalUrl = `https://www.google.com/search?q=${encodeURIComponent(finalUrl)}`
-    //   }
-    // }
-
-    if (!/^https?:\/\//i.test(finalUrl)) {
-      if (finalUrl.includes('.') || finalUrl.includes('localhost')) {
-        finalUrl = 'https://' + finalUrl
-      } else {
-        finalUrl = `https://www.google.com/search?q=${encodeURIComponent(finalUrl)}`
-      }
-    }
-
-    if (activeTab) {
-      updateTab(activeTab.id, { url: finalUrl, isLoading: true, progress: 0 })
-      setUrlInput(finalUrl)
-
-      // Navigate WebView to new URL
-      const webView = webViewRefs.current[activeTab.id]
-      if (webView) {
-        webView.stopLoading()
-        webView.injectJavaScript(`window.location.href = "${finalUrl}";`)
-      }
-    }
-
-    setIsEditingUrl(false)
-  }
-
-  const goBack = () => {
-    if (activeTab?.canGoBack) {
-      const webView = webViewRefs.current[activeTab.id]
-      webView?.goBack()
-    }
-  }
-
-  const goForward = () => {
-    if (activeTab?.canGoForward) {
-      const webView = webViewRefs.current[activeTab.id]
-      webView?.goForward()
-    }
-  }
-
-  const reload = () => {
-    if (activeTab) {
-      const webView = webViewRefs.current[activeTab.id]
-      webView?.reload()
-    }
-  }
-
-  const TabItem = ({ tab, isActive }: { tab: Tab; isActive: boolean }) => (
+  const TabItem = ({
+    tab,
+    isActive,
+  }: {
+    tab: BrowserTab
+    isActive: boolean
+  }) => (
     <View
       className={`bg-dark-200 rounded-2xl p-4 mr-3 w-48 ${
         isActive ? 'border-2 border-primary-500' : ''
@@ -238,110 +186,22 @@ export default function BrowserScreen() {
   )
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
-      <StatusBar barStyle='light-content' backgroundColor='#0a0a0b' />
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
+      <StatusBar
+        barStyle='light-content'
+        backgroundColor={Colors.dark.primary}
+      />
 
       {/* Top Toolbar */}
-      <View className='bg-dark-100 border-b border-dark-300 px-4 py-2'>
-        <View className='flex-row items-center'>
-          {/* Back Button */}
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className='w-8 h-8 justify-center items-center mr-3'
-          >
-            <Ionicons name='close' size={20} color='white' />
-          </TouchableOpacity>
-
-          {/* Navigation Controls */}
-          <TouchableOpacity
-            onPress={goBack}
-            disabled={!activeTab?.canGoBack}
-            className={`w-8 h-8 justify-center items-center mr-2 ${
-              !activeTab?.canGoBack ? 'opacity-30' : ''
-            }`}
-          >
-            <Ionicons name='arrow-back' size={18} color='white' />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={goForward}
-            disabled={!activeTab?.canGoForward}
-            className={`w-8 h-8 justify-center items-center mr-3 ${
-              !activeTab?.canGoForward ? 'opacity-30' : ''
-            }`}
-          >
-            <Ionicons name='arrow-forward' size={18} color='white' />
-          </TouchableOpacity>
-
-          {/* URL Bar */}
-          <View className='flex-1 bg-dark-200 rounded-2xl mr-3 overflow-hidden relative'>
-            {/* Progress Background */}
-            {activeTab?.isLoading && (
-              <View className='absolute inset-0 flex-row'>
-                <View
-                  className={`transition-all duration-300 ease-out ${
-                    isEditingUrl ? 'bg-primary-500/30' : 'bg-primary-500/20'
-                  }`}
-                  style={{
-                    width: `${Math.min(activeTab.progress * 100, activeTab.progress === 0 ? 15 : 100)}%`,
-                  }}
-                />
-                {/* Subtle shimmer effect when starting to load */}
-                {activeTab.progress === 0 && (
-                  <View className='absolute inset-0'>
-                    <View
-                      className={`w-full h-full animate-pulse ${
-                        isEditingUrl
-                          ? 'bg-gradient-to-r from-primary-500/15 via-primary-500/30 to-primary-500/15'
-                          : 'bg-gradient-to-r from-primary-500/10 via-primary-500/20 to-primary-500/10'
-                      }`}
-                    />
-                  </View>
-                )}
-              </View>
-            )}
-            <View className='px-3 py-2 relative z-10'>
-              <TextInput
-                className='text-white text-sm'
-                value={isEditingUrl ? urlInput : activeTab?.url || ''}
-                onChangeText={setUrlInput}
-                onFocus={() => setIsEditingUrl(true)}
-                onBlur={() => setIsEditingUrl(false)}
-                onSubmitEditing={handleUrlSubmit}
-                placeholder='Search or enter URL...'
-                placeholderTextColor='#666672'
-                autoCapitalize='none'
-                autoCorrect={false}
-                returnKeyType='go'
-                style={{ backgroundColor: 'transparent' }}
-              />
-            </View>
-          </View>
-
-          {/* Reload Button */}
-          <TouchableOpacity
-            onPress={reload}
-            className='w-8 h-8 justify-center items-center mr-2'
-          >
-            {activeTab?.isLoading ? (
-              <ActivityIndicator size={16} color='#6366f1' />
-            ) : (
-              <Ionicons name='refresh' size={16} color='white' />
-            )}
-          </TouchableOpacity>
-
-          {/* Tab Manager */}
-          {/* <TouchableOpacity
-            onPress={() => setShowTabManager(true)}
-            className='bg-dark-300 px-2 py-1 rounded-lg flex-row items-center'
-          >
-            <Text className='text-white text-xs font-medium mr-1'>
-              {tabs.length}
-            </Text>
-            <Ionicons name='copy-outline' size={14} color='white' />
-          </TouchableOpacity> */}
-        </View>
-      </View>
+      <BrowserToolbar
+        webViewRefs={webViewRefs}
+        urlInput={urlInput}
+        setUrlInput={setUrlInput}
+        isEditingUrl={isEditingUrl}
+        setIsEditingUrl={setIsEditingUrl}
+        activeTab={activeTab}
+        updateTab={updateTab}
+      />
 
       {/* WebView Container */}
       <View className='flex-1'>

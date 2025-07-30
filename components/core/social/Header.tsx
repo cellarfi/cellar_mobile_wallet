@@ -1,24 +1,25 @@
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Colors } from '@/constants/Colors'
+import { Ionicons } from '@expo/vector-icons'
+import React from 'react'
+import { Text, TouchableOpacity, View } from 'react-native'
 
 interface HeaderProps {
-  title: string;
-  onSearch: () => void;
+  title: string
+  onSearch: () => void
 }
 
 const Header: React.FC<HeaderProps> = ({ title, onSearch }) => (
-  <View className="flex-row items-center justify-between px-6 py-4">
-    <Text className="text-white text-2xl font-bold">{title}</Text>
-    <View className="flex-row gap-3">
+  <View className='flex-row items-center justify-between px-6 py-4'>
+    <Text className='text-white text-2xl font-bold'>{title}</Text>
+    <View className='flex-row gap-3'>
       <TouchableOpacity
-        className="w-10 h-10 bg-dark-200 rounded-full justify-center items-center"
+        className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
         onPress={onSearch}
       >
-        <Ionicons name="search" size={20} color="#6366f1" />
+        <Ionicons name='search' size={20} color={Colors.dark.text} />
       </TouchableOpacity>
     </View>
   </View>
-);
+)
 
-export default Header;
+export default Header

@@ -50,27 +50,29 @@ export const usePrivySign = () => {
     try {
       if (!wallet) throw new Error('No wallet connected')
       const provider = await wallet.getProvider()
-      let tx: Transaction
-      if (transaction instanceof VersionedTransaction) {
-        tx = Transaction.from(transaction.serialize())
-      } else {
-        tx = transaction
-      }
+      // let tx: Transaction
+      // if (transaction instanceof VersionedTransaction) {
+      //   tx = Transaction.from(transaction.serialize())
+      // } else {
+      //   tx = transaction
+      // }
 
-      const { blockhash, lastValidBlockHeight } =
-        await getConnection().getLatestBlockhash()
-      tx.recentBlockhash = blockhash
-      tx.lastValidBlockHeight = lastValidBlockHeight
+      // const { blockhash, lastValidBlockHeight } =
+      //   await getConnection().getLatestBlockhash()
+      // tx.recentBlockhash = blockhash
+      // tx.lastValidBlockHeight = lastValidBlockHeight
 
       console.log('111111111111')
-      const { signature } = await provider.request({
+      const { signature, ...rest } = await provider.request({
         method: 'signAndSendTransaction',
         params: {
-          transaction: tx,
+          transaction,
+          // transaction: tx,
           connection: getConnection(),
         },
       })
-      console.log('222222222222')
+      console.log('rest', rest)
+      console.log('222222222222', signature)
 
       return signature
     } catch (error) {

@@ -34,7 +34,7 @@ export default function ConnectWalletModal() {
       edges={['bottom']}
       style={{ justifyContent: 'flex-end' }}
     >
-      <View className='bg-dark-100 rounded-t-3xl px-6 pt-6 pb-8 shadow-2xl border-t border-dark-300'>
+      <View className='bg-primary-main rounded-t-3xl px-6 pt-6 pb-8 shadow-2xl border-t border-dark-300'>
         {/* Drag handle */}
         <View className='w-12 h-1.5 bg-dark-300 rounded-full self-center mb-4' />
 

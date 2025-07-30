@@ -31,11 +31,8 @@ const modalScreens: ModalScreen[] = [
   { name: 'qr-scanner' },
   { name: 'browser' },
   { name: 'connect-wallet', options: { presentation: 'transparentModal' } },
-<<<<<<< HEAD
-=======
   { name: 'sign-message', options: { presentation: 'transparentModal' } },
   { name: 'sign-transaction', options: { presentation: 'transparentModal' } },
->>>>>>> 2a52ea5 (feat: implemented signing)
 ]
 
 export default function ModalsLayout() {
