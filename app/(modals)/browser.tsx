@@ -4,7 +4,6 @@ import { Colors } from '@/constants/Colors'
 import { useDappMethods } from '@/hooks/useDappMethods'
 import { useRandomSecret } from '@/hooks/useRandomSecret'
 import { getInjectedScriptString } from '@/libs/dappScript'
-import { useAuthStore } from '@/store/authStore'
 import { useWebviewStore } from '@/store/webviewStore'
 import { BrowserTab } from '@/types/app.interface'
 import { Ionicons } from '@expo/vector-icons'
@@ -25,12 +24,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
 
 export default function BrowserScreen() {
-  const { activeWallet } = useAuthStore()
   const { url: initialUrl, title: initialTitle } = useLocalSearchParams<{
     url?: string
     title?: string
   }>()
-  console.log('initialUrl', initialUrl)
   const secret = useRandomSecret()
 
   const [tabs, setTabs] = useState<BrowserTab[]>([])
@@ -59,7 +56,6 @@ export default function BrowserScreen() {
   }, [initialUrl, initialTitle])
 
   const createNewTab = (url: string, title: string = 'New Tab') => {
-    console.log('createNewTab_______', url, title)
     const newTab: BrowserTab = {
       id: Date.now().toString(),
       url: url === 'about:blank' ? '' : url,
