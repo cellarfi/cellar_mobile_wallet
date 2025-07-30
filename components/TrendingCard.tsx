@@ -42,7 +42,7 @@ export function TrendingCard({ token, onPress }: TrendingCardProps) {
   return (
     <TouchableOpacity
       onPress={handlePress}
-      className='bg-dark-200 rounded-2xl p-4 mr-3 w-48 active:scale-95'
+      className='bg-secondary-light rounded-2xl p-4 mr-3 w-48 active:scale-95'
     >
       <View className='flex-row items-center mb-3'>
         <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-3 overflow-hidden'>

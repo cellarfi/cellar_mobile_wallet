@@ -1,12 +1,18 @@
-import { Stack } from 'expo-router';
+import { Stack } from 'expo-router'
 
 type ModalScreen = {
-  name: string;
+  name: string
   options?: {
-    presentation?: 'modal' | 'transparentModal' | 'containedModal' | 'containedTransparentModal' | 'fullScreenModal' | 'formSheet';
-    headerShown?: boolean;
-  };
-};
+    presentation?:
+      | 'modal'
+      | 'transparentModal'
+      | 'containedModal'
+      | 'containedTransparentModal'
+      | 'fullScreenModal'
+      | 'formSheet'
+    headerShown?: boolean
+  }
+}
 
 const modalScreens: ModalScreen[] = [
   { name: 'token-detail' },
@@ -24,6 +30,9 @@ const modalScreens: ModalScreen[] = [
   { name: 'notification-settings' },
   { name: 'qr-scanner' },
   { name: 'browser' },
+  { name: 'connect-wallet', options: { presentation: 'transparentModal' } },
+  { name: 'sign-message', options: { presentation: 'transparentModal' } },
+  { name: 'sign-transaction', options: { presentation: 'transparentModal' } },
   { name: 'points-history' },
   { name: 'user-profile/[tag_name]' },
 ];
@@ -32,7 +41,7 @@ export default function ModalsLayout() {
   return (
     <Stack
       screenOptions={{
-        presentation: "modal",
+        presentation: 'modal',
         headerShown: false,
         animation: 'slide_from_bottom',
       }}
@@ -45,5 +54,5 @@ export default function ModalsLayout() {
         />
       ))}
     </Stack>
-  );
+  )
 }

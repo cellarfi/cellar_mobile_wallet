@@ -4,6 +4,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import TabBarBackground from '@/components/ui/TabBarBackground'
+import { Colors } from '@/constants/Colors'
 import { useColorScheme } from '@/hooks/useColorScheme'
 
 export default function TabLayout() {
@@ -12,13 +13,16 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#6366f1',
+        // tabBarActiveTintColor: '#6366f1',
+        tabBarActiveTintColor: Colors.dark.secondary,
         tabBarInactiveTintColor: '#666672',
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1E1E1E',
-          borderTopColor: '#2d2d35',
-          borderTopWidth: 1,
+          // backgroundColor: '#1E1E1E',
+          backgroundColor: Colors.dark.secondaryLight,
+          // borderTopColor: '#2d2d35',
+          borderTopColor: Colors.dark.secondary,
+          borderTopWidth: 0,
           height: 90,
           paddingBottom: 25,
           paddingTop: 8,

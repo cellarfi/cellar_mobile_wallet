@@ -9,7 +9,7 @@ interface CreativeLoaderProps {
 
 export default function CreativeLoader({
   label,
-  logoSize = 120,
+  logoSize = 300,
 }: CreativeLoaderProps) {
   // Animation values
   const logoScale = useRef(new Animated.Value(1)).current

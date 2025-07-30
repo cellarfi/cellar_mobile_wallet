@@ -11,6 +11,12 @@ module.exports = {
     extend: {
       colors: {
         // Dark theme colors for crypto app
+        'primary-main': '#15162B',
+        secondary: '#00C2CB',
+        'secondary-light': '#1A2741',
+        'secondary-disabled': '#122C41',
+        'text-light': '#ABA7B5',
+        'text-secondary': '#059CA8',
         dark: {
           50: '#0a0a0b',
           100: '#111115',

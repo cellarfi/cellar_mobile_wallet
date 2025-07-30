@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/Colors'
 import { Ionicons } from '@expo/vector-icons'
 import React, { useState } from 'react'
 import {
@@ -81,13 +82,13 @@ export default function CustomTextInput({
   return (
     <View style={[containerStyle]}>
       {/* Label */}
-      <Text className='text-white font-medium mb-2' style={labelStyle}>
+      <Text className='text-text-secondary font-medium mb-2' style={labelStyle}>
         {label}
       </Text>
 
       {/* Input Container */}
       <View
-        className={`bg-dark-200 border rounded-xl px-4 py-4 flex-row items-center ${
+        className={`bg-secondary-light rounded-[8px] px-4 py-4 flex-row items-center ${
           isFocused ? 'border-primary-500' : 'border-dark-400'
         }`}
         style={inputContainerStyle}
@@ -97,14 +98,14 @@ export default function CustomTextInput({
           <Ionicons
             name={icon}
             size={20}
-            color='#666672'
+            color={Colors.dark.text}
             style={{ marginRight: 12, marginTop: 0 }}
           />
         )}
 
         {/* Text Input */}
         <TextInput
-          className='flex-1 text-white text-lg'
+          className='flex-1 text-text-light text-[16px] font-medium'
           style={[
             inputStyle,
             {
@@ -115,7 +116,7 @@ export default function CustomTextInput({
             },
           ]}
           placeholder={placeholder}
-          placeholderTextColor='#666672'
+          placeholderTextColor={Colors.dark.text}
           value={value}
           onChangeText={onChangeText}
           keyboardType={keyboardType}
@@ -142,7 +143,7 @@ export default function CustomTextInput({
             <Ionicons
               name={isPasswordVisible ? 'eye-off' : 'eye'}
               size={20}
-              color='#666672'
+              color={Colors.dark.text}
             />
           </TouchableOpacity>
         )}

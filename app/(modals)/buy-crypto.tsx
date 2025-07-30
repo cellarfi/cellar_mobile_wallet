@@ -6,15 +6,15 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function BuyCryptoScreen() {
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <View className='flex-1'>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name='arrow-back' size={20} color='white' />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-lg font-semibold'>Buy Crypto</Text>
           <View className='w-10' />

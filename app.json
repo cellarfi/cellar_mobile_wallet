@@ -4,30 +4,28 @@
     "slug": "cellarfi",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/icons/adaptive-icon.png",
     "scheme": "cellarfi",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1E1E1E"
-    },
     "ios": {
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
-      "associatedDomains": [
-        "webcredentials:cellar.so"
-      ],
+      "associatedDomains": ["webcredentials:cellar.so"],
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         }
+      },
+      "icon": {
+        "dark": "./assets/icons/ios-dark.png",
+        "light": "./assets/icons/ios-light.png",
+        "tinted": "./assets/icons/ios-tinted.png"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1E1E1E"
+        "backgroundColor": "#15162B"
       },
       "package": "com.cellar.so"
     },
@@ -35,19 +33,15 @@
       "expo-router",
       "expo-secure-store",
       "expo-apple-authentication",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "17.5"
-          },
-          "android": {
-            "compileSdkVersion": 35
-          }
-        }
-      ],
       "expo-font",
-      "expo-web-browser"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icons/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#15162B"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -60,7 +60,7 @@ export default function SendTokenSelector({
 
   const TokenListItem = ({ token }: { token: BirdEyeTokenItem }) => (
     <TouchableOpacity
-      className='flex-row items-center bg-dark-200 rounded-2xl p-4 mb-3'
+      className='flex-row items-center bg-secondary-light rounded-2xl p-4 mb-3'
       onPress={() => {
         onTokenSelect(token)
         handleModalClose()
@@ -106,7 +106,7 @@ export default function SendTokenSelector({
   return (
     <>
       <TouchableOpacity
-        className='bg-dark-200 rounded-2xl p-4 mb-4'
+        className='bg-secondary-light rounded-2xl p-4 mb-4'
         onPress={() => setModalVisible(true)}
       >
         <Text className='text-gray-400 text-sm mb-2'>Token</Text>
@@ -165,12 +165,12 @@ export default function SendTokenSelector({
         animationType='slide'
         presentationStyle='pageSheet'
       >
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           {/* Header */}
           <View className='flex-row items-center justify-between px-6 py-4'>
             <TouchableOpacity
               onPress={handleModalClose}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 rounded-full justify-center items-center'
             >
               <Ionicons name='close' size={20} color='white' />
             </TouchableOpacity>
@@ -182,7 +182,7 @@ export default function SendTokenSelector({
 
           {/* Search Input */}
           <View className='px-6 mb-4'>
-            <View className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'>
+            <View className='bg-secondary-light rounded-2xl px-4 py-3 flex-row items-center'>
               <Ionicons name='search' size={20} color='#666672' />
               <TextInput
                 className='flex-1 text-white ml-3 text-lg'

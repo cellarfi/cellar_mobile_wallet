@@ -3,7 +3,7 @@ import { userRequests } from '@/libs/api_requests/user.request'
 import { useAuthStore } from '@/store/authStore'
 import { useNetworkStore } from '@/store/networkStore'
 import { useIdentityToken, usePrivy } from '@privy-io/expo'
-import { router } from 'expo-router'
+import { router, useGlobalSearchParams, usePathname } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import React, {
   createContext,
@@ -56,6 +56,12 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const pathname = usePathname()
+  const { url } = useGlobalSearchParams<{ url: string }>()
+
+  console.log('AuthProvider: pathname:', pathname)
+  console.log('AuthProvider: url:', url)
+
   // Privy hooks
   const {
     user: privyUser,
@@ -79,10 +85,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Local state
   const [isInitialized, setIsInitialized] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [pendingDeepLink, setPendingDeepLink] = useState<{
+    url: string
+    pathname: string
+  } | null>(null)
   const lastNavigationStateRef = useRef<{
     isAuthenticated: boolean
     userId: string | null
   } | null>(null)
+
+  // Handle deep link changes
+  useEffect(() => {
+    if (url && pathname.includes('/browser')) {
+      console.log('AuthProvider: Deep link detected:', { url, pathname })
+      setPendingDeepLink({ url, pathname })
+    }
+  }, [url, pathname])
+
+  // Handle deep link navigation when user is already authenticated
+  useEffect(() => {
+    if (pendingDeepLink && isAuthenticated && user && !isNavigating) {
+      console.log(
+        'AuthProvider: Processing pending deep link:',
+        pendingDeepLink
+      )
+      router.replace({
+        pathname: '/(modals)/browser',
+        params: {
+          url: pendingDeepLink.url,
+        },
+      })
+      setPendingDeepLink(null)
+    }
+  }, [pendingDeepLink, isAuthenticated, user, isNavigating])
 
   // Get Privy access token
   const getPrivyIdentityToken = async () => {
@@ -162,7 +197,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log(
               'AuthProvider: User authenticated, navigating to main app'
             )
-            router.replace('/(tabs)')
+
+            // Check if we have a pending deep link
+            if (pendingDeepLink) {
+              console.log(
+                'AuthProvider: Navigating to browser with deep link:',
+                pendingDeepLink
+              )
+              router.replace({
+                pathname: '/(modals)/browser',
+                params: {
+                  url: pendingDeepLink.url,
+                },
+              })
+              setPendingDeepLink(null) // Clear the pending deep link
+            } else {
+              console.log('AuthProvider: Navigating to tabs (no deep link)')
+              router.replace('/(tabs)')
+            }
           } else {
             // User is not authenticated, go to auth flow
             console.log(
@@ -177,7 +229,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         })
       }
     }
-  }, [user, isAuthenticated, isLoading, authReady])
+  }, [
+    user,
+    isAuthenticated,
+    isLoading,
+    authReady,
+    pendingDeepLink,
+    isNavigating,
+  ])
 
   // Status helper function
   const getStatusText = (): string => {

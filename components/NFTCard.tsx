@@ -41,9 +41,9 @@ export function NFTCard({
     <TouchableOpacity
       onPress={handlePress}
       onLongPress={onLongPress}
-      className={`bg-dark-200 rounded-2xl p-4 ${galleryView ? 'mb-4 w-[48%]' : 'mr-3 w-40'} active:scale-95`}
+      className={`bg-secondary-light rounded-2xl p-4 ${galleryView ? 'mb-4 w-[48%]' : 'mr-3 w-40'} active:scale-95`}
     >
-      <View className='w-full h-32 bg-dark-300 rounded-xl justify-center items-center mb-3 overflow-hidden'>
+      <View className='w-full h-32 bg-secondary-light rounded-xl justify-center items-center mb-3 overflow-hidden'>
         {imageUrl ? (
           <Image
             source={{ uri: imageUrl }}

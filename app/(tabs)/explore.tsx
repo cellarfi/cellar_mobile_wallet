@@ -41,6 +41,18 @@ const categories = [
 
 const featuredDApps: DApp[] = [
   {
+    id: '0',
+    name: 'Airbills Pay',
+    description: 'Pay your bills with crypto',
+    url: 'https://app.airbillspay.com/',
+    icon: 'https://app.airbillspay.com/favicon.ico',
+    category: 'tools',
+    isHot: true,
+    verified: true,
+    rating: 4.8,
+    users: '1M+',
+  },
+  {
     id: '1',
     name: 'Jupiter',
     description: 'Best price swaps across all DEXs',
@@ -143,8 +155,12 @@ const Explore = () => {
 
   // Helper function to validate URLs
   const isValidUrl = (string: string) => {
+    // const urlRegex =
+    //   /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+    // const urlRegex =
+    //   /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
     const urlRegex =
-      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*(\?[\w\-=&%]*)*$/i
     return urlRegex.test(string.trim())
   }
   const [recentlyVisited] = useState<DApp[]>([
@@ -221,7 +237,9 @@ const Explore = () => {
   }) => (
     <TouchableOpacity
       className={`mr-3 px-4 py-2 rounded-xl ${
-        selectedCategory === category.id ? 'bg-primary-500' : 'bg-dark-200'
+        selectedCategory === category.id
+          ? 'bg-primary-500'
+          : 'bg-secondary-light'
       }`}
       onPress={() => setSelectedCategory(category.id)}
     >
@@ -244,7 +262,7 @@ const Explore = () => {
 
   const FeaturedCard = ({ dapp }: { dapp: DApp }) => (
     <TouchableOpacity
-      className='w-80 mr-4 bg-dark-200 rounded-3xl p-6 active:scale-95'
+      className='w-80 mr-4 bg-secondary-light rounded-3xl p-6 active:scale-95'
       onPress={() => openDApp(dapp)}
     >
       <LinearGradient
@@ -293,7 +311,7 @@ const Explore = () => {
 
   const DAppCard = ({ dapp }: { dapp: DApp }) => (
     <TouchableOpacity
-      className='bg-dark-200 rounded-2xl p-4 mb-3 active:scale-95'
+      className='bg-secondary-light rounded-2xl p-4 mb-3 active:scale-95'
       onPress={() => openDApp(dapp)}
     >
       <View className='flex-row items-center'>
@@ -333,7 +351,7 @@ const Explore = () => {
   )
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <ScrollView
         className='flex-1'
         showsVerticalScrollIndicator={false}
@@ -355,7 +373,7 @@ const Explore = () => {
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(modals)/browser' as any)}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
           >
             <Ionicons name='add' size={20} color='#6366f1' />
           </TouchableOpacity>
@@ -363,7 +381,7 @@ const Explore = () => {
 
         {/* Search Bar */}
         <View className='px-6 mb-6'>
-          <View className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'>
+          <View className='bg-secondary-light rounded-2xl px-4 py-3 flex-row items-center'>
             <Ionicons
               name={
                 searchQuery.trim() && isValidUrl(searchQuery)
@@ -448,7 +466,7 @@ const Explore = () => {
               {recentlyVisited.map((dapp) => (
                 <TouchableOpacity
                   key={dapp.id}
-                  className='bg-dark-200 rounded-2xl p-4 mr-3 items-center w-24'
+                  className='bg-secondary-light rounded-2xl p-4 mr-3 items-center w-24'
                   onPress={() => openDApp(dapp)}
                 >
                   <View className='w-12 h-12 bg-white rounded-xl justify-center items-center mb-2 overflow-hidden'>

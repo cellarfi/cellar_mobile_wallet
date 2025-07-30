@@ -1,10 +1,10 @@
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React from 'react'
+import { Text, TouchableOpacity, View } from 'react-native'
 
 interface TabsProps<T extends string> {
-  tabs: T[];
-  activeTab: T;
-  onTabChange: (tab: T) => void;
+  tabs: T[]
+  activeTab: T
+  onTabChange: (tab: T) => void
 }
 
 function Tabs<T extends string>({
@@ -13,19 +13,19 @@ function Tabs<T extends string>({
   onTabChange,
 }: TabsProps<T>) {
   return (
-    <View className="px-6 mb-4">
-      <View className="flex-row bg-dark-200 rounded-2xl p-1">
+    <View className='px-6 mb-4'>
+      <View className='flex-row bg-secondary-light  rounded-2xl p-1'>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => onTabChange(tab)}
             className={`flex-1 py-3 rounded-xl ${
-              activeTab === tab ? "bg-primary-500" : ""
+              activeTab === tab ? 'bg-primary-500' : ''
             }`}
           >
             <Text
               className={`text-center font-medium capitalize ${
-                activeTab === tab ? "text-white" : "text-gray-400"
+                activeTab === tab ? 'text-white' : 'text-gray-400'
               }`}
             >
               {tab}
@@ -34,7 +34,7 @@ function Tabs<T extends string>({
         ))}
       </View>
     </View>
-  );
+  )
 }
 
-export default Tabs;
+export default Tabs

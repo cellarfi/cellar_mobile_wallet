@@ -13,23 +13,28 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import QRCodeStyled from 'react-native-qrcode-styled';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from 'react-native'
+import QRCodeStyled from 'react-native-qrcode-styled'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ReceiveScreen() {
-  const { user } = usePrivy();
-  const { copied, copyToClipboard } = useClipboard();
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [scaleAnim] = useState(new Animated.Value(1));
+  const { user } = usePrivy()
+  const { copied, copyToClipboard } = useClipboard()
+  const [fadeAnim] = useState(new Animated.Value(0))
+  const [scaleAnim] = useState(new Animated.Value(1))
 
   // Get the embedded wallet from Privy
+
+  // For demo purposes, we'll use a mock Solana address if no Ethereum wallet is found
+  // In a real app, you'd want to get the actual Solana wallet address
+  const walletAddress =
+    account?.address || '7xKXtg2CWNfnN5p8RJ6N9W8BeFhJ4A2sP9dQvH3KwXhM'
   const account = getUserEmbeddedSolanaWallet(user);
   const walletAddress = account?.address || '';
 
   const handleCopyAddress = useCallback(async () => {
     // Haptic feedback
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
     // Scale animation
     Animated.sequence([
@@ -43,14 +48,14 @@ export default function ReceiveScreen() {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]).start()
 
     // Fade in animation for copied indicator
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 200,
       useNativeDriver: true,
-    }).start();
+    }).start()
 
     // Copy to clipboard
     await copyToClipboard(walletAddress, {
@@ -59,62 +64,62 @@ export default function ReceiveScreen() {
           toValue: 0,
           duration: 200,
           useNativeDriver: true,
-        }).start();
+        }).start()
       },
-    });
-  }, [walletAddress, fadeAnim, scaleAnim, copyToClipboard]);
+    })
+  }, [walletAddress, fadeAnim, scaleAnim, copyToClipboard])
 
   const shareAddress = async () => {
     try {
       await Share.share({
         message: `${walletAddress}`,
         title: 'Wallet Address',
-      });
+      })
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('Error sharing:', error)
     }
-  };
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+    <SafeAreaView className='flex-1 bg-primary-main'>
+      <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="flex-row items-center justify-between px-6 py-4">
+        <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-10 h-10 bg-dark-200 rounded-full justify-center items-center"
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name="arrow-back" size={20} color="white" />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
-          <Text className="text-white text-lg font-semibold">Receive</Text>
+          <Text className='text-white text-lg font-semibold'>Receive</Text>
           <TouchableOpacity
             onPress={shareAddress}
-            className="w-10 h-10 bg-dark-200 rounded-full justify-center items-center"
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name="share-outline" size={20} color="white" />
+            <Ionicons name='share-outline' size={20} color='white' />
           </TouchableOpacity>
         </View>
 
         {/* Content */}
-        <View className="flex-1 px-6">
+        <View className='flex-1 px-6'>
           {/* QR Code Section */}
-          <View className="items-center mb-8">
-            <Text className="text-white text-2xl font-bold mb-2">
+          <View className='items-center mb-8'>
+            <Text className='text-white text-2xl font-bold mb-2'>
               Scan to Send
             </Text>
-            <Text className="text-gray-400 text-center mb-8 leading-6">
+            <Text className='text-gray-400 text-center mb-8 leading-6'>
               Share this QR code or wallet address to receive payments
             </Text>
 
             {/* QR Code Container */}
-            <View className="bg-white rounded-3xl p-6 mb-6 shadow-lg">
+            <View className='bg-white rounded-3xl p-6 mb-6 shadow-lg'>
               <QRCodeStyled
                 data={walletAddress}
                 style={{ backgroundColor: 'white' }}
                 pieceSize={8}
                 pieceBorderRadius={2}
                 isPiecesGlued={false}
-                color="#0a0a0b"
+                color='#0a0a0b'
                 innerEyesOptions={{
                   borderRadius: 8,
                   color: '#6366f1',
@@ -141,16 +146,16 @@ export default function ReceiveScreen() {
           </View>
 
           {/* Address Section */}
-          <View className="bg-dark-200 rounded-3xl p-6 mb-6">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-white font-semibold text-lg">
+          <View className='bg-secondary-light rounded-3xl p-6 mb-6'>
+            <View className='flex-row items-center justify-between mb-4'>
+              <Text className='text-white font-semibold text-lg'>
                 Wallet Address
               </Text>
             </View>
 
             {/* Address Display */}
-            <View className="bg-dark-50 rounded-2xl p-4 mb-4">
-              <Text className="text-white font-mono text-sm leading-6 text-center">
+            <View className='bg-secondary-disabled rounded-2xl p-4 mb-4'>
+              <Text className='text-white font-mono text-sm leading-6 text-center'>
                 {walletAddress}
               </Text>
             </View>
@@ -170,9 +175,9 @@ export default function ReceiveScreen() {
                     top: -10,
                     right: -10,
                   }}
-                  className="bg-success-500 rounded-full w-8 h-8 justify-center items-center"
+                  className='bg-success-500 rounded-full w-8 h-8 justify-center items-center'
                 >
-                  <Ionicons name="checkmark" size={16} color="white" />
+                  <Ionicons name='checkmark' size={16} color='white' />
                 </Animated.View>
               </CustomButton>
               {/* <TouchableOpacity
@@ -214,40 +219,40 @@ export default function ReceiveScreen() {
           </View>
 
           {/* Info Section */}
-          <View className="bg-dark-200 rounded-3xl p-6 mb-6">
-            <View className="flex-row items-center mb-4">
-              <View className="w-8 h-8 bg-primary-500/20 rounded-full justify-center items-center mr-3">
-                <Ionicons name="information-circle" size={16} color="#6366f1" />
+          <View className='bg-secondary-light rounded-3xl p-6 mb-6'>
+            <View className='flex-row items-center mb-4'>
+              <View className='w-8 h-8 bg-primary-500/20 rounded-full justify-center items-center mr-3'>
+                <Ionicons name='information-circle' size={16} color='#6366f1' />
               </View>
-              <Text className="text-white font-semibold text-lg">
+              <Text className='text-white font-semibold text-lg'>
                 How to Receive
               </Text>
             </View>
 
-            <View className="gap-4">
-              <View className="flex-row items-start">
-                <View className="w-6 h-6 bg-primary-500/20 rounded-full justify-center items-center mr-3 mt-0.5">
-                  <Text className="text-primary-400 font-bold text-xs">1</Text>
+            <View className='gap-4'>
+              <View className='flex-row items-start'>
+                <View className='w-6 h-6 bg-primary-500/20 rounded-full justify-center items-center mr-3 mt-0.5'>
+                  <Text className='text-primary-400 font-bold text-xs'>1</Text>
                 </View>
-                <Text className="text-gray-300 flex-1 leading-6">
+                <Text className='text-gray-300 flex-1 leading-6'>
                   Share your wallet address or QR code with the sender
                 </Text>
               </View>
 
-              <View className="flex-row items-start">
-                <View className="w-6 h-6 bg-primary-500/20 rounded-full justify-center items-center mr-3 mt-0.5">
-                  <Text className="text-primary-400 font-bold text-xs">2</Text>
+              <View className='flex-row items-start'>
+                <View className='w-6 h-6 bg-primary-500/20 rounded-full justify-center items-center mr-3 mt-0.5'>
+                  <Text className='text-primary-400 font-bold text-xs'>2</Text>
                 </View>
-                <Text className="text-gray-300 flex-1 leading-6">
+                <Text className='text-gray-300 flex-1 leading-6'>
                   Wait for the transaction to be confirmed on the blockchain
                 </Text>
               </View>
 
-              <View className="flex-row items-start">
-                <View className="w-6 h-6 bg-primary-500/20 rounded-full justify-center items-center mr-3 mt-0.5">
-                  <Text className="text-primary-400 font-bold text-xs">3</Text>
+              <View className='flex-row items-start'>
+                <View className='w-6 h-6 bg-primary-500/20 rounded-full justify-center items-center mr-3 mt-0.5'>
+                  <Text className='text-primary-400 font-bold text-xs'>3</Text>
                 </View>
-                <Text className="text-gray-300 flex-1 leading-6">
+                <Text className='text-gray-300 flex-1 leading-6'>
                   Your balance will be updated automatically
                 </Text>
               </View>
@@ -255,22 +260,22 @@ export default function ReceiveScreen() {
           </View>
 
           {/* Warning */}
-          <View className="bg-warning-500/10 border border-warning-500/20 rounded-2xl p-4 mb-6">
-            <View className="flex-row items-start">
-              <View className="flex-1 ml-3">
-                <Text className="text-warning-400 font-medium mb-1">
+          <View className='bg-warning-500/10 border border-warning-500/20 rounded-2xl p-4 mb-6'>
+            <View className='flex-row items-start'>
+              <View className='flex-1 ml-3'>
+                <Text className='text-warning-400 font-medium mb-1'>
                   ⚠️ Solana Address Only
                 </Text>
-                <Text className="text-sm text-gray-400 leading-5">
+                <Text className='text-sm text-gray-400 leading-5'>
                   This address only accepts SOL and SPL tokens on the Solana
                   network.
                   {'\n\n'}
-                  <Text className="text-warning-400 font-medium">
+                  <Text className='text-warning-400 font-medium'>
                     Never send:
                   </Text>
                   {'\n'}• Bitcoin, Ethereum, or other blockchain tokens{'\n'}•
                   Tokens from exchanges without network verification{'\n\n'}
-                  <Text className="text-red-400 font-medium">
+                  <Text className='text-red-400 font-medium'>
                     Funds sent from incompatible networks will be permanently
                     lost and cannot be recovered.
                   </Text>
@@ -281,5 +286,5 @@ export default function ReceiveScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }

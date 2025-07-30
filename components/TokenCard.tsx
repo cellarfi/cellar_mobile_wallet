@@ -47,7 +47,7 @@ export function TokenCard({
     <TouchableOpacity
       onPress={handlePress}
       className={cn(
-        'bg-dark-200 rounded-2xl p-4 mb-3 active:scale-98',
+        'bg-secondary-light rounded-2xl p-4 mb-3 active:scale-98',
         className
       )}
     >

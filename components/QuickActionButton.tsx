@@ -31,7 +31,7 @@ export function QuickActionButton({
           <Text className='text-white font-medium text-sm'>{title}</Text>
         </LinearGradient>
       ) : (
-        <View className='bg-dark-200 rounded-2xl p-4 items-center gap-2'>
+        <View className='bg-secondary-light rounded-2xl p-4 items-center gap-2'>
           <Ionicons name={icon} size={24} color='#6366f1' />
           <Text className='text-white font-medium text-sm'>{title}</Text>
         </View>

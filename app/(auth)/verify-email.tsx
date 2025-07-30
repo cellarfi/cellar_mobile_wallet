@@ -1,15 +1,19 @@
+import CustomButton from '@/components/ui/CustomButton'
 import { Keys } from '@/constants/App'
+import { Colors } from '@/constants/Colors'
 import { userRequests } from '@/libs/api_requests/user.request'
 import { Ionicons } from '@expo/vector-icons'
 import { useIdentityToken, useLoginWithEmail } from '@privy-io/expo'
 import * as Clipboard from 'expo-clipboard'
-import { LinearGradient } from 'expo-linear-gradient'
 import { router, useLocalSearchParams } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   AppState,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -243,112 +247,125 @@ export default function VerifyEmailScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
-      <LinearGradient
-        colors={['#0a0a0b', '#1a1a1f', '#0a0a0b']}
+    <SafeAreaView className='flex-1 bg-primary-main'>
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View className='flex-1 px-6 py-8'>
-          {/* Header */}
-          <View className='flex-row items-center justify-between mb-12'>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className='p-2 -ml-2'
-            >
-              <Ionicons name='arrow-back' size={24} color='white' />
-            </TouchableOpacity>
-            <Text className='text-lg font-semibold text-white'>
-              Verify Email
-            </Text>
-            <View className='w-8' />
-          </View>
-
-          {/* Icon */}
-          <View className='items-center mb-8'>
-            <View className='w-24 h-24 bg-primary-500/20 rounded-full justify-center items-center mb-6'>
-              <Ionicons name='shield-checkmark' size={48} color='#6366f1' />
-            </View>
-            <Text className='text-2xl font-bold text-white mb-2 text-center'>
-              Verify Your Email
-            </Text>
-            <Text className='text-gray-400 text-center px-4'>
-              We sent a 6-digit verification code to {email}. Please enter it
-              below.
-            </Text>
-          </View>
-
-          {/* OTP Input */}
-          <View className='flex-row justify-center gap-3 mb-8'>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => {
-                  if (ref) inputRefs.current[index] = ref
-                }}
-                className='w-12 h-14 bg-dark-200 border-2 border-dark-400 rounded-xl text-white text-xl font-bold text-center focus:border-primary-500 leading-6'
-                value={digit}
-                onChangeText={(value) => handleTextInput(value, index)}
-                onKeyPress={(e) => handleKeyPress(e, index)}
-                keyboardType='numeric'
-                maxLength={6}
-                selectTextOnFocus
-                autoComplete='one-time-code'
-                textContentType='oneTimeCode'
-                returnKeyType='next'
-                blurOnSubmit={false}
-                autoCorrect={false}
-                autoCapitalize='none'
-                spellCheck={false}
-              />
-            ))}
-          </View>
-
-          {/* Timer and Resend */}
-          <View className='items-center mb-12'>
-            {timer > 0 ? (
-              <Text className='text-gray-400'>Resend code in {timer}s</Text>
-            ) : (
-              <TouchableOpacity onPress={handleResend}>
-                <Text className='text-primary-400 font-medium'>
-                  Resend Code
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Verify Button */}
-          <TouchableOpacity
-            onPress={() => handleVerify()}
-            disabled={isLoading || otp.join('').length !== 6}
-            className='active:scale-95 mb-6'
-          >
-            <LinearGradient
-              colors={
-                otp.join('').length === 6
-                  ? ['#6366f1', '#8b5cf6']
-                  : ['#2d2d35', '#2d2d35']
-              }
-              style={{
-                borderRadius: 16,
-                padding: 16,
-              }}
-            >
-              <Text
-                className={`text-center text-lg font-semibold ${
-                  otp.join('').length === 6 ? 'text-white' : 'text-gray-500'
-                }`}
+        <ScrollView
+          className='flex-1 px-6'
+          showsVerticalScrollIndicator={false}
+        >
+          <View className='flex-1 px-6 py-8'>
+            {/* Header */}
+            <View className='flex-row items-center justify-between mb-12'>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className='p-2 -ml-2'
               >
-                {isLoading ? 'Verifying...' : 'Verify & Continue'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+                <Ionicons
+                  name='chevron-back'
+                  size={24}
+                  color={Colors.dark.secondary}
+                />
+              </TouchableOpacity>
+              <View className='w-8' />
+            </View>
 
-          {/* Help Text */}
-          <Text className='text-gray-500 text-center text-sm'>
-            Did not receive the code? Check your spam folder or try again.
-          </Text>
-        </View>
-      </LinearGradient>
+            {/* Icon */}
+            <View className='items-center mb-8'>
+              <View className='w-24 h-24 bg-primary-500/20 rounded-full justify-center items-center mb-6'>
+                <Ionicons name='shield-checkmark' size={48} color='#6366f1' />
+              </View>
+              <Text className='text-2xl font-bold text-white mb-2 text-center'>
+                Verify Your Email
+              </Text>
+              <Text className='text-gray-400 text-center px-4'>
+                We sent a 6-digit verification code to {email}. Please enter it
+                below.
+              </Text>
+            </View>
+
+            {/* OTP Input */}
+            <View className='flex-row justify-center gap-3 mb-8'>
+              {otp.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => {
+                    if (ref) inputRefs.current[index] = ref
+                  }}
+                  className='w-12 h-14 bg-secondary-light rounded-[8px] text-white text-xl font-bold text-center focus:border-primary-500 leading-6'
+                  value={digit}
+                  onChangeText={(value) => handleTextInput(value, index)}
+                  onKeyPress={(e) => handleKeyPress(e, index)}
+                  keyboardType='numeric'
+                  maxLength={6}
+                  selectTextOnFocus
+                  autoComplete='one-time-code'
+                  textContentType='oneTimeCode'
+                  returnKeyType='next'
+                  blurOnSubmit={false}
+                  autoCorrect={false}
+                  autoCapitalize='none'
+                  spellCheck={false}
+                />
+              ))}
+            </View>
+
+            {/* Timer and Resend */}
+            <View className='items-center mb-12'>
+              {timer > 0 ? (
+                <Text className='text-gray-400'>Resend code in {timer}s</Text>
+              ) : (
+                <TouchableOpacity onPress={handleResend}>
+                  <Text className='text-primary-400 font-medium'>
+                    Resend Code
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Verify Button */}
+            <CustomButton
+              text={isLoading ? 'Verifying...' : 'Verify & Continue'}
+              onPress={() => handleVerify()}
+              disabled={isLoading || otp.join('').length !== 6}
+              className=' mb-6'
+              type='primary'
+            />
+            {/* <TouchableOpacity
+              onPress={() => handleVerify()}
+              disabled={isLoading || otp.join('').length !== 6}
+              className='active:scale-95 mb-6'
+            >
+              <LinearGradient
+                colors={
+                  otp.join('').length === 6
+                    ? ['#6366f1', '#8b5cf6']
+                    : ['#2d2d35', '#2d2d35']
+                }
+                style={{
+                  borderRadius: 16,
+                  padding: 16,
+                }}
+              >
+                <Text
+                  className={`text-center text-lg font-semibold ${
+                    otp.join('').length === 6 ? 'text-white' : 'text-gray-500'
+                  }`}
+                >
+                  {isLoading ? 'Verifying...' : 'Verify & Continue'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity> */}
+
+            {/* Help Text */}
+            <Text className='text-text-light text-center text-sm'>
+              Did not receive the code? Check your spam folder or try again.
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }

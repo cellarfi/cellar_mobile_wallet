@@ -48,6 +48,15 @@ export const PUBLIC_KEYS = {
   ],
 };
 
+export enum SolanaRpcMethod {
+  sol_connect = 'sol_connect',
+  sol_disconnect = 'sol_disconnect',
+  sol_signMessage = 'sol_signMessage',
+  sol_signTransactions = 'sol_signTransactions',
+  sol_signAndSendTransactions = 'sol_signAndSendTransactions',
+}
+
+
 // Mock data
 export const portfolioData = {
   totalBalance: '12,847.32',
