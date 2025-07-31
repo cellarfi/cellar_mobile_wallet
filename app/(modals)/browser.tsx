@@ -211,6 +211,12 @@ export default function BrowserScreen() {
           >
             {tab.url ? (
               <WebView
+                allowsBackForwardNavigationGestures
+                javaScriptEnabled
+                domStorageEnabled
+                startInLoadingState
+                pullToRefreshEnabled
+                setSupportMultipleWindows={false}
                 ref={(ref) => {
                   if (ref) webViewRefs.current[tab.id] = ref
                 }}
@@ -260,11 +266,6 @@ export default function BrowserScreen() {
                   updateTab(tab.id, { isLoading: false, progress: 0 })
                   Alert.alert('Error', 'Failed to load page')
                 }}
-                allowsBackForwardNavigationGestures
-                javaScriptEnabled
-                domStorageEnabled
-                startInLoadingState
-                pullToRefreshEnabled
                 // renderError={(errorName, errorDomain, errorDesc) => (
                 //   <WebViewError
                 //     message={errorDesc || errorName || 'Failed to load page'}
