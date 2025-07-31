@@ -1,6 +1,7 @@
-import { CreateUserDto, UpdateUserDto, User } from "@/types";
-import { apiResponse, httpRequest } from "../api.helpers";
-import { SearchUsers } from "@/types/user.interface";
+import { CreateUserDto, UpdateUserDto, User } from '@/types';
+import { apiResponse, httpRequest } from '../api.helpers';
+import { SearchUsers } from '@/types/user.interface';
+import { sessionInfo } from '@/utils/session.utilis';
 
 export const userRequests = {
   /**
@@ -12,7 +13,7 @@ export const userRequests = {
       const response = await api.get('/users/me');
       return apiResponse<User>(
         true,
-        "User profile fetched successfully",
+        'User profile fetched successfully',
         response.data?.data
       );
     } catch (err: any) {
@@ -22,7 +23,7 @@ export const userRequests = {
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error fetching user profile",
+          'Error fetching user profile',
         undefined
       );
     }
@@ -38,7 +39,7 @@ export const userRequests = {
       const response = await api.post('/users', userData);
       return apiResponse<User>(
         true,
-        "User created successfully",
+        'User created successfully',
         response.data?.data
       );
     } catch (err: any) {
@@ -48,7 +49,7 @@ export const userRequests = {
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error creating user",
+          'Error creating user',
         undefined
       );
     }
@@ -92,7 +93,7 @@ export const userRequests = {
       const response = await api.patch('/users/me', userData);
       return apiResponse<User>(
         true,
-        "User profile updated successfully",
+        'User profile updated successfully',
         response.data?.data
       );
     } catch (err: any) {
@@ -102,7 +103,7 @@ export const userRequests = {
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error updating user profile",
+          'Error updating user profile',
         undefined
       );
     }
@@ -159,7 +160,7 @@ export const userRequests = {
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error deleting user",
+          'Error deleting user',
         null
       );
     }
@@ -182,8 +183,8 @@ export const userRequests = {
       // If user doesn't exist, create new user
       return await userRequests.createUser(userData);
     } catch (err: any) {
-      console.log("Error in check and create user:", err);
-      return apiResponse(false, "Error checking or creating user", null);
+      console.log('Error in check and create user:', err);
+      return apiResponse(false, 'Error checking or creating user', null);
     }
   },
 
@@ -198,17 +199,17 @@ export const userRequests = {
       console.log(response.data.data);
       return apiResponse(
         true,
-        "User profile fetched successfully",
+        'User profile fetched successfully',
         response.data?.data
       );
     } catch (err: any) {
-      console.log("Error getting user:", err?.response?.data?.data);
+      console.log('Error getting user:', err?.response?.data?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error getting user",
+          'Error getting user',
         undefined
       );
     }
@@ -228,20 +229,39 @@ export const userRequests = {
   searchUsers: async (query: string) => {
     try {
       const api = httpRequest();
-      const response = await api.get(`/users/search?query=${encodeURIComponent(query)}`);
+      const response = await api.get(
+        `/users/search?query=${encodeURIComponent(query)}`
+      );
       return apiResponse<SearchUsers>(
         true,
-        "Users found successfully",
+        'Users found successfully',
         response.data?.data
       );
     } catch (err: any) {
-      console.log("Error searching users:", err?.response?.data?.data);
+      console.log('Error searching users:', err?.response?.data?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error searching users",
+          'Error searching users',
+        undefined
+      );
+    }
+  },
+
+  registerSession: async () => {
+    const info = await sessionInfo();
+    try {
+      const api = httpRequest();
+      const response = api.post('/sessions', info);
+    } catch (err: any) {
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error registering session',
         undefined
       );
     }

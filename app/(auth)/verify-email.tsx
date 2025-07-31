@@ -186,6 +186,9 @@ export default function VerifyEmailScreen() {
           console.log('Error getting/storing identity token:', tokenError)
         }
 
+        // Register session
+        await userRequests.registerSession()
+
         // Fetch user profile
         try {
           const profileResponse = await userRequests.getProfile()
