@@ -331,7 +331,7 @@ export function TokenChart({ tokenAddress }: TokenChartProps) {
   return (
     <View className='px-6 mb-6'>
       {/* Integrated Chart Widget */}
-      <View className='bg-dark-200 rounded-2xl overflow-hidden'>
+      <View className='bg-secondary-light rounded-2xl overflow-hidden'>
         {/* Header with timeframes and chart toggle */}
         <View className='flex-row items-center justify-between px-4 py-3 border-b border-dark-300'>
           {/* Timeframes */}
@@ -342,7 +342,7 @@ export function TokenChart({ tokenAddress }: TokenChartProps) {
                 onPress={() => switchTimeFrame(timeFrame.value)}
                 className={`px-3 py-1.5 rounded-md ${index > 0 ? 'ml-1' : ''} ${
                   activeTimeFrame === timeFrame.value
-                    ? 'bg-primary-500'
+                    ? 'bg-primary-main/95'
                     : 'bg-transparent'
                 }`}
               >
@@ -369,12 +369,12 @@ export function TokenChart({ tokenAddress }: TokenChartProps) {
             )}
 
             {/* Chart toggle buttons */}
-            <View className='flex-row bg-dark-300 rounded-lg p-0.5'>
+            <View className='flex-row bg-primary-500/50 rounded-xl p-0.5'>
               <TouchableOpacity
                 onPress={() => switchChartType('candlestick')}
                 className={`px-2 py-1.5 rounded-md ${
                   chartType === 'candlestick'
-                    ? 'bg-primary-500'
+                    ? 'bg-primary-main'
                     : 'bg-transparent'
                 }`}
               >

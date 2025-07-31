@@ -80,7 +80,7 @@ export function PortfolioSummary() {
   if (isLoading && !portfolio) {
     return (
       <LinearGradient
-        colors={['#00C2CB', '#0B6979']}
+        colors={['#122C41', '#122C41']}
         style={{
           borderRadius: 24,
           padding: 24,

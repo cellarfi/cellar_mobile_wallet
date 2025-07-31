@@ -1,11 +1,11 @@
-import { useClipboard } from '@/libs/clipboard';
-import { Transaction } from '@/types/transaction.interface';
-import { Ionicons } from '@expo/vector-icons';
-import { formatWalletAddress } from '@privy-io/expo';
-import * as Haptics from 'expo-haptics';
-import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
-import React from 'react';
+import { useClipboard } from '@/libs/clipboard'
+import { Transaction } from '@/types/transaction.interface'
+import { Ionicons } from '@expo/vector-icons'
+import { formatWalletAddress } from '@privy-io/expo'
+import * as Haptics from 'expo-haptics'
+import * as Linking from 'expo-linking'
+import { router } from 'expo-router'
+import React from 'react'
 import {
   Alert,
   ScrollView,
@@ -13,68 +13,68 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface TransactionDetailsModalProps {
-  transaction: Transaction;
+  transaction: Transaction
 }
 
 export const TransactionDetailsModal: React.FC<
   TransactionDetailsModalProps
 > = ({ transaction }) => {
-  const insets = useSafeAreaInsets();
-  const { copyToClipboard, copiedField, setCopiedField } = useClipboard(null);
+  const insets = useSafeAreaInsets()
+  const { copyToClipboard, copiedField, setCopiedField } = useClipboard(null)
 
   const getStatusColor = () => {
     switch (transaction.status) {
       case 'completed':
-        return '#22c55e';
+        return '#22c55e'
       case 'pending':
-        return '#eab308';
+        return '#eab308'
       case 'failed':
-        return '#ef4444';
+        return '#ef4444'
       default:
-        return '#ffffff';
+        return '#ffffff'
     }
-  };
+  }
 
   const getIconName = () => {
     switch (transaction.type) {
       case 'send':
-        return 'arrow-up';
+        return 'arrow-up'
       case 'receive':
-        return 'arrow-down';
+        return 'arrow-down'
       case 'swap':
-        return 'swap-horizontal';
+        return 'swap-horizontal'
       case 'buy':
-        return 'add-circle-outline';
+        return 'add-circle-outline'
       case 'sell':
-        return 'remove-circle-outline';
+        return 'remove-circle-outline'
       default:
-        return 'time-outline';
+        return 'time-outline'
     }
-  };
+  }
 
   const getIconColor = () => {
     switch (transaction.type) {
       case 'send':
-        return '#ef4444';
+        return '#ef4444'
       case 'receive':
-        return '#22c55e';
+        return '#22c55e'
       case 'swap':
-        return '#6366f1';
+        return '#6366f1'
       case 'buy':
-        return '#22c55e';
+        return '#22c55e'
       case 'sell':
-        return '#ef4444';
+        return '#ef4444'
       default:
-        return '#ffffff';
+        return '#ffffff'
     }
-  };
+  }
 
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+    const date = new Date(timestamp)
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -83,20 +83,20 @@ export const TransactionDetailsModal: React.FC<
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-    });
-  };
+    })
+  }
 
   const formatTransactionType = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  };
+    return type.charAt(0).toUpperCase() + type.slice(1)
+  }
 
   const getAmountPrefix = () => {
     return transaction.type === 'receive' || transaction.type === 'buy'
       ? '+'
       : transaction.type === 'send' || transaction.type === 'sell'
         ? '-'
-        : '';
-  };
+        : ''
+  }
 
   // Format the amount with full precision for the details view
   const formatPreciseAmount = (amount: number) => {
@@ -104,37 +104,37 @@ export const TransactionDetailsModal: React.FC<
     return amount.toLocaleString('en-US', {
       maximumFractionDigits: 9,
       minimumFractionDigits: transaction.symbol === 'SOL' ? 9 : 2,
-    });
-  };
+    })
+  }
 
   // Copy to clipboard with animation and haptic feedback
   const handleCopy = async (text: string, field: string) => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setCopiedField(field);
-    await copyToClipboard(text);
-  };
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    setCopiedField(field)
+    await copyToClipboard(text)
+  }
 
   // Open transaction in Solana Explorer
   const openInExplorer = async () => {
     try {
-      const explorerUrl = `https://solscan.io/tx/${transaction.id}`;
-      const canOpen = await Linking.canOpenURL(explorerUrl);
+      const explorerUrl = `https://solscan.io/tx/${transaction.id}`
+      const canOpen = await Linking.canOpenURL(explorerUrl)
 
       if (canOpen) {
-        await Linking.openURL(explorerUrl);
+        await Linking.openURL(explorerUrl)
       } else {
-        Alert.alert('Error', 'Cannot open explorer link');
+        Alert.alert('Error', 'Cannot open explorer link')
       }
     } catch (error) {
-      console.error('Failed to open explorer:', error);
-      Alert.alert('Error', 'Failed to open in explorer');
+      console.error('Failed to open explorer:', error)
+      Alert.alert('Error', 'Failed to open in explorer')
     }
-  };
+  }
 
   // Share transaction details
   const shareTransaction = async () => {
     try {
-      const explorerUrl = `https://solscan.io/tx/${transaction.id}`;
+      const explorerUrl = `https://solscan.io/tx/${transaction.id}`
       const shareContent = {
         title: 'Transaction Details',
         message:
@@ -143,63 +143,63 @@ export const TransactionDetailsModal: React.FC<
           `Status: ${transaction.status}\n` +
           `Date: ${formatDate(transaction.timestamp)}\n` +
           `View on Solscan: ${explorerUrl}`,
-      };
+      }
 
-      await Share.share(shareContent);
+      await Share.share(shareContent)
     } catch (error) {
-      console.error('Failed to share transaction:', error);
-      Alert.alert('Error', 'Failed to share transaction');
+      console.error('Failed to share transaction:', error)
+      Alert.alert('Error', 'Failed to share transaction')
     }
-  };
+  }
 
   return (
     <View
-      className="flex-1 bg-dark-50"
+      className='flex-1 bg-primary-main'
       style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
     >
       {/* Header */}
-      <View className="flex-row items-center justify-between px-6 py-4">
+      <View className='flex-row items-center justify-between px-6 py-4'>
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 bg-dark-200 rounded-full justify-center items-center"
+          className='w-10 h-10 rounded-full justify-center items-center'
         >
-          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+          <Ionicons name='arrow-back' size={20} color='#ffffff' />
         </TouchableOpacity>
-        <Text className="text-white text-xl font-bold">
+        <Text className='text-white text-xl font-bold'>
           Transaction Details
         </Text>
-        <View className="w-10" />
+        <View className='w-10' />
       </View>
 
-      <ScrollView className="flex-1 px-6">
+      <ScrollView className='flex-1 px-6'>
         {/* Status Card */}
-        <View className="bg-dark-200 rounded-2xl p-6 mb-6 items-center">
+        <View className='bg-secondary-light rounded-2xl p-6 mb-6 items-center'>
           <View
-            className="w-16 h-16 rounded-full justify-center items-center mb-4"
+            className='w-16 h-16 rounded-full justify-center items-center mb-4'
             style={{ backgroundColor: `${getIconColor()}20` }}
           >
             {transaction.logoURI ? (
-              <View className="w-12 h-12 rounded-full bg-dark-200 items-center justify-center">
-                <Ionicons name="wallet-outline" size={24} color="#9CA3AF" />
+              <View className='w-12 h-12 rounded-full bg-dark-200 items-center justify-center'>
+                <Ionicons name='wallet-outline' size={24} color='#9CA3AF' />
               </View>
             ) : (
               <Ionicons name={getIconName()} size={32} color={getIconColor()} />
             )}
           </View>
 
-          <Text className="text-white text-2xl font-bold">
+          <Text className='text-white text-2xl font-bold'>
             {getAmountPrefix()}
             {formatPreciseAmount(transaction.amount)}{' '}
             {transaction.symbol.split('/')[0]}
           </Text>
 
-          <View className="flex-row items-center mt-2">
+          <View className='flex-row items-center mt-2'>
             <View
-              className="w-2 h-2 rounded-full mr-2"
+              className='w-2 h-2 rounded-full mr-2'
               style={{ backgroundColor: getStatusColor() }}
             />
             <Text
-              className="text-base font-medium"
+              className='text-base font-medium'
               style={{ color: getStatusColor() }}
             >
               {transaction.status.charAt(0).toUpperCase() +
@@ -207,31 +207,31 @@ export const TransactionDetailsModal: React.FC<
             </Text>
           </View>
 
-          <Text className="text-gray-400 mt-2">
+          <Text className='text-gray-400 mt-2'>
             {formatDate(transaction.timestamp)}
           </Text>
         </View>
 
         {/* Transaction Info */}
-        <View className="bg-dark-200 rounded-2xl p-6 mb-6">
-          <Text className="text-white text-lg font-semibold mb-4">
+        <View className='bg-secondary-light rounded-2xl p-6 mb-6'>
+          <Text className='text-white text-lg font-semibold mb-4'>
             Transaction Info
           </Text>
 
-          <View className="flex-row justify-between py-3 border-b border-dark-300">
-            <Text className="text-gray-400">Type</Text>
-            <Text className="text-white font-medium">
+          <View className='flex-row justify-between py-3 border-b border-dark-300'>
+            <Text className='text-gray-400'>Type</Text>
+            <Text className='text-white font-medium'>
               {formatTransactionType(transaction.type)}
             </Text>
           </View>
 
-          <View className="flex-row justify-between py-3 border-b border-dark-300">
-            <Text className="text-gray-400">Asset</Text>
-            <Text className="text-white font-medium">{transaction.symbol}</Text>
+          <View className='flex-row justify-between py-3 border-b border-dark-300'>
+            <Text className='text-gray-400'>Asset</Text>
+            <Text className='text-white font-medium'>{transaction.symbol}</Text>
           </View>
 
-          <View className="flex-row justify-between py-3 border-b border-dark-300">
-            <Text className="text-gray-400">Amount</Text>
+          <View className='flex-row justify-between py-3 border-b border-dark-300'>
+            <Text className='text-gray-400'>Amount</Text>
             <Text
               className={`font-medium ${
                 transaction.type === 'receive' || transaction.type === 'buy'
@@ -247,19 +247,19 @@ export const TransactionDetailsModal: React.FC<
           </View>
 
           {transaction.fee !== undefined && (
-            <View className="flex-row justify-between py-3 border-b border-dark-300">
-              <Text className="text-gray-400">Network Fee</Text>
-              <Text className="text-white font-medium">
+            <View className='flex-row justify-between py-3 border-b border-dark-300'>
+              <Text className='text-gray-400'>Network Fee</Text>
+              <Text className='text-white font-medium'>
                 {transaction.fee} SOL
               </Text>
             </View>
           )}
 
-          <View className="flex-row justify-between py-3 border-b border-dark-300">
-            <Text className="text-gray-400">Date</Text>
-            <View className="flex-1 max-w-[70%] flex-row justify-end">
+          <View className='flex-row justify-between py-3 border-b border-dark-300'>
+            <Text className='text-gray-400'>Date</Text>
+            <View className='flex-1 max-w-[70%] flex-row justify-end'>
               <Text
-                className="text-white font-medium text-right"
+                className='text-white font-medium text-right'
                 numberOfLines={3}
               >
                 {formatDate(transaction.timestamp)}
@@ -267,20 +267,20 @@ export const TransactionDetailsModal: React.FC<
             </View>
           </View>
 
-          <View className="flex-row justify-between items-center py-3 border-b border-dark-300">
-            <Text className="text-gray-400">Transaction ID</Text>
-            <View className="flex-row items-center">
-              <Text className="text-white font-medium">
+          <View className='flex-row justify-between items-center py-3 border-b border-dark-300'>
+            <Text className='text-gray-400'>Transaction ID</Text>
+            <View className='flex-row items-center'>
+              <Text className='text-white font-medium'>
                 {formatWalletAddress(transaction.id)}
               </Text>
               <TouchableOpacity
-                className="ml-2 p-2"
+                className='ml-2 p-2'
                 onPress={() => handleCopy(transaction.id, 'txid')}
               >
                 <Ionicons
                   name={copiedField === 'txid' ? 'checkmark' : 'copy-outline'}
                   size={18}
-                  color="#6366f1"
+                  color='#6366f1'
                 />
               </TouchableOpacity>
             </View>
@@ -289,17 +289,17 @@ export const TransactionDetailsModal: React.FC<
 
         {/* Address Info */}
         {(transaction.recipientAddress || transaction.senderAddress) && (
-          <View className="bg-dark-200 rounded-2xl p-6 mb-6">
-            <Text className="text-white text-lg font-semibold mb-4">
+          <View className='bg-secondary-light rounded-2xl p-6 mb-6'>
+            <Text className='text-white text-lg font-semibold mb-4'>
               Address Details
             </Text>
 
             {transaction.senderAddress && (
-              <View className="mb-4">
-                <Text className="text-gray-400 mb-1">From</Text>
-                <View className="flex-row items-center">
+              <View className='mb-4'>
+                <Text className='text-gray-400 mb-1'>From</Text>
+                <View className='flex-row items-center'>
                   <Text
-                    className="text-white font-medium flex-1"
+                    className='text-white font-medium flex-1'
                     numberOfLines={1}
                   >
                     {transaction.senderAddress
@@ -307,7 +307,7 @@ export const TransactionDetailsModal: React.FC<
                       : ''}
                   </Text>
                   <TouchableOpacity
-                    className="ml-2 p-2"
+                    className='ml-2 p-2'
                     onPress={() =>
                       transaction.senderAddress &&
                       handleCopy(transaction.senderAddress, 'sender')
@@ -320,7 +320,7 @@ export const TransactionDetailsModal: React.FC<
                           : 'copy-outline'
                       }
                       size={18}
-                      color="#6366f1"
+                      color='#6366f1'
                     />
                   </TouchableOpacity>
                 </View>
@@ -329,10 +329,10 @@ export const TransactionDetailsModal: React.FC<
 
             {transaction.recipientAddress && (
               <View>
-                <Text className="text-gray-400 mb-1">To</Text>
-                <View className="flex-row items-center">
+                <Text className='text-gray-400 mb-1'>To</Text>
+                <View className='flex-row items-center'>
                   <Text
-                    className="text-white font-medium flex-1"
+                    className='text-white font-medium flex-1'
                     numberOfLines={1}
                   >
                     {transaction.recipientAddress
@@ -340,7 +340,7 @@ export const TransactionDetailsModal: React.FC<
                       : ''}
                   </Text>
                   <TouchableOpacity
-                    className="ml-2 p-2"
+                    className='ml-2 p-2'
                     onPress={() =>
                       transaction.recipientAddress &&
                       copyToClipboard(transaction.recipientAddress, {
@@ -355,7 +355,7 @@ export const TransactionDetailsModal: React.FC<
                           : 'copy-outline'
                       }
                       size={18}
-                      color="#6366f1"
+                      color='#6366f1'
                     />
                   </TouchableOpacity>
                 </View>
@@ -365,26 +365,26 @@ export const TransactionDetailsModal: React.FC<
         )}
 
         {/* Action Buttons */}
-        <View className="flex-row gap-4 mb-6">
+        <View className='flex-row gap-4 mb-6'>
           <TouchableOpacity
-            className="flex-1 bg-dark-200 rounded-xl p-4 items-center justify-center"
+            className='flex-1 bg-secondary-light rounded-xl p-4 items-center justify-center'
             onPress={openInExplorer}
           >
-            <Ionicons name="open-outline" size={20} color="#6366f1" />
-            <Text className="text-white font-medium mt-1">
+            <Ionicons name='open-outline' size={20} color='#6366f1' />
+            <Text className='text-white font-medium mt-1'>
               View in Explorer
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-1 bg-dark-200 rounded-xl p-4 items-center justify-center"
+            className='flex-1 bg-secondary-light rounded-xl p-4 items-center justify-center'
             onPress={shareTransaction}
           >
-            <Ionicons name="share-social-outline" size={20} color="#6366f1" />
-            <Text className="text-white font-medium mt-1">Share</Text>
+            <Ionicons name='share-social-outline' size={20} color='#6366f1' />
+            <Text className='text-white font-medium mt-1'>Share</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
-  );
-};
+  )
+}
