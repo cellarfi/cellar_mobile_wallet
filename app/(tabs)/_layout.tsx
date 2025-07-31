@@ -19,7 +19,8 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           // backgroundColor: '#1E1E1E',
-          backgroundColor: Colors.dark.secondaryLight,
+          // backgroundColor: Colors.dark.secondaryLight,
+          backgroundColor: '#0c1424',
           // borderTopColor: '#2d2d35',
           borderTopColor: Colors.dark.secondary,
           borderTopWidth: 0,

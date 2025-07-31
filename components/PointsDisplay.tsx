@@ -1,24 +1,24 @@
-import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { usePoints } from '@/hooks/usePoints';
-import AnimatedCounter from '@/components/AnimatedCounter';
+import AnimatedCounter from '@/components/AnimatedCounter'
+import { usePoints } from '@/hooks/usePoints'
+import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
+import React from 'react'
+import { Text, TouchableOpacity, View } from 'react-native'
 
 interface PointsDisplayProps {
-  size?: 'small' | 'medium' | 'large';
-  showLabel?: boolean;
+  size?: 'small' | 'medium' | 'large'
+  showLabel?: boolean
 }
 
-const PointsDisplay: React.FC<PointsDisplayProps> = ({ 
-  size = 'medium', 
-  showLabel = true 
+const PointsDisplay: React.FC<PointsDisplayProps> = ({
+  size = 'medium',
+  showLabel = true,
 }) => {
-  const { userPoints, isLoading } = usePoints();
+  const { userPoints, isLoading } = usePoints()
 
   const handlePress = () => {
-    router.push('/points-history');
-  };
+    router.push('/points-history')
+  }
 
   // Size configurations
   const sizeConfig = {
@@ -40,23 +40,25 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
       text: 'text-lg',
       counter: { fontSize: 18, fontWeight: 'bold' as const },
     },
-  };
+  }
 
-  const config = sizeConfig[size];
+  const config = sizeConfig[size]
 
   if (isLoading) {
     return (
-      <View className={`bg-green-500/10 rounded-full flex-row items-center ${config.container}`}>
-        <Ionicons name="leaf" size={config.icon} color="#10b981" />
+      <View
+        className={`bg-green-500/10 rounded-full flex-row items-center ${config.container}`}
+      >
+        <Ionicons name='leaf' size={config.icon} color='#10b981' />
         <Text className={`text-green-400 font-medium ml-1 ${config.text}`}>
           ...
         </Text>
       </View>
-    );
+    )
   }
 
   if (!userPoints) {
-    return null;
+    return null
   }
 
   return (
@@ -65,10 +67,10 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
       className={`bg-green-500/10 rounded-full flex-row items-center ${config.container} active:bg-green-500/20`}
       activeOpacity={0.7}
     >
-      <Ionicons name="leaf" size={config.icon} color="#10b981" />
-      <View className="ml-1">
+      <Ionicons name='leaf' size={config.icon} color='#10b981' />
+      <View className='ml-1'>
         {showLabel ? (
-          <View className="items-center">
+          <View className='items-center'>
             <AnimatedCounter
               value={userPoints.balance}
               style={{
@@ -77,7 +79,7 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
                 fontWeight: config.counter.fontWeight,
               }}
             />
-            <Text className="text-green-400 text-xs font-medium -mt-1">
+            <Text className='text-green-400 text-xs font-medium -mt-1'>
               Points
             </Text>
           </View>
@@ -93,7 +95,7 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         )}
       </View>
     </TouchableOpacity>
-  );
-};
+  )
+}
 
-export default PointsDisplay;
+export default PointsDisplay

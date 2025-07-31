@@ -87,12 +87,12 @@ export default function LoginScreen() {
             </View>
 
             {/* Welcome */}
-            <View className='mt-10 mb-8'>
+            <View className='mt-10 mb-10'>
               <Text className='text-[24px] font-bold text-white mb-2'>
                 Sign in
               </Text>
               <Text className='text-[14px] text-[#ABA7B5]'>
-                Login in to your account to continue trading
+                Login into your account to continue trading
               </Text>
             </View>
 
