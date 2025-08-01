@@ -1,7 +1,16 @@
+import { useAuth } from '@/hooks/useAuth';
+import { userRequests } from '@/libs/api_requests/user.request';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SecurityItemProps {
@@ -13,6 +22,7 @@ interface SecurityItemProps {
   onSwitchChange?: (value: boolean) => void;
   onPress?: () => void;
   isDanger?: boolean;
+  rightContent?: React.ReactNode;
 }
 
 const SecurityItem = ({
@@ -24,6 +34,7 @@ const SecurityItem = ({
   onSwitchChange = () => {},
   onPress,
   isDanger = false,
+  rightContent,
 }: SecurityItemProps) => (
   <TouchableOpacity
     className="flex-row items-center justify-between py-3 border-b border-dark-200"
@@ -49,7 +60,9 @@ const SecurityItem = ({
         <Text className="text-gray-400 text-xs mt-0.5">{description}</Text>
       </View>
     </View>
-    {hasSwitch ? (
+    {rightContent ? (
+      rightContent
+    ) : hasSwitch ? (
       <Switch
         value={switchValue}
         onValueChange={onSwitchChange}
@@ -63,10 +76,12 @@ const SecurityItem = ({
 );
 
 export default function SecuritySettingsModal() {
+  const { logout } = useAuth();
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [autoLockEnabled, setAutoLockEnabled] = useState(true);
   const [autoLockTime, setAutoLockTime] = useState('1 minute');
   const [showAutoLockOptions, setShowAutoLockOptions] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAutoLockPress = () => {
     setShowAutoLockOptions(!showAutoLockOptions);
@@ -75,6 +90,62 @@ export default function SecuritySettingsModal() {
   const handleAutoLockTimeSelect = (time: string) => {
     setAutoLockTime(time);
     setShowAutoLockOptions(false);
+  };
+
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action is irreversible and will permanently delete all your data, including your wallet, transactions, and personal information.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => {},
+        },
+        {
+          text: isDeleting ? 'Deleting...' : 'Delete',
+          style: 'destructive',
+          onPress: deleteAccount,
+        },
+      ]
+    );
+  };
+
+  const deleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await userRequests.deleteAccount();
+      if (response.success) {
+        // Show success message
+        Alert.alert('Success!', 'Your account has been deleted successfully.', [
+          {
+            text: 'Continue',
+            onPress: () => {
+              logout()
+                .then(() => {
+                  router.replace('/login');
+                })
+                .catch(() => {
+                  router.replace('/login'); // Still redirect user to auth page even if Privy logout fails for some reason
+                });
+            },
+          },
+        ]);
+      } else {
+        Alert.alert(
+          'Error',
+          response.message || 'Failed to delete account. Please try again.'
+        );
+      }
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      Alert.alert(
+        'Error',
+        error?.message || 'An unexpected error occurred. Please try again.'
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -199,13 +270,27 @@ export default function SecuritySettingsModal() {
             isDanger
             onPress={() => {}}
           />
-          <SecurityItem
-            icon="trash-outline"
-            title="Delete Account"
-            description="Permanently delete your account and all data"
-            isDanger
-            onPress={() => {}}
-          />
+          <View className="opacity-100">
+            <SecurityItem
+              icon="trash-outline"
+              title="Delete Account"
+              description="Permanently delete your account and all data"
+              isDanger
+              onPress={isDeleting ? undefined : handleDeleteAccountPress}
+              rightContent={
+                isDeleting && (
+                  <View className="ml-2">
+                    <Ionicons
+                      name="reload"
+                      size={20}
+                      color="#ef4444"
+                      className="animate-spin"
+                    />
+                  </View>
+                )
+              }
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
