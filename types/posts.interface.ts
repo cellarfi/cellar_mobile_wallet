@@ -92,6 +92,7 @@ export interface Post {
   id: string;
   content: string;
   user_id: string;
+  media?: string[];
   post_type: PostType;
   created_at: string;
   updated_at: string;
@@ -116,7 +117,7 @@ export interface Post {
       tag_name: string;
       display_name: string;
       profile_picture_url: string | null;
-    }
+    };
   }[];
   _count: {
     comment: number;

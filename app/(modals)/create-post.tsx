@@ -87,7 +87,11 @@ export default function CreatePostScreen() {
     setPostError(null);
     setFieldErrors({});
     // Build payload and validate
-    let payload: any = { content: form.content, post_type: form.postType };
+    let payload: any = {
+      content: form.content,
+      post_type: form.postType,
+      media: form.mediaUrls,
+    };
     let schema: z.ZodTypeAny = regularSchema;
     if (form.postType === 'DONATION') {
       payload = {

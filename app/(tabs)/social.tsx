@@ -636,9 +636,9 @@ export default function SocialScreen() {
       />
 
       {data.length === 0 ? (
-        <View className="flex-1">
+        <View className="px-6 flex-1">
           {renderListHeader()}
-          <View className="flex-1 justify-center items-center px-6">
+          <View className="flex-1 justify-center items-center">
             <Text className="text-white">{emptyMessage}</Text>
           </View>
         </View>
