@@ -9,6 +9,7 @@ import { useRefetchContext } from '@/contexts/RefreshProvider'
 import { useAddress } from '@/hooks/useAddress'
 import { useDebouncedCallback } from '@/hooks/useDebounce'
 import { usePortfolio } from '@/hooks/usePortfolio'
+import { analyticsRequest } from '@/libs/api_requests/analytics.request'
 import { donationRequest } from '@/libs/api_requests/donation.request'
 import { userRequests } from '@/libs/api_requests/user.request'
 import {
@@ -710,6 +711,15 @@ export default function SendScreen() {
       if (donation === 'true') {
         await createDonation()
       }
+
+      // Create Transaction Record
+      await analyticsRequest.createTransaction({
+        amount: amount,
+        type: donation ? 'DONATION' : 'TRANSFER',
+        token_address: selectedToken.address,
+        token_name: selectedToken.name ?? '',
+        tx_hash: result.signature,
+      })
 
       setShowLoadingModal(false)
       setShowSuccessModal(true)
