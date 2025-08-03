@@ -149,7 +149,7 @@ export default function FindPostsModal() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50">
+    <SafeAreaView className="flex-1 bg-primary-main">
       {/* Header */}
       <View className="flex-row items-center justify-between px-6 py-4">
         <TouchableOpacity
@@ -169,7 +169,7 @@ export default function FindPostsModal() {
           <TextInput
             className="flex-1 ml-2 text-white"
             placeholder={`Search ${
-              searchType === "USERS" ? "users" : "posts"
+              searchType === 'USERS' ? 'users' : 'posts'
             }...`}
             placeholderTextColor="#888"
             value={searchQuery}
@@ -191,17 +191,17 @@ export default function FindPostsModal() {
         onRequestClose={() => setShowFilter(false)}
       >
         <TouchableOpacity
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
           activeOpacity={1}
           onPress={() => setShowFilter(false)}
         >
           <View
             style={{
-              position: "absolute",
+              position: 'absolute',
               top: 100,
               left: 30,
               right: 30,
-              backgroundColor: "#23272f",
+              backgroundColor: '#23272f',
               borderRadius: 16,
               padding: 20,
             }}
@@ -213,7 +213,7 @@ export default function FindPostsModal() {
               <TouchableOpacity
                 key={opt.value}
                 className={`py-2 px-3 rounded-lg mb-1 ${
-                  searchType === opt.value ? "bg-primary-500" : "bg-dark-200"
+                  searchType === opt.value ? 'bg-primary-500' : 'bg-dark-200'
                 }`}
                 onPress={() => {
                   setSearchType(opt.value as any);
@@ -222,7 +222,7 @@ export default function FindPostsModal() {
               >
                 <Text
                   className={`text-white ${
-                    searchType === opt.value ? "font-bold" : "font-normal"
+                    searchType === opt.value ? 'font-bold' : 'font-normal'
                   }`}
                 >
                   {opt.label}
@@ -244,7 +244,7 @@ export default function FindPostsModal() {
           className="px-6"
           data={results}
           keyExtractor={(item) => item.id}
-          renderItem={searchType === "USERS" ? renderUser : renderPost}
+          renderItem={searchType === 'USERS' ? renderUser : renderPost}
           ListEmptyComponent={
             <Text className="text-gray-400 text-center mt-10">
               No results yet. Try searching!

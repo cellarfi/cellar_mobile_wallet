@@ -1,15 +1,16 @@
-import React, { useState, useRef } from "react";
+import { Colors } from '@/constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useRef, useState } from 'react';
 import {
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
   Animated,
   Easing,
   Modal,
   Platform,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const MAX_LENGTH = 280;
 
@@ -20,7 +21,7 @@ export default function CommentInputCard({
   expanded: expandedProp = false,
   onExpand,
   quotedComment,
-  postLabel = "Post",
+  postLabel = 'Post',
 }: {
   onPost: (text: string) => void;
   onCancel?: () => void;
@@ -33,7 +34,7 @@ export default function CommentInputCard({
   };
   postLabel?: string;
 }) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const [expanded, setExpanded] = useState(expandedProp);
   const [showModal, setShowModal] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -71,7 +72,7 @@ export default function CommentInputCard({
   const handlePost = () => {
     if (text.trim().length > 0 && !loading) {
       onPost(text.trim());
-      setText("");
+      setText('');
       setShowModal(false);
       setExpanded(false);
     }
@@ -100,23 +101,23 @@ export default function CommentInputCard({
             }),
           },
         ],
-        backgroundColor: "#23272f",
+        backgroundColor: '#23272f',
         borderRadius: 16,
         padding: 16,
         marginTop: 10,
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOpacity: 0.08,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 2 },
       }}
     >
       {quotedBlock}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextInput
           ref={inputRef}
           style={{
             flex: 1,
-            color: "#fff",
+            color: '#fff',
             fontSize: 16,
             minHeight: expanded ? 80 : 40,
             maxHeight: 120,
@@ -132,7 +133,7 @@ export default function CommentInputCard({
         />
         <TouchableOpacity onPress={handleExpand} style={{ marginLeft: 8 }}>
           <Ionicons
-            name={expanded ? "chevron-down" : "expand-outline"}
+            name={expanded ? 'chevron-down' : 'expand-outline'}
             size={20}
             color="#6366f1"
           />
@@ -140,21 +141,21 @@ export default function CommentInputCard({
       </View>
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
+          flexDirection: 'row',
+          alignItems: 'center',
           marginTop: 8,
-          justifyContent: "space-between",
+          justifyContent: 'space-between',
         }}
       >
         <Text
           style={{
-            color: text.length > MAX_LENGTH - 20 ? "#fbbf24" : "#94a3b8",
+            color: text.length > MAX_LENGTH - 20 ? '#fbbf24' : '#94a3b8',
             fontSize: 13,
           }}
         >
           {text.length}/{MAX_LENGTH}
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {onCancel && (
             <TouchableOpacity
               onPress={onCancel}
@@ -165,7 +166,7 @@ export default function CommentInputCard({
               }}
               disabled={loading}
             >
-              <Text style={{ color: "#94a3b8", fontWeight: "bold" }}>
+              <Text style={{ color: '#94a3b8', fontWeight: 'bold' }}>
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -175,15 +176,15 @@ export default function CommentInputCard({
             disabled={text.trim().length === 0 || loading}
             style={{
               backgroundColor:
-                text.trim().length === 0 || loading ? "#334155" : "#6366f1",
+                text.trim().length === 0 || loading ? '#334155' : '#6366f1',
               borderRadius: 8,
               paddingVertical: 8,
               paddingHorizontal: 20,
               opacity: text.trim().length === 0 || loading ? 0.7 : 1,
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>
-              {loading ? postLabel + "..." : postLabel}
+            <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+              {loading ? postLabel + '...' : postLabel}
             </Text>
           </TouchableOpacity>
         </View>
@@ -202,15 +203,15 @@ export default function CommentInputCard({
       <View
         style={{
           flex: 1,
-          backgroundColor: "#18181b",
-          paddingTop: Platform.OS === "android" ? 32 : 60,
+          backgroundColor: Colors.dark.secondaryLight,
+          paddingTop: Platform.OS === 'android' ? 32 : 60,
           paddingHorizontal: 20,
         }}
       >
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            flexDirection: 'row',
+            alignItems: 'center',
             marginBottom: 16,
           }}
         >
@@ -220,7 +221,7 @@ export default function CommentInputCard({
           >
             <Ionicons name="close" size={28} color="#fff" />
           </TouchableOpacity>
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 18 }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>
             Post your reply
           </Text>
         </View>
@@ -228,15 +229,15 @@ export default function CommentInputCard({
         <TextInput
           ref={inputRef}
           style={{
-            color: "#fff",
+            color: '#fff',
             fontSize: 18,
             minHeight: 120,
             maxHeight: 300,
-            backgroundColor: "#23272f",
+            backgroundColor: '#23272f',
             borderRadius: 12,
             padding: 16,
             marginBottom: 16,
-            textAlignVertical: "top",
+            textAlignVertical: 'top',
           }}
           placeholder="What's happening?"
           placeholderTextColor="#888"
@@ -248,14 +249,14 @@ export default function CommentInputCard({
         />
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <Text
             style={{
-              color: text.length > MAX_LENGTH - 20 ? "#fbbf24" : "#94a3b8",
+              color: text.length > MAX_LENGTH - 20 ? '#fbbf24' : '#94a3b8',
               fontSize: 15,
             }}
           >
@@ -266,15 +267,15 @@ export default function CommentInputCard({
             disabled={text.trim().length === 0 || loading}
             style={{
               backgroundColor:
-                text.trim().length === 0 || loading ? "#334155" : "#6366f1",
+                text.trim().length === 0 || loading ? '#334155' : '#6366f1',
               borderRadius: 8,
               paddingVertical: 12,
               paddingHorizontal: 32,
               opacity: text.trim().length === 0 || loading ? 0.7 : 1,
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
-              {loading ? postLabel + "..." : postLabel}
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              {loading ? postLabel + '...' : postLabel}
             </Text>
           </TouchableOpacity>
         </View>

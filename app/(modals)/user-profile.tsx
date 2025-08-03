@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { followsRequests } from '@/libs/api_requests/follows.request';
+import { userRequests } from '@/libs/api_requests/user.request';
+import { UserProfile } from '@/types/user.interface';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
+  ActivityIndicator,
   FlatList,
   Image,
   ScrollView,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import { UserProfile } from "@/types/user.interface";
-import { userRequests } from "@/libs/api_requests/user.request";
-import { followsRequests } from "@/libs/api_requests/follows.request";
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const DUMMY_BIO = "Building the future of finance on Solana blockchain.";
+const DUMMY_BIO = 'Building the future of finance on Solana blockchain.';
 
 export default function UserProfileModal() {
   const { tagName } = useLocalSearchParams();
@@ -34,10 +34,10 @@ export default function UserProfileModal() {
           setProfile(res.data);
           setIsFollowing(res.data.isFollowing);
         } else {
-          setError(res.message || "Failed to fetch user profile");
+          setError(res.message || 'Failed to fetch user profile');
         }
       } catch (err: any) {
-        setError(err?.message || "Failed to fetch user profile");
+        setError(err?.message || 'Failed to fetch user profile');
       } finally {
         setLoading(false);
       }
@@ -51,20 +51,18 @@ export default function UserProfileModal() {
       if (res.success) {
         setIsFollowing(!!isFollowing);
       } else {
-        alert("Couldn't not follow");
+        alert('Failed to follow');
       }
     } catch (error) {
-      alert("An error occured while performining this request");
+      alert('An error occured while performining this request');
     }
-
-    // Here you would call the follow/unfollow API
   };
 
   const user = profile?.user;
   const posts = profile?.user.post || [];
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50 px-6">
+    <SafeAreaView className="flex-1 bg-primary-main px-6">
       <ScrollView showsVerticalScrollIndicator={false}>
         <TouchableOpacity
           className="absolute top-4 right-4 z-10"
@@ -94,7 +92,7 @@ export default function UserProfileModal() {
                   />
                 ) : (
                   <Text className="text-3xl text-white">
-                    {user.display_name?.[0]?.toUpperCase() ?? "?"}
+                    {user.display_name?.[0]?.toUpperCase() ?? '?'}
                   </Text>
                 )}
               </View>
@@ -116,24 +114,24 @@ export default function UserProfileModal() {
                 <Text className="text-gray-400 text-sm">
                   <Text className="text-white font-semibold">
                     {user._count.followers.toLocaleString()}
-                  </Text>{" "}
+                  </Text>{' '}
                   Followers
                 </Text>
                 <Text className="text-gray-400 text-sm">
                   <Text className="text-white font-semibold">
                     {user._count.following.toLocaleString()}
-                  </Text>{" "}
+                  </Text>{' '}
                   Following
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => handleFollow(user.id)}
                 className={`px-6 py-2 rounded-xl ${
-                  isFollowing ? "bg-gray-600" : "bg-primary-500"
+                  isFollowing ? 'bg-gray-600' : 'bg-secondary'
                 }`}
               >
                 <Text className="text-white text-base font-medium">
-                  {isFollowing ? "Following" : "Follow"}
+                  {isFollowing ? 'Following' : 'Follow'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -157,10 +155,10 @@ export default function UserProfileModal() {
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <TouchableOpacity
-                    className="bg-dark-200 rounded-2xl p-4 mb-3"
+                    className="bg-secondary-light rounded-2xl p-4 mb-3"
                     onPress={() =>
                       router.push({
-                        pathname: "/(modals)/post-details",
+                        pathname: '/(modals)/post-details',
                         params: { postId: item.id },
                       })
                     }
@@ -180,25 +178,25 @@ export default function UserProfileModal() {
                           const diffInMinutes = Math.floor(diffInSeconds / 60);
                           if (diffInMinutes < 60) {
                             return `${diffInMinutes} minute${
-                              diffInMinutes > 1 ? "s" : ""
+                              diffInMinutes > 1 ? 's' : ''
                             } ago`;
                           }
                           const diffInHours = Math.floor(diffInMinutes / 60);
                           if (diffInHours < 24) {
                             return `${diffInHours} hour${
-                              diffInHours > 1 ? "s" : ""
+                              diffInHours > 1 ? 's' : ''
                             } ago`;
                           }
                           const diffInDays = Math.floor(diffInHours / 24);
                           if (diffInDays < 7) {
                             return `${diffInDays} day${
-                              diffInDays > 1 ? "s" : ""
+                              diffInDays > 1 ? 's' : ''
                             } ago`;
                           }
                           const diffInWeeks = Math.floor(diffInDays / 7);
                           if (diffInWeeks < 4) {
                             return `${diffInWeeks} week${
-                              diffInWeeks > 1 ? "s" : ""
+                              diffInWeeks > 1 ? 's' : ''
                             } ago`;
                           }
                           return date.toLocaleDateString();

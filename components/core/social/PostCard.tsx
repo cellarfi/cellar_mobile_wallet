@@ -449,6 +449,10 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
     </View>
   )
 
+  const handleReply = (commentId: string) => {};
+
+  const handleLike = (commentId: string) => {};
+
   // Handle posting a comment (backend integration)
   const handlePostComment = async (text: string) => {
     if (!profile) return
@@ -581,8 +585,10 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
         <CommentThread
           comments={comments}
           postId={post.id}
-          //currentUserId={profile?.id}
-          //onDelete={handleDeleteComment}
+          currentUserId={profile?.id}
+          onDelete={handleDeleteComment}
+          onReply={handleReply}
+          onLike={handleLike}
         />
       )}
       {error && (
@@ -592,26 +598,26 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
       )}
 
       {/* Edit Post Modal */}
-      <Modal visible={editing} animationType='slide' transparent>
-        <View className='flex-1 justify-center items-center bg-black/60'>
-          <View className='bg-primary-main rounded-2xl p-6 w-11/12'>
-            <Text className='text-white text-lg font-bold mb-2'>Edit Post</Text>
+      <Modal visible={editing} animationType="slide" transparent>
+        <View className="flex-1 justify-center items-center bg-black/60">
+          <View className="bg-primary-main rounded-2xl p-6 w-11/12">
+            <Text className="text-white text-lg font-bold mb-2">Edit Post</Text>
             <TextInput
-              className='bg-secondary-light text-white rounded-xl p-3 mb-4 min-h-[80px]'
+              className="bg-secondary-light text-white rounded-xl p-3 mb-4 min-h-[80px]"
               multiline
               value={editContent}
               onChangeText={setEditContent}
             />
-            <View className='flex-row justify-end gap-x-3'>
+            <View className="flex-row justify-end gap-x-3">
               <Button
-                title='Cancel'
+                title="Cancel"
                 onPress={() => setEditing(false)}
-                color='#64748b'
+                color="#64748b"
               />
               <Button
-                title='Save'
+                title="Save"
                 onPress={() => {
-                  editPostContent()
+                  editPostContent();
                 }}
                 color={Colors.dark.secondary}
               />
@@ -620,7 +626,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
         </View>
       </Modal>
     </TouchableOpacity>
-  )
+  );
 }
 
 export default PostCard

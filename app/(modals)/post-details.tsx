@@ -34,7 +34,7 @@ const Card = ({
   className?: string;
 }) => (
   <View
-    className={`bg-dark-200 rounded-2xl p-5 mb-4 shadow-md border border-dark-300 ${className}`}
+    className={`bg-secondary-light rounded-2xl p-5 mb-4 shadow-md border border-dark-300 ${className}`}
     style={{
       shadowColor: '#000',
       shadowOpacity: 0.08,
@@ -812,14 +812,14 @@ const PostDetailsModal = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50">
+    <SafeAreaView className="flex-1 bg-primary-main">
       <View
-        className="flex-row items-center justify-between px-6 py-4 bg-dark-50 z-10"
+        className="flex-row items-center justify-between px-6 py-4 bg-primary-main z-10"
         style={{ position: 'sticky', top: 0 }}
       >
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 bg-dark-200 rounded-full justify-center items-center"
+          className="w-10 h-10 bg-primary-main rounded-full justify-center items-center"
         >
           <Ionicons name="arrow-back" size={20} color="white" />
         </TouchableOpacity>
@@ -858,7 +858,7 @@ const PostDetailsModal = () => {
         <View style={{ marginTop: 10 }}>
           {!showCommentInput ? (
             <TouchableOpacity
-              className="bg-dark-200 rounded-xl px-4 py-3 border border-dark-300 flex-row items-center"
+              className="bg-secondary-light rounded-xl px-4 py-3 border border-dark-300 flex-row items-center"
               activeOpacity={0.85}
               onPress={handleShowCommentInput}
             >
