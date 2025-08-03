@@ -49,11 +49,6 @@ export default function UserProfileModal() {
     try {
       const res = await followsRequests.followUser(String(userId));
       if (res.success) {
-        if (isFollowing) {
-          alert("Unfollowed");
-        } else {
-          alert("Followed");
-        }
         setIsFollowing(!!isFollowing);
       } else {
         alert("Couldn't not follow");

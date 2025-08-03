@@ -644,22 +644,23 @@ export default function SocialScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
+    <SafeAreaView className="flex-1 bg-primary-main" edges={['top']}>
       <Header
-        title='Social'
+        title="Social"
         onSearch={() => router.push('/(modals)/find-posts')}
       />
 
       {data.length === 0 ? (
-        <View className='flex-1'>
+        <View className="flex-1">
           {renderListHeader()}
-          <View className='flex-1 justify-center items-center px-6'>
-            <Text className='text-white'>{emptyMessage}</Text>
+          <View className="flex-1 justify-center items-center px-6">
+            <Text className="text-white">{emptyMessage}</Text>
           </View>
         </View>
       ) : (
         <FlatList
           data={data}
+          className="px-6 mb-4"
           renderItem={renderPostItem}
           keyExtractor={(item) => item.id.toString()}
           ListHeaderComponent={renderListHeader}
@@ -671,7 +672,7 @@ export default function SocialScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor='#6366f1'
+              tintColor="#6366f1"
             />
           }
           removeClippedSubviews={true}
@@ -681,5 +682,5 @@ export default function SocialScreen() {
         />
       )}
     </SafeAreaView>
-  )
+  );
 }

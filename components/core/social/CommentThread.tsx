@@ -1,28 +1,34 @@
-import React, { useState } from "react";
+import { commentsRequests } from '@/libs/api_requests/comments.request';
+import { useAuthStore } from '@/store/authStore';
+import { Comment } from '@/types/comment.interface';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
   ActionSheetIOS,
-  Platform,
-  Modal,
-  TextInput,
   Button,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import CommentInputCard from "./CommentInputCard";
-import { commentsRequests } from "@/libs/api_requests/comments.request";
-import { useLocalSearchParams, router } from "expo-router";
-import { Comment } from "@/types/comment.interface";
-import { useAuthStore } from "@/store/authStore";
+  Image,
+  Modal,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import CommentInputCard from './CommentInputCard';
 
 export default function CommentThread({
   comments: initialComments,
+  onDelete,
+  onReply,
+  onLike,
   postId,
   currentUserId,
 }: {
   comments: Comment[];
+  onDelete: (commentId: string, parentId: string) => void;
+  onReply: (commentId: string, text: string) => void;
+  onLike: (commentId: string) => void;
   postId: string;
   currentUserId?: string;
 }) {
@@ -33,10 +39,10 @@ export default function CommentThread({
   );
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [editingComment, setEditingComment] = useState<Comment | null>(null);
-  const [editContent, setEditContent] = useState("");
+  const [editContent, setEditContent] = useState('');
   const [replyLoading, setReplyLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const {profile} = useAuthStore();
+  const { profile } = useAuthStore();
 
   // Optimistic like/unlike for comments
   const handleLikeComment = async (commentId: string) => {
@@ -104,10 +110,10 @@ export default function CommentThread({
             )
           );
         } else {
-          setError("An error occurred while commenting.");
+          setError('An error occurred while commenting.');
         }
       } catch (error) {
-        setError("An error occurred while commenting.");
+        setError('An error occurred while commenting.');
       } finally {
         setReplyTo(null);
         setReplyLoading(false);
@@ -141,10 +147,10 @@ export default function CommentThread({
         }
         setComments((prev) => prev.filter((c) => c.id !== commentId));
       } else {
-        setError(res.message || "Failed to delete comment");
+        setError(res.message || 'Failed to delete comment');
       }
     } catch (e) {
-      setError("Failed to delete comment");
+      setError('Failed to delete comment');
     }
   };
 
@@ -165,28 +171,28 @@ export default function CommentThread({
           )
         );
         setEditingComment(null);
-        setEditContent("");
+        setEditContent('');
       } else {
-        setError(res.message || "Failed to update comment");
+        setError(res.message || 'Failed to update comment');
       }
     } catch (e) {
-      setError("Failed to update comment");
+      setError('Failed to update comment');
     } finally {
       setEditingComment(null);
-      setEditContent("");
+      setEditContent('');
     }
-  }
+  };
 
   const handleMenu = (comment: Comment) => {
     const isOwner =
       currentUserId &&
       (comment.user_id === currentUserId || comment.user?.id === currentUserId);
-    if (Platform.OS === "ios") {
-      const options = ["Cancel"];
+    if (Platform.OS === 'ios') {
+      const options = ['Cancel'];
       const destructiveIndex: number[] = [];
       if (isOwner) {
-        options.push("Edit");
-        options.push("Delete");
+        options.push('Edit');
+        options.push('Delete');
         destructiveIndex.push(options.length - 1);
       }
       ActionSheetIOS.showActionSheetWithOptions(
@@ -196,10 +202,10 @@ export default function CommentThread({
           destructiveButtonIndex: destructiveIndex[0],
         },
         (buttonIndex) => {
-          if (isOwner && buttonIndex === options.indexOf("Edit")) {
+          if (isOwner && buttonIndex === options.indexOf('Edit')) {
             setEditingComment(comment);
             setEditContent(comment.content);
-          } else if (isOwner && buttonIndex === options.indexOf("Delete")) {
+          } else if (isOwner && buttonIndex === options.indexOf('Delete')) {
             handleDelete(comment.id, comment.parentId);
           }
         }
@@ -233,8 +239,11 @@ export default function CommentThread({
             activeOpacity={0.85}
             onPress={() =>
               router.push({
-                pathname: "/(modals)/comment-thread",
-                params: { commentId: comment.id , currentUserTagName: profile?.tag_name},
+                pathname: '/(modals)/comment-thread',
+                params: {
+                  commentId: comment.id,
+                  currentUserTagName: profile?.tag_name,
+                },
               })
             }
           >
@@ -246,7 +255,7 @@ export default function CommentThread({
             ) : (
               <View className="w-9 h-9 rounded-full mr-3 bg-dark-300 justify-center items-center">
                 <Text className="text-white text-base font-semibold">
-                  {comment.user?.display_name?.[0]?.toUpperCase() ?? "?"}
+                  {comment.user?.display_name?.[0]?.toUpperCase() ?? '?'}
                 </Text>
               </View>
             )}
@@ -259,14 +268,13 @@ export default function CommentThread({
                   @{comment.user?.tag_name}
                 </Text>
                 <Text className="text-gray-500 text-xs ml-3">
-                  {comment.updated_at && comment.updated_at !== comment.created_at ? (
+                  {comment.updated_at &&
+                  comment.updated_at !== comment.created_at ? (
                     <>
                       Edited at {new Date(comment.updated_at).toLocaleString()}
                     </>
                   ) : (
-                    <>
-                      {new Date(comment.created_at).toLocaleString()}
-                    </>
+                    <>{new Date(comment.created_at).toLocaleString()}</>
                   )}
                 </Text>
                 {/* 3-dots menu */}
@@ -294,9 +302,9 @@ export default function CommentThread({
                   activeOpacity={0.7}
                 >
                   <Ionicons
-                    name={comment.like?.status ? "heart" : "heart-outline"}
+                    name={comment.like?.status ? 'heart' : 'heart-outline'}
                     size={18}
-                    color={comment.like?.status ? "#ef4444" : "#475569"}
+                    color={comment.like?.status ? '#ef4444' : '#475569'}
                   />
                   <Text className="text-gray-400 text-xs ml-1">
                     {comment.like?.count ?? comment._count?.CommentLike ?? 0}
@@ -336,8 +344,8 @@ export default function CommentThread({
                     loading={replyLoading}
                     quotedComment={{
                       user: {
-                        display_name: comment.user?.display_name || "",
-                        tag_name: comment.user?.tag_name || "",
+                        display_name: comment.user?.display_name || '',
+                        tag_name: comment.user?.tag_name || '',
                       },
                       text: comment.content,
                     }}
@@ -371,13 +379,19 @@ export default function CommentThread({
                 onPress={() => setEditingComment(null)}
                 color="#64748b"
               />
-              <Button title="Save" onPress={() => {handleEditComment()}} color="#6366f1" />
+              <Button
+                title="Save"
+                onPress={() => {
+                  handleEditComment();
+                }}
+                color="#6366f1"
+              />
             </View>
           </View>
         </View>
       </Modal>
       {/* Android modal for delete */}
-      {Platform.OS !== "ios" && showModal && (
+      {Platform.OS !== 'ios' && showModal && (
         <Modal
           visible={showModal}
           transparent
