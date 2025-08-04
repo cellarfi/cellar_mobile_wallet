@@ -176,7 +176,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
 
         if (success && data) {
           uploadedMediaUrls.push(
-            ...data.map((item: { url: string }) => item.url)
+            ...data.map((item: { data: { url: string } }) => item.data.url)
           );
         } else {
           throw new Error(message || 'Failed to upload files');
@@ -199,11 +199,8 @@ const PostComposer: React.FC<PostComposerProps> = ({
         mediaUrls = await uploadMedia();
       }
 
-      // Update form with the uploaded media URLs
-      onFieldChange('media', mediaUrls);
-
       // Submit the form
-      onSubmit();
+      onSubmit(mediaUrls);
     } catch (error) {
       console.error('Error uploading media:', error);
       Alert.alert(
@@ -211,7 +208,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
         'Failed to upload one or more media files. Please try again.'
       );
     }
-  }, [loading, uploading, mediaItems, uploadMedia, onFieldChange, onSubmit]);
+  }, [loading, uploading, mediaItems, uploadMedia, onSubmit]);
 
   const updateTokenAddress = (address: string) => {
     if (form.postType === 'DONATION') {

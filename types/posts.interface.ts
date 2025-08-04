@@ -28,7 +28,7 @@ export interface PostComposerProps {
   form: PostComposerForm;
   onFieldChange: (field: string, value: any) => void;
   onTypeChange: (type: PostType) => void;
-  onSubmit: () => void;
+  onSubmit: (media: string[]) => void;
   loading: boolean;
   error?: string | null;
   fieldErrors?: Record<string, string>;

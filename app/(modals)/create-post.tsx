@@ -4,7 +4,7 @@ import { isValidSolanaAddress } from '@/libs/solana.lib';
 import { PostType } from '@/types/posts.interface';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -84,14 +84,14 @@ export default function CreatePostScreen() {
     setForm((prev) => ({ ...prev, postType: type }));
   };
 
-  const handleCreatePost = async () => {
+  const handleCreatePost = async (media: string[]) => {
     setPostError(null);
     setFieldErrors({});
     // Build payload and validate
     let payload: any = {
       content: form.content,
       post_type: form.postType,
-      media: form.media,
+      media: media || form.media,
     };
     let schema: z.ZodTypeAny = regularSchema;
     if (form.postType === 'DONATION') {
