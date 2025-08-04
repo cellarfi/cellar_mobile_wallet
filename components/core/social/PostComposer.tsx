@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import EmojiPicker from '../EmojiPicker';
 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
@@ -56,6 +57,9 @@ const PostComposer: React.FC<PostComposerProps> = ({
 
   const [mediaItems, setMediaItems] = React.useState<MediaItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const textInputRef = useRef<TextInput>(null);
+  const [cursorPosition, setCursorPosition] = useState(0);
 
   const addMediaItems = useCallback((items: MediaItem[]) => {
     setMediaItems((prev) => {
@@ -221,6 +225,27 @@ const PostComposer: React.FC<PostComposerProps> = ({
     setisNotValidTokenAddress(!check);
   };
 
+  const handleEmojiSelect = useCallback(
+    (emoji: string) => {
+      const newText =
+        form.content.slice(0, cursorPosition) +
+        emoji +
+        form.content.slice(cursorPosition);
+      onFieldChange('content', newText);
+      setShowEmojiPicker(false);
+      // Move cursor after the inserted emoji
+      setTimeout(() => {
+        textInputRef.current?.setNativeProps({
+          selection: {
+            start: cursorPosition + emoji.length,
+            end: cursorPosition + emoji.length,
+          },
+        });
+      }, 0);
+    },
+    [form.content, cursorPosition, onFieldChange]
+  );
+
   const renderMediaPreview = useCallback(() => {
     if (mediaItems.length === 0)
       return (
@@ -365,12 +390,17 @@ const PostComposer: React.FC<PostComposerProps> = ({
       {/* Content Field */}
       <View className="relative mb-2">
         <TextInput
+          ref={textInputRef}
           className="bg-secondary-light text-white rounded-xl px-4 py-3"
           placeholder="What's on your mind?"
           placeholderTextColor="#888"
           multiline
           value={form.content}
           onChangeText={(text) => onFieldChange('content', text)}
+          onSelectionChange={({ nativeEvent: { selection } }) => {
+            // Keep track of cursor position for emoji insertion
+            setCursorPosition(selection.start);
+          }}
           style={{
             minHeight: 120,
             borderWidth: fieldErrors?.content ? 1 : 0,
@@ -383,25 +413,43 @@ const PostComposer: React.FC<PostComposerProps> = ({
           <Text className="text-red-500 mb-2">{fieldErrors.content}</Text>
         )}
 
-        <View className="absolute bottom-2 right-2">
-          <Text className="text-gray-400">{form.content.length}/1000</Text>
-        </View>
-        {/* Attach Media Button */}
-        <TouchableOpacity
-          onPress={handleMediaPick}
-          className="absolute bottom-2 left-2 rounded-full"
-          disabled={mediaItems.length >= MAX_ATTACHMENTS}
-        >
-          <Ionicons
-            name="attach"
-            size={24}
-            color={
-              mediaItems.length >= MAX_ATTACHMENTS
-                ? Colors.dark.text + '80'
-                : Colors.dark.text
-            }
+        <View className="gap-1 flex-row absolute bottom-2 right-2 left-2 items-center">
+          {/* Emoji Picker */}
+          <EmojiPicker
+            visible={showEmojiPicker}
+            onSelect={handleEmojiSelect}
+            onClose={() => setShowEmojiPicker(false)}
           />
-        </TouchableOpacity>
+
+          {/* Attach Media Button */}
+          <TouchableOpacity
+            onPress={() => setShowEmojiPicker(true)}
+            className="p-1"
+            disabled={loading}
+          >
+            <Ionicons name="happy-outline" size={24} color={Colors.dark.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleMediaPick}
+            className="p-1"
+            disabled={mediaItems.length >= MAX_ATTACHMENTS}
+          >
+            <Ionicons
+              name="attach"
+              size={24}
+              color={
+                mediaItems.length >= MAX_ATTACHMENTS
+                  ? Colors.dark.text + '80'
+                  : Colors.dark.text
+              }
+            />
+          </TouchableOpacity>
+
+          {/* Character Counter */}
+          <View className="ml-auto">
+            <Text className="text-gray-400">{form.content.length}/1000</Text>
+          </View>
+        </View>
       </View>
       {/* Donation Fields */}
       {form.postType === 'DONATION' && (
