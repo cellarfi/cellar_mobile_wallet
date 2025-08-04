@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import EmojiPicker from '../EmojiPicker';
+import GifPicker from './GifPicker';
 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
@@ -58,8 +59,9 @@ const PostComposer: React.FC<PostComposerProps> = ({
   const [mediaItems, setMediaItems] = React.useState<MediaItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const textInputRef = useRef<TextInput>(null);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const textInputRef = useRef<TextInput>(null);
 
   const addMediaItems = useCallback((items: MediaItem[]) => {
     setMediaItems((prev) => {
@@ -70,6 +72,18 @@ const PostComposer: React.FC<PostComposerProps> = ({
       return [...prev, ...newItems];
     });
   }, []);
+
+  const handleGifSelect = useCallback(
+    (gifUrl: string) => {
+      const newMediaItem: MediaItem = {
+        uri: gifUrl,
+        type: 'gif',
+      };
+      addMediaItems([newMediaItem]);
+      setShowGifPicker(false);
+    },
+    [addMediaItems]
+  );
 
   const handleMediaPick = useCallback(async () => {
     if (mediaItems.length >= MAX_ATTACHMENTS) {
@@ -413,15 +427,8 @@ const PostComposer: React.FC<PostComposerProps> = ({
           <Text className="text-red-500 mb-2">{fieldErrors.content}</Text>
         )}
 
-        <View className="gap-1 flex-row absolute bottom-2 right-2 left-2 items-center">
-          {/* Emoji Picker */}
-          <EmojiPicker
-            visible={showEmojiPicker}
-            onSelect={handleEmojiSelect}
-            onClose={() => setShowEmojiPicker(false)}
-          />
-
-          {/* Attach Media Button */}
+        <View className="flex-row absolute bottom-2 right-2 left-2 items-center">
+          {/* Emoji Button */}
           <TouchableOpacity
             onPress={() => setShowEmojiPicker(true)}
             className="p-1"
@@ -429,6 +436,25 @@ const PostComposer: React.FC<PostComposerProps> = ({
           >
             <Ionicons name="happy-outline" size={24} color={Colors.dark.text} />
           </TouchableOpacity>
+
+          {/* GIF Button */}
+          <TouchableOpacity
+            onPress={() => setShowGifPicker(true)}
+            className="p-1"
+            disabled={loading || mediaItems.length >= MAX_ATTACHMENTS}
+          >
+            <Ionicons
+              name="gift-outline"
+              size={24}
+              color={
+                mediaItems.length >= MAX_ATTACHMENTS
+                  ? Colors.dark.text + '80'
+                  : Colors.dark.text
+              }
+            />
+          </TouchableOpacity>
+
+          {/* Attach Media Button */}
           <TouchableOpacity
             onPress={handleMediaPick}
             className="p-1"
@@ -735,6 +761,20 @@ const PostComposer: React.FC<PostComposerProps> = ({
 
       {/* Error message */}
       {error && <Text className="text-red-500 mt-2 text-center">{error}</Text>}
+
+      {/* Emoji Picker */}
+      <EmojiPicker
+        visible={showEmojiPicker}
+        onSelect={handleEmojiSelect}
+        onClose={() => setShowEmojiPicker(false)}
+      />
+
+      {/* GIF Picker */}
+      <GifPicker
+        visible={showGifPicker}
+        onSelect={handleGifSelect}
+        onClose={() => setShowGifPicker(false)}
+      />
     </View>
   );
 };
