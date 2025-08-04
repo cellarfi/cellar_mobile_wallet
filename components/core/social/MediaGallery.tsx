@@ -2,15 +2,8 @@ import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { ResizeMode, Video } from 'expo-av';
 import { Image } from 'expo-image';
-import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAP = 4;
 const MAX_IMAGES = 4;
 const MAX_VIDEOS = 1; // For now, we'll only show one video at a time
@@ -37,17 +30,119 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const remainingCount = media.length - displayMedia.length;
 
   const getGridStyle = (index: number, total: number) => {
-    if (total === 1) return styles.singleItem;
-    if (total === 2) return styles.twoItems;
-    if (total === 3)
-      return index === 0 ? styles.threeItemsFirst : styles.threeItemsRest;
-    if (total >= 4) {
-      if (index === 0) return styles.fourItemsFirst;
-      if (index === 1) return styles.fourItemsSecond;
-      if (index === 2) return styles.fourItemsThird;
-      return styles.fourItemsFourth;
+    switch (total) {
+      case 1:
+        return styles.singleItem;
+
+      case 2:
+        return styles.twoItems;
+
+      case 3:
+        if (index === 0) return styles.threeItemsFirst;
+        return styles.threeItemsRest;
+
+      case 4:
+        return styles.fourItems;
+
+      case 5:
+        if (index === 0) return styles.fiveItemsFirst;
+        if (index === 1 || index === 2) return styles.fiveItemsSecond;
+        return styles.fiveItemsThird;
+
+      default:
+        return styles.singleItem;
     }
-    return styles.singleItem;
+  };
+
+  const renderMediaGrid = () => {
+    const totalItems = Math.min(displayMedia.length, maxItems);
+
+    if (totalItems === 3) {
+      return (
+        <>
+          {/* First item - full width */}
+          {renderMediaItem(0, styles.threeItemsFirst)}
+          {/* Bottom row - two items side by side */}
+          <View style={styles.bottomRow}>
+            {renderMediaItem(1, styles.threeItemsRest)}
+            {renderMediaItem(2, styles.threeItemsRest)}
+          </View>
+        </>
+      );
+    }
+
+    if (totalItems === 5) {
+      return (
+        <>
+          {/* First item - full width */}
+          {renderMediaItem(0, styles.fiveItemsFirst)}
+          {/* Second row - two items side by side */}
+          <View style={styles.bottomRow}>
+            {renderMediaItem(1, styles.fiveItemsSecond)}
+            {renderMediaItem(2, styles.fiveItemsSecond)}
+          </View>
+          {/* Third row - two items side by side */}
+          <View style={styles.bottomRow}>
+            {renderMediaItem(3, styles.fiveItemsThird)}
+            {renderMediaItem(4, styles.fiveItemsThird)}
+          </View>
+        </>
+      );
+    }
+
+    // Default grid layout for 1, 2, 4 items
+    return displayMedia.map((uri, index) =>
+      renderMediaItem(index, getGridStyle(index, totalItems))
+    );
+  };
+
+  const renderMediaItem = (index: number, style: any) => {
+    if (index >= displayMedia.length) return null;
+
+    const uri = displayMedia[index];
+    const isVideo = uri.endsWith('.mp4') || uri.endsWith('.mov');
+
+    return (
+      <TouchableOpacity
+        key={uri}
+        style={[styles.mediaContainer, style]}
+        onPress={() => handleMediaPress(uri)}
+        activeOpacity={0.8}
+      >
+        {isVideo ? (
+          <>
+            <Video
+              source={{ uri }}
+              style={styles.media}
+              resizeMode={ResizeMode.CONTAIN}
+              useNativeControls={false}
+              isLooping
+              shouldPlay={false}
+            />
+            <View style={styles.videoOverlay}>
+              <Ionicons
+                name="play-circle"
+                size={40}
+                color="rgba(255,255,255,0.9)"
+              />
+            </View>
+          </>
+        ) : (
+          <Image
+            source={{ uri }}
+            style={styles.media}
+            contentFit="cover"
+            transition={300}
+          />
+        )}
+
+        {index === displayMedia.length - 1 && remainingCount > 0 && (
+          <View style={styles.remainingOverlay}>
+            <Text style={styles.remainingText}>+{remainingCount}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
   };
 
   const handleMediaPress = (uri: string) => {
@@ -57,58 +152,19 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   if (!media.length) return null;
 
+  const totalItems = Math.min(displayMedia.length, maxItems);
+
   return (
     <View style={styles.container}>
-      <View style={styles.grid}>
-        {displayMedia.map((uri, index) => {
-          const isVideo = uri.endsWith('.mp4') || uri.endsWith('.mov');
-          const gridStyle = getGridStyle(
-            index,
-            Math.min(displayMedia.length, 4)
-          );
-
-          return (
-            <TouchableOpacity
-              key={uri}
-              style={[styles.mediaContainer, gridStyle]}
-              onPress={() => handleMediaPress(uri)}
-              activeOpacity={0.8}
-            >
-              {isVideo ? (
-                <>
-                  <Video
-                    source={{ uri }}
-                    style={styles.media}
-                    resizeMode={ResizeMode.CONTAIN}
-                    useNativeControls={false}
-                    isLooping
-                    shouldPlay={false}
-                  />
-                  <View style={styles.videoOverlay}>
-                    <Ionicons
-                      name="play-circle"
-                      size={40}
-                      color="rgba(255,255,255,0.9)"
-                    />
-                  </View>
-                </>
-              ) : (
-                <Image
-                  source={{ uri }}
-                  style={styles.media}
-                  contentFit="cover"
-                  transition={300}
-                />
-              )}
-
-              {index === displayMedia.length - 1 && remainingCount > 0 && (
-                <View style={styles.remainingOverlay}>
-                  <Text style={styles.remainingText}>+{remainingCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+      <View
+        style={[
+          styles.grid,
+          totalItems === 3 || totalItems === 5
+            ? styles.columnContainer
+            : styles.rowContainer,
+        ]}
+      >
+        {renderMediaGrid()}
       </View>
     </View>
   );
@@ -121,15 +177,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   grid: {
+    margin: -GAP / 2,
+  },
+  rowContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    margin: -GAP / 2,
+  },
+  columnContainer: {
+    flexDirection: 'column',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: GAP,
+    marginTop: GAP / 2,
   },
   mediaContainer: {
     backgroundColor: Colors.dark.background,
     position: 'relative',
     overflow: 'hidden',
     margin: GAP / 2,
+    borderRadius: 8,
   },
   media: {
     width: '100%',
@@ -152,37 +220,48 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 24,
   },
-  // Grid layout styles
+
+  // Single item - full width
   singleItem: {
-    width: '100%',
-    aspectRatio: 1,
+    width: `${100 - GAP}%`,
+    aspectRatio: 4 / 3,
   },
+
+  // Two items - side by side
   twoItems: {
-    width: '49.5%',
+    width: `${50 - GAP}%`,
     aspectRatio: 1,
   },
+
+  // Three items layout
   threeItemsFirst: {
-    width: '100%',
+    width: `${100 - GAP}%`,
     height: 200,
+    marginBottom: GAP / 2,
   },
   threeItemsRest: {
-    width: '49.5%',
+    width: `${50 - GAP * 0.75}%`,
+    height: 120,
+  },
+
+  // Four items - 2x2 grid
+  fourItems: {
+    width: `${50 - GAP}%`,
+    aspectRatio: 1,
+  },
+
+  // Five items layout
+  fiveItemsFirst: {
+    width: `${100 - GAP}%`,
+    height: 180,
+    marginBottom: GAP,
+  },
+  fiveItemsSecond: {
+    width: `${50 - GAP * 0.75}%`,
     height: 100,
   },
-  fourItemsFirst: {
-    width: '100%',
-    height: 200,
-  },
-  fourItemsSecond: {
-    width: '66%',
-    height: 100,
-  },
-  fourItemsThird: {
-    width: '32%',
-    height: 100,
-  },
-  fourItemsFourth: {
-    width: '32%',
+  fiveItemsThird: {
+    width: `${50 - GAP * 0.75}%`,
     height: 100,
   },
 });

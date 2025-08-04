@@ -18,6 +18,7 @@ import {
 } from 'react-native'
 import CommentInputCard from './CommentInputCard'
 import CommentThread from './CommentThread'
+import MediaGallery from './MediaGallery';
 
 function formatAmount(amount: string | null) {
   if (!amount) return '0'
@@ -339,6 +340,11 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
     contentBlock = (
       <View style={{ marginBottom: 8 }}>
         <Text style={{ color: '#e5e7eb', fontSize: 16 }}>{post.content}</Text>
+        {post.media && post.media.length > 0 && (
+          <View style={{ marginTop: 8 }}>
+            <MediaGallery media={post.media} />
+          </View>
+        )}
       </View>
     );
   } else if (post.post_type === 'DONATION' && post.funding_meta) {
@@ -354,28 +360,27 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
         <Text style={{ color: '#e5e7eb', fontSize: 16, marginBottom: 4 }}>
           {post.content}
         </Text>
-        <DonationProgressBar
-          current={post.funding_meta.current_amount}
-          target={post.funding_meta.target_amount}
-        />
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}
-        >
-          <Ionicons name="wallet-outline" size={16} color="#475569" />
-          <Text style={{ color: '#94a3b8', fontSize: 13, marginLeft: 6 }}>
-            {post.funding_meta.token_symbol || 'Token'} on{' '}
-            {post.funding_meta.chain_type}
-          </Text>
-          {post.funding_meta.deadline && (
-            <Text style={{ color: '#94a3b8', fontSize: 13, marginLeft: 12 }}>
-              Ends: {new Date(post.funding_meta.deadline).toLocaleDateString()}
-            </Text>
-          )}
-        </View>
+        {post.media && post.media.length > 0 && (
+          <View style={{ marginVertical: 8 }}>
+            <MediaGallery media={post.media} />
+          </View>
+        )}
+        <Text style={{ color: '#e5e7eb', fontWeight: 'bold', fontSize: 13 }}>
+          Target: {formatAmount(post.funding_meta.target_amount)}
+        </Text>
       </View>
     );
   } else if (post.post_type === 'TOKEN_CALL' && post.token_meta) {
-    contentBlock = <TokenCallCard token_meta={post.token_meta} />;
+    contentBlock = (
+      <View>
+        <TokenCallCard token_meta={post.token_meta} />
+        {post.media && post.media.length > 0 && (
+          <View style={{ marginTop: 8 }}>
+            <MediaGallery media={post.media} />
+          </View>
+        )}
+      </View>
+    );
   }
 
   // Engagement row (likes, comments, share)

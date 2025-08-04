@@ -4,7 +4,7 @@ import { isValidSolanaAddress } from '@/libs/solana.lib';
 import { PostType } from '@/types/posts.interface';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
