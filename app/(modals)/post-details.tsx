@@ -6,6 +6,7 @@ import { PostsRequests } from '@/libs/api_requests/posts.request';
 import { formatAddress, formatNumber } from '@/libs/string.helpers';
 import { useAuthStore } from '@/store/authStore';
 import { Comment as ThreadComment } from '@/types/comment.interface';
+import MediaGallery from '@/components/core/social/MediaGallery';
 import { Post } from '@/types/posts.interface';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -564,6 +565,11 @@ const PostDetailsModal = () => {
         <Text className="text-white text-base leading-relaxed mb-1">
           {post.content}
         </Text>
+        {post.media?.length ? (
+          <View className="mt-3">
+            <MediaGallery media={post.media} maxItems={4} />
+          </View>
+        ) : null}
       </Card>
     );
   } else if (post.post_type === 'DONATION' && post.funding_meta) {
@@ -574,6 +580,11 @@ const PostDetailsModal = () => {
         <Text className="text-white text-base leading-relaxed mb-2">
           {post.content}
         </Text>
+        {post.media?.length ? (
+          <View className="mt-3">
+            <MediaGallery media={post.media} maxItems={4} />
+          </View>
+        ) : null}
         <DonationProgressBar
           current={post.funding_meta.current_amount}
           target={post.funding_meta.target_amount}
@@ -667,6 +678,11 @@ const PostDetailsModal = () => {
         <Text className="text-white text-base leading-relaxed mb-1">
           {post.content}
         </Text>
+        {post.media?.length ? (
+          <View className="mt-3">
+            <MediaGallery media={post.media} maxItems={4} />
+          </View>
+        ) : null}
         {post.token_meta.description && (
           <Text className="text-gray-200 text-xs mb-1">
             {post.token_meta.description}

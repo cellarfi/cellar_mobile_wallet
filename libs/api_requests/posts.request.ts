@@ -1,59 +1,61 @@
-import { apiResponse, httpRequest } from "../api.helpers";
-import { Posts, Post } from "@/types/posts.interface";
+import { Post } from '@/types/posts.interface';
+import { apiResponse, httpRequest } from '../api.helpers';
 
 export const PostsRequests = {
   createPost: async (payload: any) => {
     try {
       const api = httpRequest();
       const response = await api.post(`/posts`, payload);
-      return apiResponse(true, "Post created", response.data.data);
+      return apiResponse(true, 'Post created', response.data.data);
     } catch (err: any) {
-      console.log("Error creating post:", err?.response?.data);
+      console.log('Error creating post:', err?.response?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error while creating post",
+          'Error while creating post',
         err
       );
     }
   },
 
-  updatePost: async (payload: {id: string, content: string}) => {
-      try {
-        const api = httpRequest();
-        const response = await api.patch(`/posts`, payload);
-        return apiResponse(true, "Post updated", response.data.data);
-      } catch (err: any) {
-        return apiResponse(
-          false,
-          err?.response?.data?.error ||
-            err?.response?.data?.message ||
-            err?.message ||
-            "Error while updating post",
-          err
-        )
-      }
-  },
-
-  getPosts: async (page: string) => {
+  updatePost: async (payload: { id: string; content: string }) => {
     try {
       const api = httpRequest();
-      const response = await api.get(`/posts?${new URLSearchParams({ page: page, pageSize: '10' })}`);
-      return apiResponse<Posts>(
-        true,
-        "posts fetched successfully",
-        response.data.data
-      );
+      const response = await api.patch(`/posts`, payload);
+      return apiResponse(true, 'Post updated', response.data.data);
     } catch (err: any) {
-      console.log("Error fetching address book entries:", err?.response?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error fetching posts entries",
+          'Error while updating post',
+        err
+      );
+    }
+  },
+
+  getPosts: async (page: string) => {
+    try {
+      const api = httpRequest();
+      const response = await api.get(
+        `/posts?${new URLSearchParams({ page: page, pageSize: '10' })}`
+      );
+      return apiResponse<Post[]>(
+        true,
+        'posts fetched successfully',
+        response.data.data
+      );
+    } catch (err: any) {
+      console.log('Error fetching address book entries:', err?.response?.data);
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error fetching posts entries',
         err
       );
     }
@@ -62,20 +64,22 @@ export const PostsRequests = {
   trendingPosts: async (page: string) => {
     try {
       const api = httpRequest();
-      const response = await api.get(`/posts/trending?${new URLSearchParams({ page: page, pageSize: '10' })}`);
-      return apiResponse<Posts>(
+      const response = await api.get(
+        `/posts/trending?${new URLSearchParams({ page: page, pageSize: '10' })}`
+      );
+      return apiResponse<Post[]>(
         true,
-        "trending posts fetched successfully",
+        'trending posts fetched successfully',
         response.data.data
       );
     } catch (err: any) {
-      console.log("Error fetching trending posts:", err?.response?.data);
+      console.log('Error fetching trending posts:', err?.response?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error fetching posts entries",
+          'Error fetching posts entries',
         err
       );
     }
@@ -84,20 +88,22 @@ export const PostsRequests = {
   followingPosts: async (page: string) => {
     try {
       const api = httpRequest();
-      const response = await api.get(`/follows/posts?${new URLSearchParams({ page: page, pageSize: '10' })}`);
-      return apiResponse<Posts>(
+      const response = await api.get(
+        `/follows/posts?${new URLSearchParams({ page: page, pageSize: '10' })}`
+      );
+      return apiResponse<Post[]>(
         true,
-        "trending posts fetched successfully",
+        'trending posts fetched successfully',
         response.data.data
       );
     } catch (err: any) {
-      console.log("Error fetching trending posts:", err?.response?.data);
+      console.log('Error fetching trending posts:', err?.response?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error fetching posts entries",
+          'Error fetching posts entries',
         err
       );
     }
@@ -106,20 +112,22 @@ export const PostsRequests = {
   getPost: async (id: string, page: string) => {
     try {
       const api = httpRequest();
-      const response = await api.get(`/posts/${id}?${new URLSearchParams({page: page, pageSize: '10'})}`);
+      const response = await api.get(
+        `/posts/${id}?${new URLSearchParams({ page: page, pageSize: '10' })}`
+      );
       return apiResponse<Post>(
         true,
-        "post fetched successfully",
+        'post fetched successfully',
         response.data.data
       );
     } catch (err: any) {
-      console.log("Error fetching address book entries:", err?.response?.data);
+      console.log('Error fetching address book entries:', err?.response?.data);
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error fetching address book entries",
+          'Error fetching address book entries',
         err
       );
     }
@@ -133,7 +141,7 @@ export const PostsRequests = {
       );
       return apiResponse(
         true,
-        "posts search fetched successfully",
+        'posts search fetched successfully',
         response.data.data
       );
     } catch (err: any) {
@@ -142,7 +150,7 @@ export const PostsRequests = {
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error searching posts",
+          'Error searching posts',
         err
       );
     }
@@ -152,14 +160,14 @@ export const PostsRequests = {
     try {
       const api = httpRequest();
       const response = await api.post(`/posts/likes/${id}`);
-      return apiResponse(true, "post liked successfully", response.data.data);
+      return apiResponse(true, 'post liked successfully', response.data.data);
     } catch (err: any) {
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error liking post",
+          'Error liking post',
         err
       );
     }
@@ -173,17 +181,16 @@ export const PostsRequests = {
     try {
       const api = httpRequest();
       const response = await api.delete(`/posts/likes/`, { data: payload });
-      return apiResponse(true, "post unliked successfully", response.data.data);
+      return apiResponse(true, 'post unliked successfully', response.data.data);
     } catch (err: any) {
       return apiResponse(
         false,
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          "Error liking post",
+          'Error liking post',
         err
       );
     }
   },
 };
-

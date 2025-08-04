@@ -7,7 +7,7 @@ import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { SocialFiRequests } from '@/libs/api_requests/socialfi.request'
 import { useAuthStore } from '@/store/authStore'
 import { useSocialEventsStore } from '@/store/socialEventsStore'
-import { Posts } from '@/types/posts.interface'
+import { Post } from '@/types/posts.interface';
 import { SuggestedAccounts } from '@/types/socialfi.interface'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
@@ -28,10 +28,10 @@ export default function SocialScreen() {
     'feed'
   );
   const [refreshing, setRefreshing] = useState(false);
-  const [socialPosts, setSocialPosts] = useState<Posts[]>([]);
+  const [socialPosts, setSocialPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [trendingPosts, setTrendingPosts] = useState<Posts[]>([]);
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
   const [errorTrending, setErrorTrending] = useState<string | null>(null);
   const [suggestedAccounts, setSuggestedAccounts] = useState<
@@ -39,7 +39,7 @@ export default function SocialScreen() {
   >([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [errorSuggestions, setErrorSuggestions] = useState<string | null>(null);
-  const [personalizedPosts, setPersonalizedPosts] = useState<Posts[]>([]);
+  const [personalizedPosts, setPersonalizedPosts] = useState<Post[]>([]);
   const [loadingPersonalized, setLoadingPersonalized] = useState(false);
   const [errorPersonalized, setErrorPersonalized] = useState<string | null>(
     null
@@ -254,7 +254,7 @@ export default function SocialScreen() {
   }, [activeTab, personalizedPosts, socialPosts, trendingPosts]);
 
   const filterPosts = useCallback(
-    (posts: Posts[]) => {
+    (posts: Post[]) => {
       if (postTypeFilter === 'ALL') return posts;
       return posts.filter((post) => post.post_type === postTypeFilter);
     },
@@ -332,7 +332,7 @@ export default function SocialScreen() {
     };
 
     // Optimistically update the UI based on active tab
-    const updatePosts = (prevPosts: Posts[]) =>
+    const updatePosts = (prevPosts: Post[]) =>
       prevPosts.map((p) => (p.id === postId ? updatedPost : p));
 
     if (activeTab === 'feed') {
@@ -356,7 +356,7 @@ export default function SocialScreen() {
         }
 
         // Update the like id with the response data
-        const updateLikeId = (prevPosts: Posts[]) =>
+        const updateLikeId = (prevPosts: Post[]) =>
           prevPosts.map((p) =>
             p.id === postId
               ? {
@@ -377,7 +377,7 @@ export default function SocialScreen() {
       triggerRefresh();
     } catch (error) {
       // Revert the changes if the API call fails
-      const revertPosts = (prevPosts: Posts[]) =>
+      const revertPosts = (prevPosts: Post[]) =>
         prevPosts.map((p) => (p.id === postId ? post : p));
 
       if (activeTab === 'feed') {
@@ -478,7 +478,7 @@ export default function SocialScreen() {
     </View>
   );
 
-  const renderPostItem = ({ item }: { item: Posts }) => (
+  const renderPostItem = ({ item }: { item: Post }) => (
     <PostCard key={item.id} post={item} onLike={handleLike} />
   );
 

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,17 +23,13 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_ATTACHMENTS = 5;
 
-interface MediaItem {
+export interface MediaItem {
   uri: string;
   type: 'image' | 'video' | 'gif';
   fileName?: string;
   mimeType?: string;
   fileSize?: number;
   thumbnail?: string;
-  uploading?: boolean;
-  uploadProgress?: number;
-  publicId?: string;
-  assetId?: string;
 }
 
 const PostComposer: React.FC<PostComposerProps> = ({
@@ -59,84 +55,22 @@ const PostComposer: React.FC<PostComposerProps> = ({
   };
 
   const [mediaItems, setMediaItems] = React.useState<MediaItem[]>([]);
-  const uploadQueue = useRef<MediaItem[]>([]);
-  const isProcessing = useRef(false);
+  const [uploading, setUploading] = useState(false);
 
-  const processUploadQueue = useCallback(async () => {
-    if (isProcessing.current || uploadQueue.current.length === 0) return;
-
-    isProcessing.current = true;
-    const item = uploadQueue.current.shift();
-
-    if (!item) {
-      isProcessing.current = false;
-      return;
-    }
-
-    try {
-      setMediaItems((prev) =>
-        prev.map((m) =>
-          m.uri === item.uri ? { ...m, uploading: true, uploadProgress: 0 } : m
-        )
+  const addMediaItems = useCallback((items: MediaItem[]) => {
+    setMediaItems((prev) => {
+      // Filter out any duplicate URIs
+      const newItems = items.filter(
+        (item) => !prev.some((existing) => existing.uri === item.uri)
       );
-
-      const formData = new FormData();
-      formData.append('file', {
-        uri: item.uri,
-        type: item.mimeType || 'image/jpeg',
-        name: item.fileName || `file-${Date.now()}`,
-      } as any);
-
-      const { success, data, message } = await UploadRequests.uploadSingle({
-        uri: item.uri,
-        type: item.mimeType || 'image/jpeg',
-        name: item.fileName || `file-${Date.now()}`,
-      });
-
-      if (success && data) {
-        setMediaItems((prev) =>
-          prev.map((m) =>
-            m.uri === item.uri
-              ? {
-                  ...m,
-                  uploading: false,
-                  uploadProgress: 100,
-                  publicId: data.publicId,
-                  assetId: data.assetId,
-                }
-              : m
-          )
-        );
-
-        // Update form with the uploaded media
-        const mediaUrls = [...(form.mediaUrls || []), data.secureUrl];
-        onFieldChange('mediaUrls', mediaUrls);
-      } else {
-        throw new Error(message || 'Failed to upload file');
-      }
-    } catch (error) {
-      console.error('Upload failed:', error);
-      setMediaItems((prev) => prev.filter((m) => m.uri !== item.uri));
-      Alert.alert('Upload Failed', 'Failed to upload media. Please try again.');
-    } finally {
-      isProcessing.current = false;
-      processUploadQueue(); // Process next item in queue
-    }
-  }, [form.mediaUrls, onFieldChange]);
-
-  const addMediaToQueue = useCallback(
-    (newItems: MediaItem[]) => {
-      setMediaItems((prev) => [...prev, ...newItems]);
-      uploadQueue.current = [...uploadQueue.current, ...newItems];
-      processUploadQueue();
-    },
-    [processUploadQueue]
-  );
+      return [...prev, ...newItems];
+    });
+  }, []);
 
   const handleMediaPick = useCallback(async () => {
     if (mediaItems.length >= MAX_ATTACHMENTS) {
       Alert.alert(
-        'Maximum Attachments Reached',
+        'Maximum attachments reached',
         `You can only attach up to ${MAX_ATTACHMENTS} files.`
       );
       return;
@@ -155,28 +89,38 @@ const PostComposer: React.FC<PostComposerProps> = ({
       const newMediaItems: MediaItem[] = [];
 
       for (const asset of result.assets) {
+        if (!asset.uri) continue;
+
+        // Check file size
         if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
           Alert.alert(
-            'File Too Large',
-            `${asset.fileName || 'File'} exceeds the 10MB limit.`
+            'File too large',
+            `${asset.fileName || 'File'} exceeds the 10MB size limit.`
           );
           continue;
         }
 
-        const type =
-          asset.type === 'video'
-            ? 'video'
-            : asset.uri.endsWith('.gif')
-              ? 'gif'
-              : 'image';
-
+        // Explicitly handle the media type to match our MediaItem type
+        let type: 'image' | 'video' | 'gif' = 'image';
+        if (asset.type === 'video') {
+          type = 'video';
+        } else if (
+          asset.uri.endsWith('.gif') ||
+          asset.type === ('gif' as typeof asset.type)
+        ) {
+          type = 'gif';
+        }
         let thumbnail = asset.uri;
+
+        // Generate thumbnail for videos
         if (type === 'video') {
           try {
-            const { uri } = await VideoThumbnails.getThumbnailAsync(asset.uri);
+            const { uri } = await VideoThumbnails.getThumbnailAsync(asset.uri, {
+              time: 0,
+            });
             thumbnail = uri;
           } catch (e) {
-            console.warn('Failed to generate video thumbnail', e);
+            console.warn('Failed to generate video thumbnail:', e);
           }
         }
 
@@ -191,38 +135,88 @@ const PostComposer: React.FC<PostComposerProps> = ({
       }
 
       if (newMediaItems.length > 0) {
-        addMediaToQueue(newMediaItems);
+        addMediaItems(newMediaItems);
       }
     } catch (error) {
       console.error('Error picking media:', error);
       Alert.alert('Error', 'Failed to pick media. Please try again.');
     }
-  }, [addMediaToQueue, mediaItems.length]);
+  }, [addMediaItems, mediaItems.length]);
 
-  const removeMedia = useCallback(
-    async (index: number) => {
-      const item = mediaItems[index];
-      if (!item) return;
+  const removeMedia = useCallback((index: number) => {
+    setMediaItems((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
-      try {
-        if (item.publicId) {
-          await UploadRequests.deleteFile(item.publicId);
+  const uploadMedia = useCallback(async () => {
+    setUploading(true);
+    const uploadedMediaUrls: string[] = [];
+
+    try {
+      if (mediaItems.length === 1) {
+        const { success, data, message } = await UploadRequests.uploadSingle({
+          uri: mediaItems[0].uri,
+          type: mediaItems[0].mimeType || 'image/jpeg',
+          name: mediaItems[0].fileName || `file-${Date.now()}`,
+        });
+
+        if (success && data) {
+          uploadedMediaUrls.push(data.url);
+        } else {
+          throw new Error(message || 'Failed to upload file');
         }
-
-        setMediaItems((prev) => prev.filter((_, i) => i !== index));
-
-        // Update form with remaining media URLs
-        const remainingUrls = (form.mediaUrls || []).filter(
-          (_, i) => i !== mediaItems.findIndex((m) => m.uri === item.uri)
+      } else {
+        // Use batch upload
+        const { success, data, message } = await UploadRequests.uploadMultiple(
+          mediaItems.map((item) => ({
+            uri: item.uri,
+            type: item.mimeType || 'image/jpeg',
+            name: item.fileName || `file-${Date.now()}`,
+          }))
         );
-        onFieldChange('mediaUrls', remainingUrls);
-      } catch (error) {
-        console.error('Failed to delete media:', error);
-        Alert.alert('Error', 'Failed to remove media. Please try again.');
+
+        if (success && data) {
+          uploadedMediaUrls.push(
+            ...data.map((item: { url: string }) => item.url)
+          );
+        } else {
+          throw new Error(message || 'Failed to upload files');
+        }
       }
-    },
-    [form.mediaUrls, mediaItems, onFieldChange]
-  );
+      return uploadedMediaUrls;
+    } finally {
+      setUploading(false);
+    }
+  }, [mediaItems]);
+
+  const handleSubmit = useCallback(async () => {
+    if (loading || uploading) return;
+
+    try {
+      let mediaUrls: string[] = [];
+
+      // Only upload if there are media items
+      if (mediaItems.length > 0) {
+        mediaUrls = await uploadMedia();
+      }
+
+      Alert.alert(
+        'Upload Success',
+        'Media files uploaded successfully.' + mediaUrls.join(', ')
+      );
+
+      // Update form with the uploaded media URLs
+      onFieldChange('media', mediaUrls);
+
+      // Submit the form
+      onSubmit();
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      Alert.alert(
+        'Upload Error',
+        'Failed to upload one or more media files. Please try again.'
+      );
+    }
+  }, [loading, uploading, mediaItems, uploadMedia, onFieldChange, onSubmit]);
 
   const updateTokenAddress = (address: string) => {
     if (form.postType === 'DONATION') {
@@ -236,7 +230,26 @@ const PostComposer: React.FC<PostComposerProps> = ({
   };
 
   const renderMediaPreview = useCallback(() => {
-    if (mediaItems.length === 0) return null;
+    if (mediaItems.length === 0)
+      return (
+        <View className="mt-2">
+          <TouchableOpacity
+            onPress={handleMediaPick}
+            className="flex-row items-center py-2 px-3 bg-dark-800/50 rounded-lg border border-dashed border-gray-600"
+          >
+            <Ionicons
+              name="attach"
+              size={20}
+              color={Colors.dark.text}
+              style={{ marginRight: 8 }}
+            />
+            <Text className="text-gray-300">Add photos or videos</Text>
+          </TouchableOpacity>
+          <Text className="text-xs text-gray-500 mt-1 ml-1">
+            {MAX_ATTACHMENTS} files max • 10MB per file
+          </Text>
+        </View>
+      );
 
     return (
       <View className="mt-2 mb-3">
@@ -268,18 +281,18 @@ const PostComposer: React.FC<PostComposerProps> = ({
                 </View>
               )}
 
-              {item.uploading && (
+              {uploading && (
                 <View className="absolute bottom-0 left-0 right-0 h-1 bg-dark-400">
                   <View
                     className="h-full bg-primary-500"
-                    style={{ width: `${item.uploadProgress || 0}%` }}
+                    style={{ width: '100%' }}
                   />
                 </View>
               )}
 
               <TouchableOpacity
                 onPress={() => removeMedia(index)}
-                className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center"
+                className="absolute -top-5 -right-5 bg-red-500 rounded-full w-5 h-5 items-center justify-center"
                 style={{
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -302,7 +315,8 @@ const PostComposer: React.FC<PostComposerProps> = ({
           {mediaItems.length < MAX_ATTACHMENTS && (
             <TouchableOpacity
               onPress={handleMediaPick}
-              className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-500 items-center justify-center"
+              className="rounded-lg border-2 border-dashed border-gray-500 items-center justify-center"
+              style={{ width: 80, height: 80 }}
             >
               <Ionicons name="add" size={24} color={Colors.dark.text} />
             </TouchableOpacity>
@@ -318,58 +332,85 @@ const PostComposer: React.FC<PostComposerProps> = ({
 
   return (
     <View className="rounded-2xl">
-      {/* Type Selector */}
-      <View className="flex-row my-3">
-        {[
-          { label: 'Regular', value: 'REGULAR', icon: 'chatbubble-outline' },
-          { label: 'Donation', value: 'DONATION', icon: 'gift-outline' },
-          {
-            label: 'Token Call',
-            value: 'TOKEN_CALL',
-            icon: 'megaphone-outline',
-          },
-        ].map((t) => (
-          <TouchableOpacity
-            key={t.value}
-            className={`flex-1 py-2 mx-1 rounded-xl flex-row items-center justify-center ${
-              form.postType === t.value ? 'bg-secondary' : 'bg-secondary/20'
-            }`}
-            onPress={() => onTypeChange(t.value as PostType)}
-          >
-            <Ionicons
-              name={t.icon as any}
-              size={18}
-              color={form.postType === t.value ? '#fff' : Colors.dark.secondary}
-              style={{ marginRight: 6 }}
-            />
-            <Text
-              className={`text-center font-medium ${
-                form.postType === t.value ? 'text-white' : 'text-gray-400'
+      {/* Type Selector and Media Button */}
+      <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row flex-1">
+          {[
+            { label: 'Regular', value: 'REGULAR', icon: 'chatbubble-outline' },
+            { label: 'Donation', value: 'DONATION', icon: 'gift-outline' },
+            {
+              label: 'Token Call',
+              value: 'TOKEN_CALL',
+              icon: 'megaphone-outline',
+            },
+          ].map((t) => (
+            <TouchableOpacity
+              key={t.value}
+              className={`flex-1 py-2 mx-1 rounded-xl flex-row items-center justify-center ${
+                form.postType === t.value ? 'bg-secondary' : 'bg-secondary/20'
               }`}
+              onPress={() => onTypeChange(t.value as PostType)}
             >
-              {t.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Ionicons
+                name={t.icon as any}
+                size={18}
+                color={
+                  form.postType === t.value ? '#fff' : Colors.dark.secondary
+                }
+                style={{ marginRight: 6 }}
+              />
+              <Text
+                className={`text-center font-medium ${
+                  form.postType === t.value ? 'text-white' : 'text-gray-400'
+                }`}
+              >
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
       {/* Content Field */}
-      <TextInput
-        className="bg-secondary-light text-white rounded-xl px-4 py-3 mb-2"
-        placeholder="What's on your mind?"
-        placeholderTextColor="#888"
-        multiline
-        value={form.content}
-        onChangeText={(text) => onFieldChange('content', text)}
-        style={{
-          minHeight: 120,
-          borderWidth: fieldErrors?.content ? 1 : 0,
-          borderColor: fieldErrors?.content ? '#ef4444' : undefined,
-        }}
-        editable={!loading}
-      />
-      {fieldErrors?.content && (
-        <Text className="text-red-500 mb-2">{fieldErrors.content}</Text>
-      )}
+      <View className="relative mb-2">
+        <TextInput
+          className="bg-secondary-light text-white rounded-xl px-4 py-3"
+          placeholder="What's on your mind?"
+          placeholderTextColor="#888"
+          multiline
+          value={form.content}
+          onChangeText={(text) => onFieldChange('content', text)}
+          style={{
+            minHeight: 120,
+            borderWidth: fieldErrors?.content ? 1 : 0,
+            borderColor: fieldErrors?.content ? '#ef4444' : undefined,
+          }}
+          editable={!loading}
+          maxLength={1000}
+        />
+        {fieldErrors?.content && (
+          <Text className="text-red-500 mb-2">{fieldErrors.content}</Text>
+        )}
+
+        <View className="absolute bottom-2 right-2">
+          <Text className="text-gray-400">{form.content.length}/1000</Text>
+        </View>
+        {/* Attach Media Button */}
+        <TouchableOpacity
+          onPress={handleMediaPick}
+          className="absolute bottom-2 left-2 rounded-full"
+          disabled={mediaItems.length >= MAX_ATTACHMENTS}
+        >
+          <Ionicons
+            name="attach"
+            size={24}
+            color={
+              mediaItems.length >= MAX_ATTACHMENTS
+                ? Colors.dark.text + '80'
+                : Colors.dark.text
+            }
+          />
+        </TouchableOpacity>
+      </View>
       {/* Donation Fields */}
       {form.postType === 'DONATION' && (
         <>
@@ -628,23 +669,19 @@ const PostComposer: React.FC<PostComposerProps> = ({
           )}
         </>
       )}
-      {/* Media Preview */}
-      {renderMediaPreview()}
+      {/* Media Preview - Only show if there are media items */}
+      {mediaItems.length > 0 && renderMediaPreview()}
 
       <View className="mt-2">
         <TouchableOpacity
           className="bg-secondary rounded-xl px-4 py-2"
-          onPress={onSubmit}
-          disabled={loading || mediaItems.some((m) => m.uploading)}
+          onPress={handleSubmit}
+          disabled={loading || uploading}
           style={{ opacity: loading ? 0.7 : 1 }}
         >
-          {loading || mediaItems.some((m) => m.uploading) ? (
+          {loading || uploading ? (
             <View className="flex flex-row items-center justify-center gap-2">
-              <Text className="text-white">
-                {mediaItems.some((m) => m.uploading)
-                  ? 'Uploading...'
-                  : 'Posting...'}
-              </Text>
+              <Text className="text-white">Posting...</Text>
               <ActivityIndicator color="#fff" size="small" />
             </View>
           ) : (
@@ -655,6 +692,8 @@ const PostComposer: React.FC<PostComposerProps> = ({
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Error message */}
       {error && <Text className="text-red-500 mt-2 text-center">{error}</Text>}
     </View>
   );

@@ -235,7 +235,7 @@ export default function CommentThread({
         return (
           <TouchableOpacity
             key={comment.id}
-            className="flex-row items-start mb-4 bg-dark-200 rounded-2xl p-4 shadow-sm border border-dark-300"
+            className="flex-row items-start mb-4 bg-secondary-light rounded-2xl p-4 shadow-sm border border-dark-300"
             activeOpacity={0.85}
             onPress={() =>
               router.push({

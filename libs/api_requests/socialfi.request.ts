@@ -1,4 +1,4 @@
-import { Posts } from '@/types/posts.interface';
+import { Post } from '@/types/posts.interface';
 import { SearchUser, SuggestedAccounts } from '@/types/socialfi.interface';
 import { UserProfile } from '@/types/user.interface';
 import { apiResponse, httpRequest } from '../api.helpers';
@@ -184,7 +184,7 @@ export const SocialFiRequests = {
     try {
       const api = httpRequest();
       const response = await api.get(`socialfi/personalized/posts`);
-      return apiResponse<Posts>(
+      return apiResponse<Post[]>(
         true,
         'personalized posts fetched successfully',
         response.data.data

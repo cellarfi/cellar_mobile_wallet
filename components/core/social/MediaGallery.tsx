@@ -1,9 +1,14 @@
-import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { Video } from 'expo-av';
-import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity, View, StyleSheet, Dimensions } from 'react-native';
 import { Colors } from '@/constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
+import { ResizeMode, Video } from 'expo-av';
+import { Image } from 'expo-image';
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAP = 4;
@@ -15,19 +20,27 @@ interface MediaGalleryProps {
   maxItems?: number;
 }
 
-const MediaGallery: React.FC<MediaGalleryProps> = ({ media = [], maxItems = MAX_IMAGES }) => {
-  const router = useRouter();
-  const videoUris = media.filter(uri => uri.endsWith('.mp4') || uri.endsWith('.mov'));
-  const imageUris = media.filter(uri => !videoUris.includes(uri));
-  
+const MediaGallery: React.FC<MediaGalleryProps> = ({
+  media = [],
+  maxItems = MAX_IMAGES,
+}) => {
+  const videoUris = media.filter(
+    (uri) => uri.endsWith('.mp4') || uri.endsWith('.mov')
+  );
+  const imageUris = media.filter((uri) => !videoUris.includes(uri));
+
   // Show videos first, then images
-  const displayMedia = [...videoUris.slice(0, MAX_VIDEOS), ...imageUris].slice(0, maxItems);
+  const displayMedia = [...videoUris.slice(0, MAX_VIDEOS), ...imageUris].slice(
+    0,
+    maxItems
+  );
   const remainingCount = media.length - displayMedia.length;
 
   const getGridStyle = (index: number, total: number) => {
     if (total === 1) return styles.singleItem;
     if (total === 2) return styles.twoItems;
-    if (total === 3) return index === 0 ? styles.threeItemsFirst : styles.threeItemsRest;
+    if (total === 3)
+      return index === 0 ? styles.threeItemsFirst : styles.threeItemsRest;
     if (total >= 4) {
       if (index === 0) return styles.fourItemsFirst;
       if (index === 1) return styles.fourItemsSecond;
@@ -37,15 +50,9 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({ media = [], maxItems = MAX_
     return styles.singleItem;
   };
 
-  const handleMediaPress = (uri: string, index: number) => {
-    // Navigate to media viewer with all media and starting index
-    router.push({
-      pathname: '/media-viewer',
-      params: { 
-        media: JSON.stringify(media),
-        initialIndex: index 
-      },
-    });
+  const handleMediaPress = (uri: string) => {
+    // TODO: Implement media viewer navigation
+    console.log('Media pressed:', uri);
   };
 
   if (!media.length) return null;
@@ -55,13 +62,16 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({ media = [], maxItems = MAX_
       <View style={styles.grid}>
         {displayMedia.map((uri, index) => {
           const isVideo = uri.endsWith('.mp4') || uri.endsWith('.mov');
-          const gridStyle = getGridStyle(index, Math.min(displayMedia.length, 4));
-          
+          const gridStyle = getGridStyle(
+            index,
+            Math.min(displayMedia.length, 4)
+          );
+
           return (
-            <TouchableOpacity 
-              key={uri} 
+            <TouchableOpacity
+              key={uri}
               style={[styles.mediaContainer, gridStyle]}
-              onPress={() => handleMediaPress(uri, media.indexOf(uri))}
+              onPress={() => handleMediaPress(uri)}
               activeOpacity={0.8}
             >
               {isVideo ? (
@@ -69,13 +79,17 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({ media = [], maxItems = MAX_
                   <Video
                     source={{ uri }}
                     style={styles.media}
-                    resizeMode="cover"
+                    resizeMode={ResizeMode.CONTAIN}
                     useNativeControls={false}
                     isLooping
                     shouldPlay={false}
                   />
                   <View style={styles.videoOverlay}>
-                    <Ionicons name="play-circle" size={40} color="rgba(255,255,255,0.9)" />
+                    <Ionicons
+                      name="play-circle"
+                      size={40}
+                      color="rgba(255,255,255,0.9)"
+                    />
                   </View>
                 </>
               ) : (
@@ -86,7 +100,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({ media = [], maxItems = MAX_
                   transition={300}
                 />
               )}
-              
+
               {index === displayMedia.length - 1 && remainingCount > 0 && (
                 <View style={styles.remainingOverlay}>
                   <Text style={styles.remainingText}>+{remainingCount}</Text>

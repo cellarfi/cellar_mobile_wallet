@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
+import { SocialFiRequests } from '@/libs/api_requests/socialfi.request';
+import { Post } from '@/types/posts.interface';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
   Image,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import { SocialFiRequests } from "@/libs/api_requests/socialfi.request";
-import { Posts } from "@/types/socialfi.interface";
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HashtagPostsModal() {
   const { hashtag } = useLocalSearchParams();
-  const [posts, setPosts] = useState<Posts[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +28,10 @@ export default function HashtagPostsModal() {
         if (res.success) {
           setPosts(res.data || []);
         } else {
-          setError(res.message || "Failed to fetch posts");
+          setError(res.message || 'Failed to fetch posts');
         }
       } catch (err: any) {
-        setError(err?.message || "Failed to fetch posts");
+        setError(err?.message || 'Failed to fetch posts');
       } finally {
         setLoading(false);
       }
@@ -40,9 +40,9 @@ export default function HashtagPostsModal() {
   }, [hashtag]);
 
   // Full-featured PostCard (copied and adapted from social tab)
-  const PostCard = ({ post }: { post: Posts }) => {
+  const PostCard = ({ post }: { post: Post }) => {
     const handlePostDetail = (postId: string) => {
-      router.push({ pathname: "/(modals)/post-details", params: { postId } });
+      router.push({ pathname: '/(modals)/post-details', params: { postId } });
     };
     return (
       <TouchableOpacity
@@ -56,7 +56,7 @@ export default function HashtagPostsModal() {
             <TouchableOpacity
               onPress={() =>
                 router.push({
-                  pathname: "/(modals)/user-profile",
+                  pathname: '/(modals)/user-profile',
                   params: { userId: post.user.id },
                 })
               }
@@ -70,7 +70,7 @@ export default function HashtagPostsModal() {
                 />
               ) : (
                 <Text className="text-lg text-white">
-                  {post.user?.display_name?.[0]?.toUpperCase() ?? "?"}
+                  {post.user?.display_name?.[0]?.toUpperCase() ?? '?'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -79,13 +79,13 @@ export default function HashtagPostsModal() {
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
-                      pathname: "/(modals)/user-profile",
+                      pathname: '/(modals)/user-profile',
                       params: { userId: post.user.id },
                     })
                   }
                 >
                   <Text className="text-white font-semibold mr-2">
-                    {post.user?.display_name ?? ""}
+                    {post.user?.display_name ?? ''}
                   </Text>
                 </TouchableOpacity>
                 <Ionicons name="checkmark-circle" size={16} color="#6366f1" />
@@ -93,16 +93,16 @@ export default function HashtagPostsModal() {
               <TouchableOpacity
                 onPress={() =>
                   router.push({
-                    pathname: "/(modals)/user-profile",
+                    pathname: '/(modals)/user-profile',
                     params: { userId: post.user.id },
                   })
                 }
               >
                 <Text className="text-gray-400 text-sm">
-                  @{post.user?.tag_name ?? ""} •{" "}
-                  {post.createdAt
-                    ? new Date(post.createdAt).toLocaleString()
-                    : ""}
+                  @{post.user?.tag_name ?? ''} •{' '}
+                  {post.created_at
+                    ? new Date(post.created_at).toLocaleString()
+                    : ''}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -112,24 +112,24 @@ export default function HashtagPostsModal() {
           </TouchableOpacity>
         </View>
         {/* Content */}
-        <Text className="text-white leading-6 mb-3">{post.message ?? ""}</Text>
+        <Text className="text-white leading-6 mb-3">{post.content ?? ''}</Text>
         {/* Engagement Stats (disabled actions) */}
         <View className="flex-row items-center justify-between py-3 border-t border-dark-300">
           <View className="flex-row items-center gap-6">
             <View className="flex-row items-center">
               <Ionicons
-                name={post.like?.status ? "heart" : "heart-outline"}
+                name={post.like?.status ? 'heart' : 'heart-outline'}
                 size={22}
-                color={post.like?.status ? "#ef4444" : "#666672"}
+                color={post.like?.status ? '#ef4444' : '#666672'}
               />
               <Text className="text-gray-400 text-sm ml-2">
-                {typeof post.likes === "number" ? post.likes : 0}
+                {post._count?.like || 0}
               </Text>
             </View>
             <View className="flex-row items-center">
               <Ionicons name="chatbubble-outline" size={20} color="#666672" />
               <Text className="text-gray-400 text-sm ml-2">
-                {typeof post.comments === "number" ? post.comments : 0}
+                {post._count?.comment || 0}
               </Text>
             </View>
             <View className="flex-row items-center">
