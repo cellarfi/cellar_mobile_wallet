@@ -1,35 +1,35 @@
-import React, { useState } from "react";
+import SearchPostCard from '@/components/core/social/SearchPostCard';
+import { PostsRequests } from '@/libs/api_requests/posts.request';
+import { userRequests } from '@/libs/api_requests/user.request';
+import { SearchedPost } from '@/types/posts.interface';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Modal,
+  SafeAreaView,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  Modal,
-  SafeAreaView,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { PostsRequests } from "@/libs/api_requests/posts.request";
-import { SearchedPost } from "@/types/posts.interface";
-import SearchPostCard from "@/components/core/social/SearchPostCard";
-import { userRequests } from "@/libs/api_requests/user.request";
+  View,
+} from 'react-native';
 
 const FILTER_OPTIONS = [
-  { label: "Users", value: "USERS" },
-  { label: "All Posts", value: "ALL_POSTS" },
-  { label: "Regular", value: "REGULAR" },
-  { label: "Donation", value: "DONATION" },
-  { label: "Token Call", value: "TOKEN_CALL" },
+  { label: 'Users', value: 'USERS' },
+  { label: 'All Posts', value: 'ALL_POSTS' },
+  { label: 'Regular', value: 'REGULAR' },
+  { label: 'Donation', value: 'DONATION' },
+  { label: 'Token Call', value: 'TOKEN_CALL' },
 ];
 
 export default function FindPostsModal() {
   const [searchType, setSearchType] = useState<
-    "USERS" | "ALL_POSTS" | "REGULAR" | "DONATION" | "TOKEN_CALL"
-  >("ALL_POSTS");
-  const [searchQuery, setSearchQuery] = useState("");
+    'USERS' | 'ALL_POSTS' | 'REGULAR' | 'DONATION' | 'TOKEN_CALL'
+  >('ALL_POSTS');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,10 +39,10 @@ export default function FindPostsModal() {
   React.useEffect(() => {
     const doSearch = async () => {
       if (
-        searchType === "ALL_POSTS" ||
-        searchType === "REGULAR" ||
-        searchType === "DONATION" ||
-        searchType === "TOKEN_CALL"
+        searchType === 'ALL_POSTS' ||
+        searchType === 'REGULAR' ||
+        searchType === 'DONATION' ||
+        searchType === 'TOKEN_CALL'
       ) {
         if (!searchQuery.trim()) {
           setResults([]);
@@ -55,21 +55,21 @@ export default function FindPostsModal() {
         try {
           const res = await PostsRequests.searchPosts(
             searchQuery.trim(),
-            searchType === "ALL_POSTS" ? undefined : searchType
+            searchType === 'ALL_POSTS' ? undefined : searchType
           );
           if (res.success && res.data) {
             setResults(res.data as SearchedPost[]);
           } else {
             setResults([]);
-            setError(res.message || "No results found");
+            setError(res.message || 'No results found');
           }
         } catch (e: any) {
           setResults([]);
-          setError(e?.message || "Search failed");
+          setError(e?.message || 'Search failed');
         } finally {
           setLoading(false);
         }
-      } else if (searchType === "USERS") {
+      } else if (searchType === 'USERS') {
         if (!searchQuery.trim()) {
           setResults([]);
           setError(null);
@@ -84,11 +84,11 @@ export default function FindPostsModal() {
             setResults(res.data);
           } else {
             setResults([]);
-            setError(res.message || "No users found");
+            setError(res.message || 'No users found');
           }
         } catch (e: any) {
           setResults([]);
-          setError(e?.message || "User search failed");
+          setError(e?.message || 'User search failed');
         } finally {
           setLoading(false);
         }
@@ -110,7 +110,7 @@ export default function FindPostsModal() {
       className="bg-dark-200 rounded-xl p-4 mb-2 border border-dark-300 flex-row items-center"
       onPress={() =>
         router.push({
-          pathname: "/(modals)/user-profile",
+          pathname: '/(modals)/user-profile',
           params: { tagName: item.tag_name },
         })
       }
@@ -124,7 +124,7 @@ export default function FindPostsModal() {
           />
         ) : (
           <Text className="text-white text-lg font-semibold">
-            {item.display_name?.[0]?.toUpperCase() ?? "?"}
+            {item.display_name?.[0]?.toUpperCase() ?? '?'}
           </Text>
         )}
       </View>
@@ -138,7 +138,7 @@ export default function FindPostsModal() {
         className="ml-4 px-3 py-1 rounded-xl bg-primary-500"
         onPress={() =>
           router.push({
-            pathname: "/(modals)/user-profile",
+            pathname: '/(modals)/user-profile',
             params: { tagName: item.tag_name },
           })
         }
@@ -149,7 +149,7 @@ export default function FindPostsModal() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50">
+    <SafeAreaView className="flex-1 bg-primary-main">
       {/* Header */}
       <View className="flex-row items-center justify-between px-6 py-4">
         <TouchableOpacity
@@ -164,12 +164,12 @@ export default function FindPostsModal() {
       </View>
       {/* Search Bar + Filter */}
       <View className="flex-row items-center px-6 mb-4">
-        <View className="flex-1 bg-dark-200 rounded-xl flex-row items-center px-3 py-2 mr-2">
+        <View className="flex-1 bg-secondary-light rounded-xl flex-row items-center px-3 py-2 mr-2">
           <Ionicons name="search" size={18} color="#6366f1" />
           <TextInput
             className="flex-1 ml-2 text-white"
             placeholder={`Search ${
-              searchType === "USERS" ? "users" : "posts"
+              searchType === 'USERS' ? 'users' : 'posts'
             }...`}
             placeholderTextColor="#888"
             value={searchQuery}
@@ -178,7 +178,7 @@ export default function FindPostsModal() {
         </View>
         <TouchableOpacity
           onPress={() => setShowFilter(true)}
-          className="bg-dark-200 rounded-xl p-2"
+          className="bg-secondary-light rounded-xl p-2"
         >
           <Ionicons name="filter" size={20} color="#6366f1" />
         </TouchableOpacity>
@@ -191,21 +191,11 @@ export default function FindPostsModal() {
         onRequestClose={() => setShowFilter(false)}
       >
         <TouchableOpacity
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
           activeOpacity={1}
           onPress={() => setShowFilter(false)}
         >
-          <View
-            style={{
-              position: "absolute",
-              top: 100,
-              left: 30,
-              right: 30,
-              backgroundColor: "#23272f",
-              borderRadius: 16,
-              padding: 20,
-            }}
-          >
+          <View className="absolute top-44 left-5 right-5 bg-secondary-light/80 rounded-xl p-4 mb-2 border border-dark-200">
             <Text className="text-white text-base font-semibold mb-3">
               Search for
             </Text>
@@ -213,7 +203,9 @@ export default function FindPostsModal() {
               <TouchableOpacity
                 key={opt.value}
                 className={`py-2 px-3 rounded-lg mb-1 ${
-                  searchType === opt.value ? "bg-primary-500" : "bg-dark-200"
+                  searchType === opt.value
+                    ? 'bg-primary-500'
+                    : 'bg-secondary-light'
                 }`}
                 onPress={() => {
                   setSearchType(opt.value as any);
@@ -222,7 +214,7 @@ export default function FindPostsModal() {
               >
                 <Text
                   className={`text-white ${
-                    searchType === opt.value ? "font-bold" : "font-normal"
+                    searchType === opt.value ? 'font-bold' : 'font-normal'
                   }`}
                 >
                   {opt.label}
@@ -244,7 +236,7 @@ export default function FindPostsModal() {
           className="px-6"
           data={results}
           keyExtractor={(item) => item.id}
-          renderItem={searchType === "USERS" ? renderUser : renderPost}
+          renderItem={searchType === 'USERS' ? renderUser : renderPost}
           ListEmptyComponent={
             <Text className="text-gray-400 text-center mt-10">
               No results yet. Try searching!

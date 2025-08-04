@@ -5,4 +5,5 @@ export const ENV = {
   SERVER_URL: process.env.EXPO_PUBLIC_SERVER_URL,
   RPC_URL:
     process.env.EXPO_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com',
-}
+  GIPHY_API_KEY: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '',
+};

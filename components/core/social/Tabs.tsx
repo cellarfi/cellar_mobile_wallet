@@ -13,14 +13,14 @@ function Tabs<T extends string>({
   onTabChange,
 }: TabsProps<T>) {
   return (
-    <View className='px-6 mb-4'>
-      <View className='flex-row bg-secondary-light  rounded-2xl p-1'>
+    <View className="mb-4">
+      <View className="flex-row bg-secondary-light  rounded-2xl p-1">
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => onTabChange(tab)}
             className={`flex-1 py-3 rounded-xl ${
-              activeTab === tab ? 'bg-primary-500' : ''
+              activeTab === tab ? 'bg-secondary' : ''
             }`}
           >
             <Text
@@ -34,7 +34,7 @@ function Tabs<T extends string>({
         ))}
       </View>
     </View>
-  )
+  );
 }
 
 export default Tabs

@@ -1,49 +1,43 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-} from "react";
+import CommentInputCard from '@/components/core/social/CommentInputCard';
+import CommentThread from '@/components/core/social/CommentThread';
+import { useTokenOverview } from '@/hooks/useTokenOverview';
+import { commentsRequests } from '@/libs/api_requests/comments.request';
+import { PostsRequests } from '@/libs/api_requests/posts.request';
+import { formatAddress, formatNumber } from '@/libs/string.helpers';
+import { useAuthStore } from '@/store/authStore';
+import { Comment as ThreadComment } from '@/types/comment.interface';
+import MediaGallery from '@/components/core/social/MediaGallery';
+import { Post } from '@/types/posts.interface';
+import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
   ActivityIndicator,
-  Text,
-  ScrollView,
   Image,
-  TouchableOpacity,
   Pressable,
   RefreshControl,
-  FlatList,
-} from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { PostsRequests } from "@/libs/api_requests/posts.request";
-import { Post } from "@/types/posts.interface";
-import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
-import * as Haptics from "expo-haptics";
-import { formatAddress, formatNumber } from "@/libs/string.helpers";
-import { useTokenOverview } from "@/hooks/useTokenOverview";
-import CommentInputCard from "@/components/core/social/CommentInputCard";
-import CommentThread from "@/components/core/social/CommentThread";
-import { Comment as ThreadComment } from "@/types/comment.interface";
-import { useAuthStore } from "@/store/authStore";
-import { commentsRequests } from "@/libs/api_requests/comments.request";
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Divider = () => <View className="h-px bg-dark-300 my-4 opacity-70" />;
 
 const Card = ({
   children,
-  className = "",
+  className = '',
 }: {
   children: React.ReactNode;
   className?: string;
 }) => (
   <View
-    className={`bg-dark-200 rounded-2xl p-5 mb-4 shadow-md border border-dark-300 ${className}`}
+    className={`bg-secondary-light rounded-2xl p-5 mb-4 shadow-md border border-dark-300 ${className}`}
     style={{
-      shadowColor: "#000",
+      shadowColor: '#000',
       shadowOpacity: 0.08,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 2 },
@@ -67,12 +61,12 @@ function handleDonation(
   selectedToken: string
 ) {
   router.push({
-    pathname: "/(modals)/send",
+    pathname: '/(modals)/send',
     params: {
       recipient: address,
-      currentMemo: memo + "Donation",
+      currentMemo: memo + 'Donation',
       postId,
-      donation: "true",
+      donation: 'true',
       selectedToken,
     },
   });
@@ -85,8 +79,8 @@ const DonationProgressBar = ({
   current: string;
   target: string;
 }) => {
-  const currentNum = parseFloat(current || "0");
-  const targetNum = parseFloat(target || "1");
+  const currentNum = parseFloat(current || '0');
+  const targetNum = parseFloat(target || '1');
   const percent = Math.min((currentNum / targetNum) * 100, 100);
   const overFunded = currentNum > targetNum;
   return (
@@ -103,7 +97,7 @@ const DonationProgressBar = ({
         <View
           style={{ width: `${percent}%` }}
           className={`h-2 ${
-            overFunded ? "bg-success-400" : "bg-primary-500"
+            overFunded ? 'bg-success-400' : 'bg-primary-500'
           } rounded-full`}
         />
       </View>
@@ -142,7 +136,7 @@ const PostDetailsModal = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Get token address from post if available
-  const tokenAddress = post?.token_meta?.token_address || "";
+  const tokenAddress = post?.token_meta?.token_address || '';
   const { token: tokenData } = useTokenOverview(tokenAddress);
 
   // Update ref when postId changes
@@ -175,13 +169,13 @@ const PostDetailsModal = () => {
         // Unlike the post
         const response = await PostsRequests.unlikePost(post.like.id, post.id);
         if (!response.success) {
-          throw new Error("Failed to unlike post");
+          throw new Error('Failed to unlike post');
         }
       } else {
         // Like the post
-        const response = await PostsRequests.likePost(post?.id || "");
+        const response = await PostsRequests.likePost(post?.id || '');
         if (!response.success) {
-          throw new Error("Failed to like post");
+          throw new Error('Failed to like post');
         }
         // Update the like id with the response data
         setPost((prev) =>
@@ -199,13 +193,13 @@ const PostDetailsModal = () => {
       if (post) {
         setPost(post);
       }
-      alert("Failed to update like status");
+      alert('Failed to update like status');
     }
   };
 
   const redirectToUserProfile = (tagName: string) => {
     router.push({
-      pathname: "/(modals)/user-profile",
+      pathname: '/(modals)/user-profile',
       params: { tagName },
     });
   };
@@ -229,7 +223,7 @@ const PostDetailsModal = () => {
     : undefined;
 
   useEffect(() => {
-    console.log("Post ID ref", postIdRef.current);
+    console.log('Post ID ref', postIdRef.current);
     if (postIdRef.current) fetchPost();
   }, [postIdRef.current]);
 
@@ -237,7 +231,7 @@ const PostDetailsModal = () => {
     if (currentPage === 1) {
       if (post && post.comment) {
         setComments(
-          post.comment.map((c: Post["comment"][0]) => ({
+          post.comment.map((c: Post['comment'][0]) => ({
             id: c.id,
             user: {
               display_name: c.user.display_name,
@@ -248,11 +242,11 @@ const PostDetailsModal = () => {
             post_id: c.post_id,
             user_id: c.user_id,
             created_at:
-              typeof c.created_at === "string"
+              typeof c.created_at === 'string'
                 ? c.created_at
                 : c.created_at.toISOString(),
             updated_at:
-              typeof c.updated_at === "string"
+              typeof c.updated_at === 'string'
                 ? c.updated_at
                 : c.updated_at.toISOString(),
             parentId: c.parentId,
@@ -282,22 +276,22 @@ const PostDetailsModal = () => {
           // update the comments state to reflect the latest from the server (including new comments)
           setComments((prevComments) => [
             ...prevComments,
-            ...(res.data.comment || []).map((c: Post["comment"][0]) => ({
+            ...(res.data.comment || []).map((c: Post['comment'][0]) => ({
               id: c.id,
               user: {
-                display_name: c.user?.display_name ?? "",
-                tag_name: c.user?.tag_name ?? "",
+                display_name: c.user?.display_name ?? '',
+                tag_name: c.user?.tag_name ?? '',
                 profile_picture_url: c.user?.profile_picture_url || undefined,
               },
               content: c.content,
               post_id: c.post_id,
               user_id: c.user_id,
               created_at:
-                typeof c.created_at === "string"
+                typeof c.created_at === 'string'
                   ? c.created_at
                   : c.created_at?.toISOString(),
               updated_at:
-                typeof c.updated_at === "string"
+                typeof c.updated_at === 'string'
                   ? c.updated_at
                   : c.updated_at?.toISOString(),
               parentId: c.parentId,
@@ -320,10 +314,10 @@ const PostDetailsModal = () => {
           setHasMorePages(page < res.data.pagination.totalPages);
         }
       } else {
-        setError(res.message || "Post not found");
+        setError(res.message || 'Post not found');
       }
     } catch (err: any) {
-      setError("Failed to fetch post");
+      setError('Failed to fetch post');
     } finally {
       setLoading(false);
       setIsLoadingMore(false);
@@ -337,7 +331,7 @@ const PostDetailsModal = () => {
       return;
     }
     if (hasMorePages && !isLoadingMore) {
-      console.log("User reached the end, loading more posts...");
+      console.log('User reached the end, loading more posts...');
       let nextPage = currentPage + 1;
       setCurrentPage(nextPage);
       fetchPost(nextPage, true);
@@ -347,7 +341,7 @@ const PostDetailsModal = () => {
   const handleShowCommentInput = () => setShowCommentInput(true);
 
   const handlePostComment = async (text: string, parentId?: string) => {
-    console.log("Creating Comment");
+    console.log('Creating Comment');
     if (!profile || !post) return;
     setPosting(true);
     setError(null);
@@ -365,8 +359,8 @@ const PostDetailsModal = () => {
             profile_picture_url: profile.profile_picture_url || undefined,
           },
           content: text,
-          post_id: "",
-          user_id: "",
+          post_id: '',
+          user_id: '',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           parentId: null,
@@ -394,14 +388,11 @@ const PostDetailsModal = () => {
 
         // Reset input
         setShowCommentInput(false);
-
-        // Alert the user
-        alert("Commented Successfully")
       } else {
-        setError(res.message || "Failed to post comment");
+        setError(res.message || 'Failed to post comment');
       }
     } catch (e: any) {
-      setError(e?.message || "Failed to post comment");
+      setError(e?.message || 'Failed to post comment');
     } finally {
       setPosting(false);
     }
@@ -444,10 +435,10 @@ const PostDetailsModal = () => {
         }
         setComments((prev) => prev.filter((c) => c.id !== commentId));
       } else {
-        setError(res.message || "Failed to delete comment");
+        setError(res.message || 'Failed to delete comment');
       }
     } catch (e: any) {
-      setError(e?.message || "Failed to delete comment");
+      setError(e?.message || 'Failed to delete comment');
     } finally {
       setPosting(false);
     }
@@ -528,7 +519,7 @@ const PostDetailsModal = () => {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: "#23272f",
+            backgroundColor: '#23272f',
             marginRight: 10,
           }}
         />
@@ -538,14 +529,14 @@ const PostDetailsModal = () => {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: "#23272f",
+            backgroundColor: '#23272f',
             marginRight: 10,
-            justifyContent: "center",
-            alignItems: "center",
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
-          <Text style={{ color: "#fff", fontSize: 16 }}>
-            {post.user?.display_name?.[0]?.toUpperCase() ?? "?"}
+          <Text style={{ color: '#fff', fontSize: 16 }}>
+            {post.user?.display_name?.[0]?.toUpperCase() ?? '?'}
           </Text>
         </View>
       )}
@@ -553,7 +544,7 @@ const PostDetailsModal = () => {
         <Text className="flex-col text-white font-bold text-base leading-tight">
           {post.user?.display_name}
           <Text className="text-gray-400 font-normal">
-            {" "}
+            {' '}
             @{post.user.tag_name}
           </Text>
         </Text>
@@ -567,16 +558,21 @@ const PostDetailsModal = () => {
 
   // Content rendering by type
   let contentBlock = null;
-  if (post.post_type === "REGULAR") {
+  if (post.post_type === 'REGULAR') {
     contentBlock = (
       <Card>
         <SectionTitle>Post</SectionTitle>
         <Text className="text-white text-base leading-relaxed mb-1">
           {post.content}
         </Text>
+        {post.media?.length ? (
+          <View className="mt-3">
+            <MediaGallery media={post.media} maxItems={4} />
+          </View>
+        ) : null}
       </Card>
     );
-  } else if (post.post_type === "DONATION" && post.funding_meta) {
+  } else if (post.post_type === 'DONATION' && post.funding_meta) {
     const { wallet_address } = post.funding_meta || {};
     contentBlock = (
       <Card>
@@ -584,6 +580,11 @@ const PostDetailsModal = () => {
         <Text className="text-white text-base leading-relaxed mb-2">
           {post.content}
         </Text>
+        {post.media?.length ? (
+          <View className="mt-3">
+            <MediaGallery media={post.media} maxItems={4} />
+          </View>
+        ) : null}
         <DonationProgressBar
           current={post.funding_meta.current_amount}
           target={post.funding_meta.target_amount}
@@ -591,7 +592,7 @@ const PostDetailsModal = () => {
         <View className="flex-row items-center mt-2">
           <Ionicons name="wallet-outline" size={18} color="#6366f1" />
           <Text className="text-gray-400 text-xs ml-2">
-            {post.funding_meta.token_symbol || "Token"} on{" "}
+            {post.funding_meta.token_symbol || 'Token'} on{' '}
             {post.funding_meta.chain_type}
           </Text>
         </View>
@@ -617,7 +618,7 @@ const PostDetailsModal = () => {
                 activeOpacity={0.8}
               >
                 <Ionicons
-                  name={copied ? "checkmark-outline" : "copy-outline"}
+                  name={copied ? 'checkmark-outline' : 'copy-outline'}
                   size={16}
                   color="#6366f1"
                 />
@@ -637,10 +638,10 @@ const PostDetailsModal = () => {
           activeOpacity={0.92}
           onPress={() =>
             handleDonation(
-              post.funding_meta?.wallet_address || "",
-              post.content || "",
-              post.id || "",
-              post.funding_meta?.token_address || ""
+              post.funding_meta?.wallet_address || '',
+              post.content || '',
+              post.id || '',
+              post.funding_meta?.token_address || ''
             )
           }
         >
@@ -648,7 +649,7 @@ const PostDetailsModal = () => {
         </TouchableOpacity>
       </Card>
     );
-  } else if (post.post_type === "TOKEN_CALL" && post.token_meta) {
+  } else if (post.post_type === 'TOKEN_CALL' && post.token_meta) {
     contentBlock = (
       <Card>
         <SectionTitle>Token Call</SectionTitle>
@@ -661,14 +662,14 @@ const PostDetailsModal = () => {
           )}
           <View>
             <Text className="text-white font-bold text-base leading-tight">
-              {post.token_meta.token_name}{" "}
+              {post.token_meta.token_name}{' '}
               <Text className="text-gray-400">
                 ({post.token_meta.token_symbol})
               </Text>
             </Text>
             {post.token_meta.launch_date && (
               <Text className="text-gray-500 text-xs mt-0.5">
-                Launch:{" "}
+                Launch:{' '}
                 {new Date(post.token_meta.launch_date).toLocaleDateString()}
               </Text>
             )}
@@ -677,6 +678,11 @@ const PostDetailsModal = () => {
         <Text className="text-white text-base leading-relaxed mb-1">
           {post.content}
         </Text>
+        {post.media?.length ? (
+          <View className="mt-3">
+            <MediaGallery media={post.media} maxItems={4} />
+          </View>
+        ) : null}
         {post.token_meta.description && (
           <Text className="text-gray-200 text-xs mb-1">
             {post.token_meta.description}
@@ -704,9 +710,9 @@ const PostDetailsModal = () => {
           activeOpacity={0.92}
           onPress={() =>
             handleTokenSwap(
-              post.token_meta?.token_address || "",
-              post.token_meta?.token_symbol || "",
-              post.token_meta?.token_name || ""
+              post.token_meta?.token_address || '',
+              post.token_meta?.token_symbol || '',
+              post.token_meta?.token_name || ''
             )
           }
         >
@@ -722,9 +728,9 @@ const PostDetailsModal = () => {
       <View className="flex-row items-center">
         <TouchableOpacity className="flex-row items-center mr-4">
           <Ionicons
-            name={post.like?.status ? "heart" : "heart-outline"}
+            name={post.like?.status ? 'heart' : 'heart-outline'}
             size={22}
-            color={post.like?.status ? "#ef4444" : "#475569"}
+            color={post.like?.status ? '#ef4444' : '#475569'}
             onPress={() => handleLike()}
           />
           <Text className="text-gray-400 text-xs ml-1">{post._count.like}</Text>
@@ -744,8 +750,8 @@ const PostDetailsModal = () => {
         <TouchableOpacity
           onPress={() => {
             router.push({
-              pathname: "/(modals)/send",
-              params: { recipient: post.user.wallets[0].address },
+              pathname: '/(modals)/send',
+              params: { recipient: post.user.wallets.address },
             });
           }}
           className="flex-row items-center mr-2"
@@ -773,6 +779,7 @@ const PostDetailsModal = () => {
       />
     );
   });
+  CommentThreadRenderer.displayName = 'CommentThreadRenderer';
 
   // render comment loading footer
   const renderFooter = () => {
@@ -804,9 +811,9 @@ const PostDetailsModal = () => {
     tokenName: string
   ) {
     router.push({
-      pathname: "/(modals)/swap",
+      pathname: '/(modals)/swap',
       params: {
-        outputToken: token ? JSON.stringify(token) : "",
+        outputToken: token ? JSON.stringify(token) : '',
         tokenSymbol,
         tokenName,
       },
@@ -821,14 +828,14 @@ const PostDetailsModal = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50">
+    <SafeAreaView className="flex-1 bg-primary-main">
       <View
-        className="flex-row items-center justify-between px-6 py-4 bg-dark-50 z-10"
-        style={{ position: "sticky", top: 0 }}
+        className="flex-row items-center justify-between px-6 py-4 bg-primary-main z-10"
+        style={{ position: 'sticky', top: 0 }}
       >
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 bg-dark-200 rounded-full justify-center items-center"
+          className="w-10 h-10 bg-primary-main rounded-full justify-center items-center"
         >
           <Ionicons name="arrow-back" size={20} color="white" />
         </TouchableOpacity>
@@ -836,6 +843,7 @@ const PostDetailsModal = () => {
         <View className="w-10" />
       </View>
       <ScrollView
+        className="px-6 mb-4"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -866,7 +874,7 @@ const PostDetailsModal = () => {
         <View style={{ marginTop: 10 }}>
           {!showCommentInput ? (
             <TouchableOpacity
-              className="bg-dark-200 rounded-xl px-4 py-3 border border-dark-300 flex-row items-center"
+              className="bg-secondary-light rounded-xl px-4 py-3 border border-dark-300 flex-row items-center"
               activeOpacity={0.85}
               onPress={handleShowCommentInput}
             >
@@ -884,7 +892,7 @@ const PostDetailsModal = () => {
         </View>
 
         {error && (
-          <Text style={{ color: "#ef4444", marginTop: 6, fontSize: 13 }}>
+          <Text style={{ color: '#ef4444', marginTop: 6, fontSize: 13 }}>
             {error}
           </Text>
         )}

@@ -1,41 +1,41 @@
-import React, { useState } from "react";
-import { View, Text } from "react-native";
-import { useRouter } from "expo-router";
-import PostComposer from "@/components/core/social/PostComposer";
-import { SocialFiRequests } from "@/libs/api_requests/socialfi.request";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { z } from "zod";
-import { PostType } from "@/types/posts.interface";
-import { isValidSolanaAddress } from "@/libs/solana.lib";
-import { PostsRequests } from "@/libs/api_requests/posts.request";
+import PostComposer from '@/components/core/social/PostComposer';
+import { PostsRequests } from '@/libs/api_requests/posts.request';
+import { isValidSolanaAddress } from '@/libs/solana.lib';
+import { PostType } from '@/types/posts.interface';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { z } from 'zod';
 
 // Zod schemas for validation (unchanged)
 const regularSchema = z.object({
-  content: z.string().min(1, "Content cannot be empty"),
-  post_type: z.literal("REGULAR"),
+  content: z.string().min(1, 'Content cannot be empty'),
+  post_type: z.literal('REGULAR'),
+  media: z.array(z.string()).optional(),
 });
 const donationSchema = z.object({
-  content: z.string().min(1, "Content cannot be empty"),
-  post_type: z.literal("DONATION"),
-  target_amount: z.number().positive("Target amount must be positive"),
+  content: z.string().min(1, 'Content cannot be empty'),
+  post_type: z.literal('DONATION'),
+  target_amount: z.number().positive('Target amount must be positive'),
   wallet_address: z
     .string()
-    .min(1, "Wallet address is required")
+    .min(1, 'Wallet address is required')
     .refine((val) => isValidSolanaAddress(val) !== false, {
-      message: "Invalid wallet address",
+      message: 'Invalid wallet address',
     }),
-  chain_type: z.string().min(1, "Chain type is required"),
+  chain_type: z.string().min(1, 'Chain type is required'),
   token_symbol: z.string().optional(),
   token_address: z.string().optional(),
   deadline: z.string().datetime().optional(),
 });
 const tokenCallSchema = z.object({
-  content: z.string().min(1, "Content cannot be empty"),
-  post_type: z.literal("TOKEN_CALL"),
-  token_name: z.string().min(1, "Token name is required"),
-  token_symbol: z.string().min(1, "Token symbol is required"),
-  token_address: z.string().min(1, "Token address is required"),
-  chain_type: z.string().min(1, "Chain type is required"),
+  content: z.string().min(1, 'Content cannot be empty'),
+  post_type: z.literal('TOKEN_CALL'),
+  token_name: z.string().min(1, 'Token name is required'),
+  token_symbol: z.string().min(1, 'Token symbol is required'),
+  token_address: z.string().min(1, 'Token address is required'),
+  chain_type: z.string().min(1, 'Chain type is required'),
   logo_url: z.string().url().optional(),
   launch_date: z.string().datetime().optional(),
   initial_price: z.number().positive().optional(),
@@ -46,26 +46,27 @@ const tokenCallSchema = z.object({
 
 const initialForm = {
   // Common
-  content: "",
-  postType: "REGULAR" as PostType,
+  content: '',
+  postType: 'REGULAR' as PostType,
+  media: [],
   // Donation
-  targetAmount: "",
-  walletAddress: "",
-  chainType: "",
-  donationTokenSymbol: "",
-  donationTokenAddress: "",
+  targetAmount: '',
+  walletAddress: '',
+  chainType: '',
+  donationTokenSymbol: '',
+  donationTokenAddress: '',
   deadline: undefined as string | undefined,
   // Token Call
-  tokenName: "",
-  tokenSymbol: "",
-  tokenAddress: "",
-  tokenChainType: "",
-  logoUrl: "",
+  tokenName: '',
+  tokenSymbol: '',
+  tokenAddress: '',
+  tokenChainType: '',
+  logoUrl: '',
   launchDate: undefined as string | undefined,
-  initialPrice: "",
-  targetPrice: "",
-  marketCap: "",
-  description: "",
+  initialPrice: '',
+  targetPrice: '',
+  marketCap: '',
+  description: '',
 };
 
 export default function CreatePostScreen() {
@@ -83,13 +84,17 @@ export default function CreatePostScreen() {
     setForm((prev) => ({ ...prev, postType: type }));
   };
 
-  const handleCreatePost = async () => {
+  const handleCreatePost = async (media: string[]) => {
     setPostError(null);
     setFieldErrors({});
     // Build payload and validate
-    let payload: any = { content: form.content, post_type: form.postType };
+    let payload: any = {
+      content: form.content,
+      post_type: form.postType,
+      media: media || form.media,
+    };
     let schema: z.ZodTypeAny = regularSchema;
-    if (form.postType === "DONATION") {
+    if (form.postType === 'DONATION') {
       payload = {
         ...payload,
         target_amount: Number(form.targetAmount),
@@ -100,7 +105,7 @@ export default function CreatePostScreen() {
         deadline: form.deadline || undefined,
       };
       schema = donationSchema;
-    } else if (form.postType === "TOKEN_CALL") {
+    } else if (form.postType === 'TOKEN_CALL') {
       payload = {
         ...payload,
         token_name: form.tokenName,
@@ -127,7 +132,7 @@ export default function CreatePostScreen() {
         if (err.path[0]) errors[err.path[0] as string] = err.message;
       }
       setFieldErrors(errors);
-      setPostError("Please fix the errors above.");
+      setPostError('Please fix the errors above.');
       return;
     }
     setPosting(true);
@@ -136,21 +141,21 @@ export default function CreatePostScreen() {
       if (res.success) {
         router.replace('/social');
       } else {
-        setPostError(res.message || "Failed to create post");
+        setPostError(res.message || 'Failed to create post');
       }
     } catch (err: any) {
-      setPostError(err?.message || "Failed to create post");
+      setPostError(err?.message || 'Failed to create post');
     } finally {
       setPosting(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-dark-50">
-      <View className="flex-row items-center justify-between px-6 py-4">
+    <SafeAreaView className="flex-1 bg-primary-main px-6 py-4">
+      <View className="flex-row items-center justify-between mb-4">
         <Text className="text-white text-2xl font-bold">Create Post</Text>
         <Text
-          className="text-primary-500 text-lg"
+          className="text-secondary text-lg"
           onPress={() => router.replace('/social')}
         >
           Cancel
