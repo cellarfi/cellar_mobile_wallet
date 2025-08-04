@@ -101,6 +101,7 @@ const BrowserToolbar = ({
     if (!activeTab?.url) return
     setIsAddingToHomeScreen(true)
     try {
+      console.log('Adding to home screen', activeTab.url)
       await ShortcutModule.createShortcut(activeTab.url)
       // await ShortcutModule.createStandaloneWebApp(activeTab.url)
       setShowMenu(false)

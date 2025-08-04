@@ -66,3 +66,20 @@ export const formatAddress = (address: string) => {
 //     // Optionally handle error
 //   }
 // };
+
+// URL validation function
+export const isValidUrl = (string: string) => {
+  try {
+    // Check for common URL patterns
+    const urlRegex =
+      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+    const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+
+    // Remove protocol if present for domain checking
+    const withoutProtocol = string.replace(/^https?:\/\//, '')
+
+    return urlRegex.test(string) || domainRegex.test(withoutProtocol)
+  } catch (error) {
+    return false
+  }
+}

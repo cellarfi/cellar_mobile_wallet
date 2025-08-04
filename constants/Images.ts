@@ -18,4 +18,6 @@ export const Images = {
   tradeWithConfidence: require('@/assets/images/onboarding/trade-with-confidence.png'),
   mascotOnRocks: require('@/assets/images/onboarding/mascot-on-rock.png'),
   arrowBack: require('@/assets/images/arrow-back.png'),
+  launchPumpFun: require('@/assets/images/launch/Pumpfun_bg.png'),
+  launchPumpFunLogo: require('@/assets/images/launch/Pumpfun_logo.png'),
 }

@@ -155,9 +155,9 @@ export default function HomeScreen() {
               onPress={() => router.push('/(modals)/swap')}
             />
             <QuickActionButton
-              icon='trending-up'
-              title='Trade'
-              onPress={() => router.push('/trading')}
+              icon='rocket-outline'
+              title='Launch'
+              onPress={() => router.push('/launch')}
             />
           </View>
         </View>

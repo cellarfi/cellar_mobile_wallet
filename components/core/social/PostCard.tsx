@@ -3,10 +3,10 @@ import { commentsRequests } from '@/libs/api_requests/comments.request'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { useAuthStore } from '@/store/authStore'
 import { Comment as ThreadComment } from '@/types/comment.interface'
-import { Post } from '@/types/posts.interface';
+import { Post } from '@/types/posts.interface'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import React from 'react';
+import React from 'react'
 import {
   Button,
   Image,
@@ -18,7 +18,7 @@ import {
 } from 'react-native'
 import CommentInputCard from './CommentInputCard'
 import CommentThread from './CommentThread'
-import MediaGallery from './MediaGallery';
+import MediaGallery from './MediaGallery'
 
 function formatAmount(amount: string | null) {
   if (!amount) return '0'
@@ -111,7 +111,7 @@ const DonationProgressBar = ({
 
 const TokenCallCard = ({ token_meta }: { token_meta: Post['token_meta'] }) => {
   const isUpcoming =
-    token_meta?.launch_date && new Date(token_meta.launch_date) > new Date();
+    token_meta?.launch_date && new Date(token_meta.launch_date) > new Date()
   return (
     <View
       style={{
@@ -226,104 +226,104 @@ const TokenCallCard = ({ token_meta }: { token_meta: Post['token_meta'] }) => {
       </TouchableOpacity>
       */}
     </View>
-  );
-};
+  )
+}
 
 type PostCardProps = {
-  post: Post;
-  onLike?: (postId: string) => void;
-};
+  post: Post
+  onLike?: (postId: string) => void
+}
 
 const PostCard = ({ post, onLike }: PostCardProps) => {
-  const [showCommentInput, setShowCommentInput] = React.useState(false);
-  const [comments, setComments] = React.useState<ThreadComment[]>([]);
-  const [posting, setPosting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const { profile } = useAuthStore();
-  const [showMenu, setShowMenu] = React.useState(false);
-  const [editing, setEditing] = React.useState(false);
-  const [editedContent, setEditedContent] = React.useState('');
-  const menuButtonRef = React.useRef(null);
+  const [showCommentInput, setShowCommentInput] = React.useState(false)
+  const [comments, setComments] = React.useState<ThreadComment[]>([])
+  const [posting, setPosting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const { profile } = useAuthStore()
+  const [showMenu, setShowMenu] = React.useState(false)
+  const [editing, setEditing] = React.useState(false)
+  const [editedContent, setEditedContent] = React.useState('')
+  const menuButtonRef = React.useRef(null)
 
   // User header
   const handleMenu = () => {
-    setShowMenu((v) => !v);
-  };
+    setShowMenu((v) => !v)
+  }
 
-  const isOwner = profile?.id === post.user_id;
+  const isOwner = profile?.id === post.user_id
   const handleEdit = () => {
-    setShowMenu(false);
-    setEditedContent(post.content);
-    setEditing(true);
-  };
+    setShowMenu(false)
+    setEditedContent(post.content)
+    setEditing(true)
+  }
 
   const handleViewProfile = () => {
-    setShowMenu(false);
+    setShowMenu(false)
     router.push({
       pathname: '/(modals)/user-profile',
       params: { tagName: post.user.tag_name },
-    });
-  };
+    })
+  }
 
   const userHeader = (
-    <View className="flex-row items-center mb-2 relative">
+    <View className='flex-row items-center mb-2 relative'>
       {post.user.profile_picture_url ? (
         <Image
           source={{ uri: post.user.profile_picture_url }}
-          className="w-10 h-10 rounded-full bg-secondary-light mr-2"
+          className='w-10 h-10 rounded-full bg-secondary-light mr-2'
         />
       ) : (
-        <View className="w-10 h-10 rounded-full bg-dark-300 mr-2 justify-center items-center">
-          <Text className="text-white text-base font-semibold">
+        <View className='w-10 h-10 rounded-full bg-dark-300 mr-2 justify-center items-center'>
+          <Text className='text-white text-base font-semibold'>
             {post.user.display_name?.[0]?.toUpperCase() ?? '?'}
           </Text>
         </View>
       )}
-      <View className="flex-1">
-        <Text className="text-white font-semibold text-base">
+      <View className='flex-1'>
+        <Text className='text-white font-semibold text-base'>
           {post.user.display_name}
-          <Text className="text-gray-400 font-normal">
+          <Text className='text-gray-400 font-normal'>
             {' '}
             @{post.user.tag_name}
           </Text>
         </Text>
-        <Text className="text-gray-500 text-xs mt-0.5">
+        <Text className='text-gray-500 text-xs mt-0.5'>
           {new Date(post.created_at).toLocaleString()}
         </Text>
       </View>
       <TouchableOpacity
         ref={menuButtonRef}
         onPress={handleMenu}
-        className="p-2 ml-2"
+        className='p-2 ml-2'
         activeOpacity={0.7}
       >
-        <Ionicons name="ellipsis-horizontal" size={20} color="#94a3b8" />
+        <Ionicons name='ellipsis-horizontal' size={20} color='#94a3b8' />
       </TouchableOpacity>
       {/* Custom popover menu */}
       {showMenu && (
         <>
           {/* Overlay to close menu when clicking outside */}
           <TouchableOpacity
-            className="absolute inset-0 z-30"
+            className='absolute inset-0 z-30'
             style={{ left: 0, top: 0, right: 0, bottom: 0 }}
             activeOpacity={1}
             onPress={() => setShowMenu(false)}
           />
           <View
-            className="absolute z-40 right-0 top-10 bg-primary-main rounded-xl shadow-lg border border-dark-300 min-w-[160px]"
+            className='absolute z-40 right-0 top-10 bg-primary-main rounded-xl shadow-lg border border-dark-300 min-w-[160px]'
             style={{ elevation: 8 }}
           >
             <TouchableOpacity
-              className="px-4 py-3 border-b border-dark-300"
+              className='px-4 py-3 border-b border-dark-300'
               onPress={handleViewProfile}
             >
-              <Text className="text-primary-400 font-semibold text-base">
+              <Text className='text-primary-400 font-semibold text-base'>
                 View user profile
               </Text>
             </TouchableOpacity>
             {isOwner && (
-              <TouchableOpacity className="px-4 py-3" onPress={handleEdit}>
-                <Text className="text-primary-400 font-semibold text-base">
+              <TouchableOpacity className='px-4 py-3' onPress={handleEdit}>
+                <Text className='text-primary-400 font-semibold text-base'>
                   Edit
                 </Text>
               </TouchableOpacity>
@@ -332,10 +332,10 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
         </>
       )}
     </View>
-  );
+  )
 
   // Content rendering by type
-  let contentBlock = null;
+  let contentBlock = null
   if (post.post_type === 'REGULAR') {
     contentBlock = (
       <View style={{ marginBottom: 8 }}>
@@ -346,7 +346,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
           </View>
         )}
       </View>
-    );
+    )
   } else if (post.post_type === 'DONATION' && post.funding_meta) {
     contentBlock = (
       <View
@@ -369,7 +369,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
           Target: {formatAmount(post.funding_meta.target_amount)}
         </Text>
       </View>
-    );
+    )
   } else if (post.post_type === 'TOKEN_CALL' && post.token_meta) {
     contentBlock = (
       <View>
@@ -380,7 +380,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
           </View>
         )}
       </View>
-    );
+    )
   }
 
   // Engagement row (likes, comments, share)
@@ -401,7 +401,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
             marginRight: 18,
           }}
           onPress={() => {
-            onLike?.(post.id);
+            onLike?.(post.id)
           }}
         >
           <Ionicons
@@ -421,7 +421,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
           }}
           onPress={() => setShowCommentInput((v) => !v)}
         >
-          <Ionicons name="chatbubble-outline" size={20} color="#475569" />
+          <Ionicons name='chatbubble-outline' size={20} color='#475569' />
           <Text style={{ color: '#94a3b8', fontSize: 13, marginLeft: 4 }}>
             {post._count.comment + comments.length || 0}
           </Text>
@@ -429,7 +429,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
         <TouchableOpacity
           style={{ flexDirection: 'row', alignItems: 'center' }}
         >
-          <Ionicons name="arrow-redo-outline" size={20} color="#475569" />
+          <Ionicons name='arrow-redo-outline' size={20} color='#475569' />
           <Text style={{ color: '#94a3b8', fontSize: 13, marginLeft: 4 }}>
             Share
           </Text>
@@ -444,30 +444,30 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
                 recipient: post.user.wallets.address,
                 currentMemo: post.user.display_name + ' Tip',
               },
-            });
+            })
           }}
-          className="flex-row items-center mr-2"
+          className='flex-row items-center mr-2'
         >
-          <Ionicons name="cash-outline" size={20} color="#475569" />
+          <Ionicons name='cash-outline' size={20} color='#475569' />
         </TouchableOpacity>
       </View>
     </View>
-  );
+  )
 
-  const handleReply = (commentId: string) => {};
+  const handleReply = (commentId: string) => {}
 
-  const handleLike = (commentId: string) => {};
+  const handleLike = (commentId: string) => {}
 
   // Handle posting a comment (backend integration)
   const handlePostComment = async (text: string) => {
-    if (!profile) return;
-    setPosting(true);
-    setError(null);
+    if (!profile) return
+    setPosting(true)
+    setError(null)
     try {
       const res = await commentsRequests.createComment({
         postId: post.id,
         text,
-      });
+      })
       if (res.success) {
         const newComment: ThreadComment = {
           id: res.data?.id || Math.random().toString(36).slice(2),
@@ -490,73 +490,73 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
           _count: {
             CommentLike: 0,
           },
-        };
-        setComments((prev) => [newComment, ...prev]);
-        setShowCommentInput(false);
+        }
+        setComments((prev) => [newComment, ...prev])
+        setShowCommentInput(false)
       } else {
-        setError(res.message || 'Failed to post comment');
+        setError(res.message || 'Failed to post comment')
       }
     } catch (e: any) {
-      setError(e?.message || 'Failed to post comment');
+      setError(e?.message || 'Failed to post comment')
     } finally {
-      setPosting(false);
+      setPosting(false)
     }
-  };
+  }
 
   // Handle deleting a comment (backend integration)
   const handleDeleteComment = async (commentId: string) => {
-    if (!profile) return;
-    setPosting(true);
-    setError(null);
+    if (!profile) return
+    setPosting(true)
+    setError(null)
     try {
       const res = await commentsRequests.deleteComment({
         id: commentId,
         postId: post.id,
-      });
+      })
       if (res.success) {
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
+        setComments((prev) => prev.filter((c) => c.id !== commentId))
       } else {
-        setError(res.message || 'Failed to delete comment');
+        setError(res.message || 'Failed to delete comment')
       }
     } catch (e: any) {
-      setError(e?.message || 'Failed to delete comment');
+      setError(e?.message || 'Failed to delete comment')
     } finally {
-      setPosting(false);
+      setPosting(false)
     }
-  };
+  }
 
   // Handle editing post content
   const editPostContent = async () => {
-    if (!post.id || editedContent) return;
-    setPosting(true);
-    setError(null);
+    if (!post.id || editedContent) return
+    setPosting(true)
+    setError(null)
     try {
       // Call your API to update the post content
       const res = await PostsRequests.updatePost({
         id: post.id,
         content: editedContent.trim(),
-      });
+      })
       if (res.success) {
-        setEditing(false);
-        alert('Post updated successfully');
+        setEditing(false)
+        alert('Post updated successfully')
       } else {
-        setError(res.message || 'Failed to update post');
+        setError(res.message || 'Failed to update post')
       }
     } catch (e: any) {
-      setError(e?.message || 'Failed to update post');
+      setError(e?.message || 'Failed to update post')
     } finally {
-      setPosting(false);
+      setPosting(false)
     }
-    setEditing(false);
-    setEditedContent(post.content); // Reset to original content
-  };
+    setEditing(false)
+    setEditedContent(post.content) // Reset to original content
+  }
   // router function to redirect to Post Details Modal
   const handlePress = () => {
     router.push({
       pathname: '/(modals)/post-details',
       params: { postId: post.id },
-    });
-  };
+    })
+  }
 
   return (
     <TouchableOpacity
@@ -603,26 +603,26 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
       )}
 
       {/* Edit Post Modal */}
-      <Modal visible={editing} animationType="slide" transparent>
-        <View className="flex-1 justify-center items-center bg-black/60">
-          <View className="bg-primary-main rounded-2xl p-6 w-11/12">
-            <Text className="text-white text-lg font-bold mb-4">Edit Post</Text>
+      <Modal visible={editing} animationType='slide' transparent>
+        <View className='flex-1 justify-center items-center bg-black/60'>
+          <View className='bg-primary-main rounded-2xl p-6 w-11/12'>
+            <Text className='text-white text-lg font-bold mb-4'>Edit Post</Text>
             <TextInput
-              className="bg-secondary-light text-white rounded-xl p-3 mb-4 min-h-[80px]"
+              className='bg-secondary-light text-white rounded-xl p-3 mb-4 min-h-[80px]'
               multiline
               value={editedContent}
               onChangeText={setEditedContent}
             />
-            <View className="flex-row justify-end gap-x-3">
+            <View className='flex-row justify-end gap-x-3'>
               <Button
-                title="Cancel"
+                title='Cancel'
                 onPress={() => setEditing(false)}
-                color="#64748b"
+                color='#64748b'
               />
               <Button
-                title="Save"
+                title='Save'
                 onPress={() => {
-                  editPostContent();
+                  editPostContent()
                 }}
                 color={Colors.dark.secondary}
               />
@@ -631,7 +631,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
         </View>
       </Modal>
     </TouchableOpacity>
-  );
-};
+  )
+}
 
 export default PostCard

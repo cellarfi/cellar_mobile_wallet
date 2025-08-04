@@ -5,6 +5,7 @@ import { usePortfolio } from '@/hooks/usePortfolio'
 import { useTokenChart } from '@/hooks/useTokenChart'
 import { useTokenOverview } from '@/hooks/useTokenOverview'
 import { formatPercentage, formatValue } from '@/libs/string.helpers'
+import { useSettingsStore } from '@/store/settingsStore'
 import { BirdEyeTokenItem } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
@@ -35,6 +36,8 @@ export default function TokenDetailScreen() {
   const [addressCopied, setAddressCopied] = useState(false)
   const copyScaleAnim = useRef(new Animated.Value(1)).current
   const { tokenAddress } = useLocalSearchParams<{ tokenAddress: string }>()
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
 
   const {
     token,
@@ -547,11 +550,15 @@ Powered by Cellar Wallet`
                     Your Holdings
                   </Text>
                   <Text className='text-white text-2xl font-bold mb-1'>
-                    ${formatValue(userHolding.valueUsd)}
+                    {hidePortfolioBalance
+                      ? '••••••'
+                      : `$${formatValue(userHolding.valueUsd)}`}
                   </Text>
                   <Text className='text-white/80 text-lg'>
                     {/* <Text className='text-white/80 text-lg mb-4'> */}
-                    {formatValue(userHolding.uiAmount)} {userHolding.symbol}
+                    {hidePortfolioBalance
+                      ? '••••••'
+                      : `${formatValue(userHolding.uiAmount)} ${userHolding.symbol}`}
                   </Text>
                   <View className='flex-row justify-between hidden'>
                     <View>

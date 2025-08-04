@@ -2,75 +2,51 @@ import { Colors } from '@/constants/Colors'
 import { Ionicons } from '@expo/vector-icons'
 import React, { useState } from 'react'
 import {
-  KeyboardTypeOptions,
   Text,
   TextInput,
+  TextInputProps,
   TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native'
 
-interface CustomTextInputProps {
-  label: string
-  value: string
-  onChangeText: (text: string) => void
-  placeholder: string
+interface CustomTextInputProps extends Omit<TextInputProps, 'style'> {
+  label?: string
   icon?: keyof typeof Ionicons.glyphMap
-  keyboardType?: KeyboardTypeOptions
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters'
-  secureTextEntry?: boolean
   showPasswordToggle?: boolean
   containerStyle?: ViewStyle
   inputContainerStyle?: ViewStyle
   inputStyle?: TextStyle
   labelStyle?: TextStyle
-  editable?: boolean
-  multiline?: boolean
-  numberOfLines?: number
-  maxLength?: number
-  autoFocus?: boolean
-  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send'
-  onSubmitEditing?: () => void
-  onFocus?: () => void
-  onBlur?: () => void
+  isSearch?: boolean
 }
 
 export default function CustomTextInput({
   label,
-  value,
-  onChangeText,
-  placeholder,
   icon,
-  keyboardType = 'default',
-  autoCapitalize = 'sentences',
-  secureTextEntry = false,
   showPasswordToggle = false,
   containerStyle,
   inputContainerStyle,
   inputStyle,
   labelStyle,
-  editable = true,
-  multiline = false,
-  numberOfLines = 1,
-  maxLength,
-  autoFocus = false,
-  returnKeyType = 'done',
-  onSubmitEditing,
+  isSearch = false,
   onFocus,
   onBlur,
+  secureTextEntry = false,
+  ...props
 }: CustomTextInputProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry)
   const [isFocused, setIsFocused] = useState(false)
 
-  const handleFocus = () => {
+  const handleFocus = (e: any) => {
     setIsFocused(true)
-    onFocus?.()
+    onFocus && onFocus(e)
   }
 
-  const handleBlur = () => {
+  const handleBlur = (e: any) => {
     setIsFocused(false)
-    onBlur?.()
+    onBlur && onBlur(e)
   }
 
   const togglePasswordVisibility = () => {
@@ -82,9 +58,14 @@ export default function CustomTextInput({
   return (
     <View style={[containerStyle]}>
       {/* Label */}
-      <Text className='text-text-secondary font-medium mb-2' style={labelStyle}>
-        {label}
-      </Text>
+      {label && (
+        <Text
+          className='text-text-secondary font-medium mb-2'
+          style={labelStyle}
+        >
+          {label}
+        </Text>
+      )}
 
       {/* Input Container */}
       <View
@@ -115,23 +96,33 @@ export default function CustomTextInput({
               height: 20, // Match icon size
             },
           ]}
-          placeholder={placeholder}
           placeholderTextColor={Colors.dark.text}
-          value={value}
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize}
           secureTextEntry={finalSecureTextEntry}
-          editable={editable}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
-          maxLength={maxLength}
-          autoFocus={autoFocus}
-          returnKeyType={returnKeyType}
-          onSubmitEditing={onSubmitEditing}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          {...props}
         />
+
+        {isSearch && props.value && props.value.length > 0 && (
+          <View className='flex-row items-center'>
+            {/* {isValidUrl(props.value.trim()) && (
+              <TouchableOpacity
+                onPress={handleUrlSubmit}
+                className='bg-primary-500 rounded-xl px-3 py-1 mr-2'
+              >
+                <Text className='text-white text-xs font-medium'>Open</Text>
+              </TouchableOpacity>
+            )} */}
+            <TouchableOpacity
+              onPress={() => {
+                props.onChangeText?.('')
+              }}
+              className='ml-2'
+            >
+              <Ionicons name='close-circle' size={20} color='#666672' />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Password Toggle */}
         {showPasswordToggle && (

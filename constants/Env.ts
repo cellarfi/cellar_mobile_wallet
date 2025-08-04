@@ -6,4 +6,5 @@ export const ENV = {
   RPC_URL:
     process.env.EXPO_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com',
   GIPHY_API_KEY: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '',
-};
+  SOLANA_COMMISSION_WALLET: process.env.EXPO_PUBLIC_SOLANA_COMMISSION_WALLET,
+}

@@ -1,4 +1,5 @@
 import { blurHashPlaceholder } from '@/constants/App'
+import { useSettingsStore } from '@/store/settingsStore'
 import { BirdEyeTokenItem } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
@@ -26,6 +27,8 @@ export default function SendTokenSelector({
 }: SendTokenSelectorProps) {
   const [modalVisible, setModalVisible] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
 
   const formatBalance = (balance: number, decimals: number = 9) => {
     const actualBalance = balance / Math.pow(10, decimals)
@@ -87,12 +90,14 @@ export default function SendTokenSelector({
           {token.name || 'Unknown Token'}
         </Text>
         <Text className='text-gray-400 text-sm'>
-          {formatBalanceWithSymbol(token)}
+          {hidePortfolioBalance ? '••••••' : formatBalanceWithSymbol(token)}
         </Text>
       </View>
       <View className='items-end'>
         <Text className='text-white font-semibold'>
-          ${token.valueUsd?.toFixed(2) || '0.00'}
+          {hidePortfolioBalance
+            ? '••••••'
+            : `$${token.valueUsd?.toFixed(2) || '0.00'}`}
         </Text>
         {token.priceUsd && (
           <Text className='text-gray-400 text-xs'>
@@ -131,7 +136,9 @@ export default function SendTokenSelector({
               </Text>
               <Text className='text-gray-400 text-sm'>
                 {selectedToken
-                  ? formatBalanceWithSymbol(selectedToken)
+                  ? hidePortfolioBalance
+                    ? '••••••'
+                    : formatBalanceWithSymbol(selectedToken)
                   : 'No token selected'}
               </Text>
             </View>
@@ -141,7 +148,10 @@ export default function SendTokenSelector({
             {selectedToken && (
               <View className='items-end mr-3'>
                 <Text className='text-white font-medium text-sm'>
-                  ≈ ${selectedToken.valueUsd?.toFixed(2) || '0.00'}
+                  ≈{' '}
+                  {hidePortfolioBalance
+                    ? '••••••'
+                    : `$${selectedToken.valueUsd?.toFixed(2) || '0.00'}`}
                 </Text>
                 {selectedToken.priceUsd && (
                   <Text className='text-gray-400 text-xs'>
