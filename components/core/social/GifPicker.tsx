@@ -1,10 +1,10 @@
 import { Colors } from '@/constants/Colors';
+import type { GifObject } from '@/services/giphy';
 import {
+  getGifCategories,
   getTrendingGifs,
   searchGifs,
-  getGifCategories,
 } from '@/services/giphy';
-import type { GifObject } from '@/services/giphy';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -44,9 +44,9 @@ const GifPicker: React.FC<GifPickerProps> = ({
   const [gifs, setGifs] = useState<GifObject[]>([]);
   const [categories, setCategories] = useState<GifCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    'trending' | 'categories' | 'search'
-  >('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'categories'>(
+    'trending'
+  );
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>(null);
 
   const loadGifs = useCallback(
@@ -54,7 +54,6 @@ const GifPicker: React.FC<GifPickerProps> = ({
       const searchTerm = query || searchQuery || '';
       try {
         setIsLoading(true);
-        setActiveTab(searchTerm.trim() ? 'search' : 'trending');
         const data = searchTerm.trim()
           ? await searchGifs(searchTerm)
           : await getTrendingGifs();
@@ -184,7 +183,7 @@ const GifPicker: React.FC<GifPickerProps> = ({
             color={Colors.dark.text + '80'}
           />
           <Text style={styles.emptyText}>
-            {activeTab === 'search'
+            {searchQuery.trim()
               ? 'No GIFs found. Try a different search term.'
               : 'Unable to load GIFs. Please try again.'}
           </Text>
