@@ -632,6 +632,7 @@ export default function SocialScreen() {
       <Header
         title="Social"
         onSearch={() => router.push('/(modals)/find-posts')}
+        activeFilter={postTypeFilter}
         onFilter={(filter) => setPostTypeFilter(filter)}
       />
 

@@ -6,10 +6,16 @@ import { Text, TouchableOpacity, View } from 'react-native';
 interface HeaderProps {
   title: string;
   onSearch: () => void;
+  activeFilter?: 'ALL' | 'REGULAR' | 'DONATION' | 'TOKEN_CALL';
   onFilter?: (filter: 'ALL' | 'REGULAR' | 'DONATION' | 'TOKEN_CALL') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, onSearch, onFilter }) => {
+const Header: React.FC<HeaderProps> = ({
+  title,
+  onSearch,
+  activeFilter,
+  onFilter,
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 
   const handleFilterPress = () => {
@@ -45,45 +51,65 @@ const Header: React.FC<HeaderProps> = ({ title, onSearch, onFilter }) => {
                   shadowRadius: 12,
                   elevation: 5,
                   borderWidth: 1,
-                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
                 }}
               >
                 <View className="py-1">
                   <TouchableOpacity
-                    className="px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80"
+                    className={`px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80 ${activeFilter === 'ALL' ? 'bg-white/5' : ''}`}
                     onPress={() => handleFilter('ALL')}
                   >
-                    <Ionicons name="grid-outline" size={18} color="#00C2CB" style={{ width: 24 }} />
+                    <Ionicons
+                      name="grid-outline"
+                      size={18}
+                      color="#00C2CB"
+                      style={{ width: 24 }}
+                    />
                     <Text className="text-white font-medium text-base ml-2">
                       All Posts
                     </Text>
                   </TouchableOpacity>
                   <View className="h-px bg-white/5 mx-4" />
                   <TouchableOpacity
-                    className="px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80"
+                    className={`px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80 ${activeFilter === 'REGULAR' ? 'bg-white/5' : ''}`}
                     onPress={() => handleFilter('REGULAR')}
                   >
-                    <Ionicons name="chatbubble-outline" size={18} color="#00C2CB" style={{ width: 24 }} />
+                    <Ionicons
+                      name="chatbubble-outline"
+                      size={18}
+                      color="#00C2CB"
+                      style={{ width: 24 }}
+                    />
                     <Text className="text-white font-medium text-base ml-2">
                       Regular
                     </Text>
                   </TouchableOpacity>
                   <View className="h-px bg-white/5 mx-4" />
                   <TouchableOpacity
-                    className="px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80"
+                    className={`px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80 ${activeFilter === 'DONATION' ? 'bg-white/5' : ''}`}
                     onPress={() => handleFilter('DONATION')}
                   >
-                    <Ionicons name="gift-outline" size={18} color="#00C2CB" style={{ width: 24 }} />
+                    <Ionicons
+                      name="gift-outline"
+                      size={18}
+                      color="#00C2CB"
+                      style={{ width: 24 }}
+                    />
                     <Text className="text-white font-medium text-base ml-2">
                       Donations
                     </Text>
                   </TouchableOpacity>
                   <View className="h-px bg-white/5 mx-4" />
                   <TouchableOpacity
-                    className="px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80"
+                    className={`px-4 py-3 flex-row items-center hover:bg-white/5 active:opacity-80 ${activeFilter === 'TOKEN_CALL' ? 'bg-white/5' : ''}`}
                     onPress={() => handleFilter('TOKEN_CALL')}
                   >
-                    <Ionicons name="megaphone-outline" size={18} color="#00C2CB" style={{ width: 24 }} />
+                    <Ionicons
+                      name="megaphone-outline"
+                      size={18}
+                      color="#00C2CB"
+                      style={{ width: 24 }}
+                    />
                     <Text className="text-white font-medium text-base ml-2">
                       Token Calls
                     </Text>
