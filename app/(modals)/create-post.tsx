@@ -12,6 +12,7 @@ import { z } from 'zod';
 const regularSchema = z.object({
   content: z.string().min(1, 'Content cannot be empty'),
   post_type: z.literal('REGULAR'),
+  media: z.array(z.string()).optional(),
 });
 const donationSchema = z.object({
   content: z.string().min(1, 'Content cannot be empty'),
@@ -47,7 +48,7 @@ const initialForm = {
   // Common
   content: '',
   postType: 'REGULAR' as PostType,
-  mediaUrls: [],
+  media: [],
   // Donation
   targetAmount: '',
   walletAddress: '',
@@ -90,7 +91,7 @@ export default function CreatePostScreen() {
     let payload: any = {
       content: form.content,
       post_type: form.postType,
-      media: form.mediaUrls,
+      media: form.media,
     };
     let schema: z.ZodTypeAny = regularSchema;
     if (form.postType === 'DONATION') {

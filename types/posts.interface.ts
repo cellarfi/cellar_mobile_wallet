@@ -3,7 +3,7 @@ export type PostType = "REGULAR" | "DONATION" | "TOKEN_CALL";
 export interface PostComposerForm {
   content: string;
   postType: PostType;
-  mediaUrls: string[];
+  media: string[];
   // Donation
   targetAmount: string;
   walletAddress: string;

@@ -199,11 +199,6 @@ const PostComposer: React.FC<PostComposerProps> = ({
         mediaUrls = await uploadMedia();
       }
 
-      Alert.alert(
-        'Upload Success',
-        'Media files uploaded successfully.' + mediaUrls.join(', ')
-      );
-
       // Update form with the uploaded media URLs
       onFieldChange('media', mediaUrls);
 
@@ -681,7 +676,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
         >
           {loading || uploading ? (
             <View className="flex flex-row items-center justify-center gap-2">
-              <Text className="text-white">Posting...</Text>
+              <Text className="text-white">Posting</Text>
               <ActivityIndicator color="#fff" size="small" />
             </View>
           ) : (
