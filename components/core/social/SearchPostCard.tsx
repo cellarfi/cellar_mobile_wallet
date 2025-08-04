@@ -1,14 +1,14 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Image } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { SearchedPost } from "@/types/posts.interface";
-import CommentInputCard from "./CommentInputCard";
-import { commentsRequests } from "@/libs/api_requests/comments.request";
-import { PostsRequests } from "@/libs/api_requests/posts.request";
+import { commentsRequests } from '@/libs/api_requests/comments.request';
+import { PostsRequests } from '@/libs/api_requests/posts.request';
+import { SearchedPost } from '@/types/posts.interface';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
+import CommentInputCard from './CommentInputCard';
 
 function formatAmount(amount: string | null) {
-  if (!amount) return "0";
+  if (!amount) return '0';
   return parseFloat(amount).toLocaleString(undefined, {
     maximumFractionDigits: 2,
   });
@@ -21,8 +21,8 @@ const DonationProgressBar = ({
   current: string;
   target: string;
 }) => {
-  const currentNum = parseFloat(current || "0");
-  const targetNum = parseFloat(target || "1");
+  const currentNum = parseFloat(current || '0');
+  const targetNum = parseFloat(target || '1');
   const percent = Math.min((currentNum / targetNum) * 100, 100);
   const overFunded = currentNum > targetNum;
   return (
@@ -35,11 +35,11 @@ const DonationProgressBar = ({
           Target: {formatAmount(target)}
         </Text>
       </View>
-      <View className="h-2 bg-dark-300 rounded-full w-full overflow-hidden">
+      <View className="h-2 bg-secondary-light rounded-full w-full overflow-hidden">
         <View
           style={{ width: `${percent}%` }}
           className={`h-2 ${
-            overFunded ? "bg-success-400" : "bg-primary-500"
+            overFunded ? 'bg-success-400' : 'bg-primary-500'
           } rounded-full`}
         />
       </View>
@@ -55,12 +55,12 @@ const DonationProgressBar = ({
 const TokenCallCard = ({
   token_meta,
 }: {
-  token_meta: SearchedPost["token_meta"];
+  token_meta: SearchedPost['token_meta'];
 }) => {
   const isUpcoming =
     token_meta?.launch_date && new Date(token_meta.launch_date) > new Date();
   return (
-    <View className="rounded-2xl p-4 mb-2 bg-dark-200 border border-dark-300">
+    <View className="rounded-2xl p-4 mb-2 bg-secondary-light border border-dark-300">
       <View className="flex-row items-center mb-2">
         {token_meta?.logo_url && (
           <Image
@@ -70,13 +70,13 @@ const TokenCallCard = ({
               height: 36,
               borderRadius: 18,
               marginRight: 10,
-              backgroundColor: "#18181b",
+              backgroundColor: '#18181b',
             }}
           />
         )}
         <View>
           <Text className="text-white font-bold text-base">
-            {token_meta?.token_name}{" "}
+            {token_meta?.token_name}{' '}
             <Text className="text-gray-400">({token_meta?.token_symbol})</Text>
           </Text>
           <View className="flex-row items-center mt-1">
@@ -132,43 +132,39 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
   const [error, setError] = useState<string | null>(null);
 
   const likeFunction = async () => {
-      if(likeStatus == true){
+    if (likeStatus == true) {
+      setLikeCount((prev) => (likeStatus ? Math.max(prev - 1, 0) : prev - 1));
+      setLikeStatus(false);
+      await PostsRequests.unlikePost(post.like.id, post.id);
+      //setLikeStatus(false);
+      return;
+    } else {
+      try {
+        await PostsRequests.likePost(post.id);
+        setLikeStatus((prev) => !prev);
+        setLikeCount((prev) => (likeStatus ? Math.max(prev - 1, 0) : prev + 1));
+      } catch (e) {
+        setLikeStatus((prev) => !prev);
         setLikeCount((prev) =>
-          likeStatus ? Math.max(prev - 1, 0) : prev - 1
+          likeStatus ? likeCount + 1 : Math.max(likeCount - 1, 0)
         );
-        setLikeStatus(false)
-        await PostsRequests.unlikePost(post.like.id, post.id);
-        //setLikeStatus(false);
-        return;
-      } else {
-        try {
-          await PostsRequests.likePost(post.id);
-          setLikeStatus((prev) => !prev);
-          setLikeCount((prev) =>
-            likeStatus ? Math.max(prev - 1, 0) : prev + 1
-          );
-        } catch (e) {
-          setLikeStatus((prev) => !prev);
-          setLikeCount((prev) =>
-            likeStatus ? likeCount + 1 : Math.max(likeCount - 1, 0)
-          );
-        }
       }
-  }
+    }
+  };
 
   // User header
   const userHeader = (
     <View className="flex-row items-center mb-2">
-      <View className="w-9 h-9 rounded-full bg-dark-300 justify-center items-center mr-2">
+      <View className="w-9 h-9 rounded-full bg-secondary-light justify-center items-center mr-2">
         <Text className="text-white text-base font-semibold">
-          {post.user.display_name?.[0]?.toUpperCase() ?? "?"}
+          {post.user.display_name?.[0]?.toUpperCase() ?? '?'}
         </Text>
       </View>
       <View className="flex-1">
         <Text className="text-white font-semibold text-base">
           {post.user.display_name}
           <Text className="text-gray-400 font-normal">
-            {" "}
+            {' '}
             @{post.user.tag_name}
           </Text>
         </Text>
@@ -181,21 +177,25 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
 
   // Content rendering by type
   let contentBlock = null;
-  if (post.post_type === "REGULAR") {
+  if (post.post_type === 'REGULAR') {
     contentBlock = (
       <View className="mb-2">
         <Text className="text-gray-200 text-base">{post.content}</Text>
       </View>
     );
-  } else if (post.post_type === "DONATION" && post.funding_meta) {
+  } else if (post.post_type === 'DONATION' && post.funding_meta) {
     contentBlock = (
-      <View className="bg-dark-300 rounded-xl p-3 mb-2">
+      <View className="bg-secondary-light rounded-xl p-3 mb-2">
         <Text className="text-gray-200 text-base mb-1">{post.content}</Text>
-        <DonationProgressBar current={post.funding_meta.current_amount} target={post.funding_meta.target_amount} />
+        <DonationProgressBar
+          current={post.funding_meta.current_amount}
+          target={post.funding_meta.target_amount}
+        />
         <View className="flex-row items-center mt-1">
           <Ionicons name="wallet-outline" size={16} color="#475569" />
           <Text className="text-gray-400 text-xs ml-2">
-            {post.funding_meta.token_symbol || "Token"} on {post.funding_meta.chain_type}
+            {post.funding_meta.token_symbol || 'Token'} on{' '}
+            {post.funding_meta.chain_type}
           </Text>
           {post.funding_meta.deadline && (
             <Text className="text-gray-400 text-xs ml-3">
@@ -205,7 +205,7 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
         </View>
       </View>
     );
-  } else if (post.post_type === "TOKEN_CALL" && post.token_meta) {
+  } else if (post.post_type === 'TOKEN_CALL' && post.token_meta) {
     contentBlock = (
       <>
         {post.content && (
@@ -227,9 +227,9 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
         activeOpacity={0.7}
       >
         <Ionicons
-          name={likeStatus ? "heart" : "heart-outline"}
+          name={likeStatus ? 'heart' : 'heart-outline'}
           size={20}
-          color={likeStatus ? "#ef4444" : "#475569"}
+          color={likeStatus ? '#ef4444' : '#475569'}
         />
         <Text className="text-gray-400 text-xs ml-1">{likeCount}</Text>
       </TouchableOpacity>
@@ -261,23 +261,23 @@ export default function SearchPostCard({ post }: { post: SearchedPost }) {
         setCommentCount((prev) => prev + 1);
         setShowCommentInput(false);
       } else {
-        setError(res.message || "Failed to post comment");
+        setError(res.message || 'Failed to post comment');
       }
     } catch (e: any) {
-      setError(e?.message || "Failed to post comment");
+      setError(e?.message || 'Failed to post comment');
     } finally {
       setPosting(false);
     }
   };
 
   return (
-    <View className="bg-dark-200 rounded-2xl p-5 mb-4 border border-dark-300">
+    <View className="bg-secondary-light rounded-2xl p-5 mb-4 border border-dark-300">
       {/* Make the whole card pressable to open post-details modal */}
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() =>
           router.push({
-            pathname: "/(modals)/post-details",
+            pathname: '/(modals)/post-details',
             params: { postId: post.id },
           })
         }
