@@ -3,7 +3,7 @@ import { ENV } from '@/constants/Env';
 const GIPHY_API_KEY = ENV.GIPHY_API_KEY;
 const GIPHY_BASE_URL = 'https://api.giphy.com/v1/gifs';
 
-type GifObject = {
+export type GifObject = {
   id: string;
   images: {
     fixed_width: {

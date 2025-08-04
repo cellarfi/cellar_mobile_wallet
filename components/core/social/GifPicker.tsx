@@ -1,5 +1,10 @@
 import { Colors } from '@/constants/Colors';
-import { getTrendingGifs, searchGifs } from '@/services/giphy';
+import {
+  getTrendingGifs,
+  searchGifs,
+  getGifCategories,
+} from '@/services/giphy';
+import type { GifObject } from '@/services/giphy';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -19,21 +24,9 @@ const { width } = Dimensions.get('window');
 const GIPHY_LOGO =
   'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/GIPHY_Logo_2014.svg/640px-GIPHY_Logo_2014.svg.png';
 
-type GifObject = {
-  id: string;
-  images: {
-    fixed_width: {
-      url: string;
-      width: string;
-      height: string;
-    };
-    original: {
-      url: string;
-      width: string;
-      height: string;
-    };
-  };
-  title: string;
+type GifCategory = {
+  name: string;
+  gif: GifObject;
 };
 
 interface GifPickerProps {
@@ -49,19 +42,41 @@ const GifPicker: React.FC<GifPickerProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [gifs, setGifs] = useState<GifObject[]>([]);
+  const [categories, setCategories] = useState<GifCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    'trending' | 'categories' | 'search'
+  >('trending');
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>(null);
 
-  const loadGifs = useCallback(async (query: string = '') => {
+  const loadGifs = useCallback(
+    async (query: string = '') => {
+      const searchTerm = query || searchQuery || '';
+      try {
+        setIsLoading(true);
+        setActiveTab(searchTerm.trim() ? 'search' : 'trending');
+        const data = searchTerm.trim()
+          ? await searchGifs(searchTerm)
+          : await getTrendingGifs();
+        setGifs(data);
+      } catch (error) {
+        console.error('Error loading GIFs:', error);
+        setGifs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [searchQuery]
+  );
+
+  const loadCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = query.trim()
-        ? await searchGifs(query)
-        : await getTrendingGifs();
-      setGifs(data);
+      const data = await getGifCategories();
+      setCategories(data);
     } catch (error) {
-      console.error('Error loading GIFs:', error);
-      setGifs([]);
+      console.error('Error loading categories:', error);
+      setCategories([]);
     } finally {
       setIsLoading(false);
     }
@@ -86,29 +101,108 @@ const GifPicker: React.FC<GifPickerProps> = ({
     };
   }, [searchQuery, loadGifs, visible]);
 
-  // Load trending GIFs when component becomes visible
+  // Load data when component becomes visible
   useEffect(() => {
     if (visible) {
-      loadGifs(''); // Pass empty string to load trending GIFs
+      loadGifs('');
+      loadCategories();
     } else {
       // Reset state when closing
       setSearchQuery('');
       setGifs([]);
+      setActiveTab('trending');
     }
-  }, [visible, loadGifs]);
+  }, [visible, loadGifs, loadCategories]);
 
   const renderGifItem = ({ item }: { item: GifObject }) => (
     <TouchableOpacity
       style={styles.gifItem}
       onPress={() => onSelect(item.images.original.url)}
+      activeOpacity={0.8}
     >
       <Image
-        source={{ uri: item.images.fixed_width.url }}
+        source={{
+          uri: item.images.fixed_width?.url || item.images.original?.url,
+        }}
         style={styles.gifImage}
         resizeMode="cover"
+        onError={(e) => console.log('Error loading GIF:', e.nativeEvent.error)}
       />
     </TouchableOpacity>
   );
+
+  const renderCategoryItem = ({ item }: { item: GifCategory }) => (
+    <TouchableOpacity
+      style={styles.categoryItem}
+      onPress={() => {
+        setSearchQuery(item.name);
+        loadGifs(item.name);
+      }}
+      activeOpacity={0.8}
+    >
+      <Image
+        source={{
+          uri:
+            item.gif.images.fixed_width?.url || item.gif.images.original?.url,
+        }}
+        style={styles.categoryImage}
+        resizeMode="cover"
+      />
+      <View style={styles.categoryOverlay} />
+      <Text style={styles.categoryTitle}>{item.name}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.dark.secondary} />
+        </View>
+      );
+    }
+
+    if (activeTab === 'categories') {
+      return (
+        <FlatList
+          data={categories}
+          renderItem={renderCategoryItem}
+          keyExtractor={(item) => item.name}
+          numColumns={2}
+          contentContainerStyle={styles.categoriesList}
+          showsVerticalScrollIndicator={false}
+        />
+      );
+    }
+
+    if (gifs.length === 0) {
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons
+            name="sad-outline"
+            size={48}
+            color={Colors.dark.text + '80'}
+          />
+          <Text style={styles.emptyText}>
+            {activeTab === 'search'
+              ? 'No GIFs found. Try a different search term.'
+              : 'Unable to load GIFs. Please try again.'}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={gifs}
+        renderItem={renderGifItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={styles.gifList}
+        showsVerticalScrollIndicator={false}
+      />
+    );
+  };
 
   return (
     <Modal
@@ -142,32 +236,66 @@ const GifPicker: React.FC<GifPickerProps> = ({
             </TouchableOpacity>
           </View>
 
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.dark.secondary} />
-            </View>
-          ) : gifs.length > 0 ? (
-            <FlatList
-              data={gifs}
-              renderItem={renderGifItem}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              contentContainerStyle={styles.gifList}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <View style={styles.emptyState}>
+          {/* Tabs */}
+          <View style={styles.tabsContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'trending' && styles.activeTab]}
+              onPress={() => {
+                setSearchQuery('');
+                loadGifs('');
+              }}
+            >
               <Ionicons
-                name="sad-outline"
-                size={48}
-                color={Colors.dark.text + '80'}
+                name="flame"
+                size={20}
+                color={
+                  activeTab === 'trending'
+                    ? Colors.dark.secondary
+                    : Colors.dark.text + '80'
+                }
               />
-              <Text style={styles.emptyText}>No GIFs found</Text>
-              <Text style={styles.emptySubtext}>
-                Try a different search term
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'trending' && styles.activeTabText,
+                ]}
+              >
+                Trending
               </Text>
-            </View>
-          )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'categories' && styles.activeTab,
+              ]}
+              onPress={() => {
+                setSearchQuery('');
+                setActiveTab('categories');
+              }}
+            >
+              <Ionicons
+                name="grid"
+                size={20}
+                color={
+                  activeTab === 'categories'
+                    ? Colors.dark.secondary
+                    : Colors.dark.text + '80'
+                }
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'categories' && styles.activeTabText,
+                ]}
+              >
+                Categories
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View style={styles.contentContainer}>{renderContent()}</View>
 
           <View style={styles.footer}>
             <Image
@@ -189,12 +317,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   container: {
-    height: '70%',
+    height: '80%',
     width: '100%',
     backgroundColor: Colors.dark.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
+  },
+  contentContainer: {
+    flex: 1,
+    marginTop: 12,
   },
   header: {
     flexDirection: 'row',
@@ -210,6 +342,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     marginRight: 8,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    marginTop: 12,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.secondaryLight,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginRight: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: Colors.dark.secondary,
+  },
+  tabText: {
+    color: Colors.dark.text + '80',
+    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: Colors.dark.secondary,
   },
   searchInput: {
     flex: 1,
@@ -239,6 +399,38 @@ const styles = StyleSheet.create({
   gifImage: {
     width: '100%',
     height: '100%',
+  },
+  categoryItem: {
+    width: (width - 48) / 2,
+    height: (width - 48) / 3,
+    margin: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: Colors.dark.secondaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  categoryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  categoryTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    paddingHorizontal: 8,
+  },
+  categoriesList: {
+    paddingBottom: 16,
   },
   loadingContainer: {
     flex: 1,
