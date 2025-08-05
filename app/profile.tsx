@@ -1,14 +1,15 @@
-import PointsDisplay from '@/components/PointsDisplay';
-import { useAuthContext } from '@/contexts/AuthProvider';
-import { usePoints } from '@/hooks/usePoints';
-import { usePortfolio } from '@/hooks/usePortfolio';
-import { formatNumber } from '@/libs/string.helpers';
-import { useAuthStore } from '@/store/authStore';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import PointsDisplay from '@/components/PointsDisplay'
+import { useAuthContext } from '@/contexts/AuthProvider'
+import { usePoints } from '@/hooks/usePoints'
+import { usePortfolio } from '@/hooks/usePortfolio'
+import { formatNumber } from '@/libs/string.helpers'
+import { useAuthStore } from '@/store/authStore'
+import { useSettingsStore } from '@/store/settingsStore'
+import { Ionicons } from '@expo/vector-icons'
+import { format } from 'date-fns'
+import { LinearGradient } from 'expo-linear-gradient'
+import { router } from 'expo-router'
+import React, { useEffect, useState } from 'react'
 import {
   Alert,
   ScrollView,
@@ -122,13 +123,15 @@ const menuSections = [
 ]
 
 export default function ProfileScreen() {
-  const { profile } = useAuthStore();
-  const { portfolio } = usePortfolio();
-  const { userPoints, isLoading } = usePoints();
+  const { profile } = useAuthStore()
+  const { portfolio } = usePortfolio()
+  const { userPoints, isLoading } = usePoints()
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
 
   // For pagination in points history
-  const [historyPage, setHistoryPage] = useState(0);
-  const historyLimit = 10;
+  const [historyPage, setHistoryPage] = useState(0)
+  const historyLimit = 10
 
   const [preferences, setPreferences] = useState(userData.preferences)
   // const { logout } = usePrivy()
@@ -159,11 +162,11 @@ export default function ProfileScreen() {
         router.push('/(modals)/notification-settings')
         break
       case 'address-book':
-        router.push('/(modals)/address-book');
-        break;
+        router.push('/(modals)/address-book')
+        break
       case 'leaderboard':
-        router.push('/leaderboard' as any);
-        break;
+        router.push('/leaderboard' as any)
+        break
       default:
         Alert.alert('Coming Soon', `${action} feature will be available soon!`)
     }
@@ -217,12 +220,12 @@ export default function ProfileScreen() {
   )
 
   const StatCard = ({ label, value, extra }: any) => (
-    <View className="items-center">
-      <Text className="text-white text-xl font-bold">{value}</Text>
-      <Text className="text-gray-400 text-sm">{label}</Text>
+    <View className='items-center'>
+      <Text className='text-white text-xl font-bold'>{value}</Text>
+      <Text className='text-gray-400 text-sm'>{label}</Text>
       {extra && (
-        <View className="bg-primary-500/30 rounded-full px-2 py-0.5 mt-1">
-          <Text className="text-primary-300 text-xs font-medium">{extra}</Text>
+        <View className='bg-primary-500/30 rounded-full px-2 py-0.5 mt-1'>
+          <Text className='text-primary-300 text-xs font-medium'>{extra}</Text>
         </View>
       )}
     </View>
@@ -270,8 +273,8 @@ export default function ProfileScreen() {
                   {/* {userData.verified && ( */}
                   <Ionicons name='checkmark-circle' size={24} color='white' />
                   {/* )} */}
-                  <View className="ml-2">
-                    <PointsDisplay size="small" showLabel={false} />
+                  <View className='ml-2'>
+                    <PointsDisplay size='small' showLabel={false} />
                   </View>
                 </View>
                 <Text className='text-white/80 text-lg mb-1'>
@@ -295,20 +298,24 @@ export default function ProfileScreen() {
             <View className='flex-row justify-around'>
               <StatCard
                 label='Portfolio'
-                value={'$' + formatNumber(portfolio?.totalUsd || 0)}
+                value={
+                  hidePortfolioBalance
+                    ? '••••••'
+                    : '$' + formatNumber(portfolio?.totalUsd || 0)
+                }
               />
-              <View className="items-center">
+              <View className='items-center'>
                 {isLoading ? (
-                  <Text className="text-white text-xl font-bold">...</Text>
+                  <Text className='text-white text-xl font-bold'>...</Text>
                 ) : (
-                  <Text className="text-white text-xl font-bold">
+                  <Text className='text-white text-xl font-bold'>
                     {userPoints?.level || 0}
                   </Text>
                 )}
-                <Text className="text-gray-400 text-sm">Level</Text>
+                <Text className='text-gray-400 text-sm'>Level</Text>
               </View>
-              <StatCard label="Wallets" value={userData.stats.wallets} />
-              <StatCard label="Followers" value={userData.stats.followers} />
+              <StatCard label='Wallets' value={userData.stats.wallets} />
+              <StatCard label='Followers' value={userData.stats.followers} />
             </View>
           </LinearGradient>
         </View>

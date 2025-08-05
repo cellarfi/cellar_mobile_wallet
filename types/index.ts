@@ -41,6 +41,11 @@ import {
   PointsHistoryResponse,
   UserPoint,
 } from './points.interface'
+import {
+  CreateTokenFormData,
+  PumpFunToken,
+  PumpFunTokenStatus,
+} from './pumpfun.interface'
 import { Risk, RugResponse, TokenHolder } from './rug.interface'
 import { Session } from './session.interface'
 import { CreateUserDto, UpdateUserDto, User } from './user.interface'
@@ -72,6 +77,7 @@ export {
   BirdEyeWalletBalanceChangeTokenInfo,
   BirdEyeWalletPortfolio,
   BirdEyeWalletTransactionHistory,
+  CreateTokenFormData,
   CreateUserDto,
   JupiterExecuteOrderResponse,
   JupiterOrderRequest,
@@ -84,6 +90,8 @@ export {
   PointsHistoryFilterOptions,
   PointsHistoryResponse,
   PrivyWalletAccount,
+  PumpFunToken,
+  PumpFunTokenStatus,
   Risk,
   RugResponse,
   Session,

@@ -1,6 +1,8 @@
 import { blurHashPlaceholder } from '@/constants/App'
 import { formatPriceChange, formatValue } from '@/libs/string.helpers'
 import { cn } from '@/libs/utils'
+
+import { useSettingsStore } from '@/store/settingsStore'
 import { BirdEyeTokenItem } from '@/types'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
@@ -23,6 +25,8 @@ export function TokenCard({
   className,
 }: TokenCardProps) {
   const [imageError, setImageError] = useState(false)
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
 
   const handlePress = () => {
     if (onPress) {
@@ -76,7 +80,9 @@ export function TokenCard({
             <Text className='text-gray-400 text-sm' numberOfLines={1}>
               {/* {token.name || 'Unknown Token'} */}
               {mc && '$'}
-              {formatValue(token.uiAmount || token.balance)} {token.symbol}
+              {hidePortfolioBalance
+                ? '••••••'
+                : `${formatValue(token.uiAmount || token.balance)} ${token.symbol}`}
             </Text>
             {/* {showBalance && (
               <Text className='text-gray-500 text-xs'>
@@ -87,7 +93,9 @@ export function TokenCard({
         </View>
         <View className='items-end'>
           <Text className='text-white font-semibold text-lg'>
-            ${formatValue(token.valueUsd)}
+            {hidePortfolioBalance
+              ? '••••••'
+              : `$${formatValue(token.valueUsd)}`}
           </Text>
           {token.priceChange24h !== undefined && (
             <Text

@@ -11,6 +11,14 @@ import bs58 from 'bs58'
 export const NATIVE_SOL_ADDRESS = '11111111111111111111111111111111'
 export const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111111'
 export const WRAPPED_SOL_MINT = 'So11111111111111111111111111111111111111112'
+export const USDC_METADATA = {
+  address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  decimals: 6,
+  symbol: 'USDC',
+  name: 'USD Coin',
+  logoURI:
+    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+}
 
 export const getConnection = () => {
   return new Connection(ENV.RPC_URL, {

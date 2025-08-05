@@ -6,7 +6,6 @@ import { useDebouncedCallback } from '@/hooks/useDebounce'
 import { userRequests } from '@/libs/api_requests/user.request'
 import { useAuthStore } from '@/store/authStore'
 import { usePrivy } from '@privy-io/expo'
-import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import {
@@ -222,154 +221,145 @@ const SetupProfile = () => {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
-      <LinearGradient
-        colors={['#0a0a0b', '#1a1a1f', '#0a0a0b']}
+    <SafeAreaView className='flex-1 bg-primary-main'>
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <ScrollView
+          className='flex-1 px-6'
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView
-            className='flex-1 px-6'
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Header */}
-            <View className='flex-row items-center justify-between pt-4 mb-8'>
-              <View className='w-8' />
-              <Text className='text-lg font-semibold text-white'>
-                Setup Profile
-              </Text>
-              <TouchableOpacity onPress={handleSkip} className='p-2'>
-                <Text className='text-gray-400 font-medium'>Skip</Text>
-              </TouchableOpacity>
+          {/* Header */}
+          <View className='flex-row items-center justify-between pt-4 mb-8'>
+            <View className='w-8' />
+            <Text className='text-lg font-semibold text-white'>
+              Setup Profile
+            </Text>
+            <TouchableOpacity onPress={handleSkip} className='p-2'>
+              <Text className='text-gray-400 font-medium'>Skip</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Logo */}
+          <View className='items-center mb-8'>
+            <View className='mb-6 shadow-glow'>
+              <AppLogo size={64} />
+            </View>
+            <Text className='text-2xl font-bold text-white mb-2'>
+              Complete Your Profile
+            </Text>
+            <Text className='text-gray-400 text-center px-4'>
+              Set up your profile to get started with Cellar
+            </Text>
+          </View>
+
+          {/* Form */}
+          <View className='gap-6'>
+            {/* Display Name Input */}
+            <View>
+              <CustomTextInput
+                label='Display Name'
+                icon='person-outline'
+                placeholder='Enter your display name'
+                value={formData.display_name}
+                onChangeText={(text) => updateFormData('display_name', text)}
+                autoCapitalize='words'
+                returnKeyType='next'
+              />
+              {errors.display_name && (
+                <Text className='text-red-800 text-sm mt-1'>
+                  {errors.display_name}
+                </Text>
+              )}
             </View>
 
-            {/* Logo */}
-            <View className='items-center mb-8'>
-              <View className='mb-6 shadow-glow'>
-                <AppLogo size={64} />
-              </View>
-              <Text className='text-2xl font-bold text-white mb-2'>
-                Complete Your Profile
-              </Text>
-              <Text className='text-gray-400 text-center px-4'>
-                Set up your profile to get started with Cellar
-              </Text>
-            </View>
-
-            {/* Form */}
-            <View className='gap-6'>
-              {/* Display Name Input */}
-              <View>
+            {/* Tag Name Input */}
+            <View>
+              <View className='mb-4'>
                 <CustomTextInput
-                  label='Display Name'
-                  icon='person-outline'
-                  placeholder='Enter your display name'
-                  value={formData.display_name}
-                  onChangeText={(text) => updateFormData('display_name', text)}
-                  autoCapitalize='words'
+                  label='Tag Name'
+                  icon='at-outline'
+                  placeholder='Enter your tag name'
+                  value={formData.tag_name}
+                  onChangeText={(text) => updateFormData('tag_name', text)}
+                  autoCapitalize='none'
+                  returnKeyType='next'
+                  maxLength={20}
+                />
+                <View className='flex-row justify-between mt-1'>
+                  <Text className='text-gray-500 text-xs'>
+                    This will be your unique identifier (like @
+                    {formData.tag_name || 'tag_name'})
+                  </Text>
+                  {isCheckingTag ? (
+                    <Text className='text-yellow-500 text-xs'>Checking...</Text>
+                  ) : tagNameAvailable === true ? (
+                    <Text className='text-green-500 text-xs'>Available!</Text>
+                  ) : tagNameAvailable === false ? (
+                    <Text className='text-red-500 text-xs'>Not available</Text>
+                  ) : null}
+                </View>
+                {errors.tag_name && (
+                  <Text className='text-red-500 text-sm mt-1'>
+                    {errors.tag_name}
+                  </Text>
+                )}
+              </View>
+
+              <View className='mb-4'>
+                <CustomTextInput
+                  label='Bio (Optional)'
+                  icon='pencil-outline'
+                  placeholder='Tell us about yourself...'
+                  value={formData.about}
+                  onChangeText={(text) => updateFormData('about', text)}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={160}
                   returnKeyType='next'
                 />
-                {errors.display_name && (
-                  <Text className='text-red-500 text-sm mt-1'>
-                    {errors.display_name}
-                  </Text>
-                )}
-              </View>
-
-              {/* Tag Name Input */}
-              <View>
-                <View className='mb-4'>
-                  <CustomTextInput
-                    label='Tag Name'
-                    icon='at-outline'
-                    placeholder='Enter your tag name'
-                    value={formData.tag_name}
-                    onChangeText={(text) => updateFormData('tag_name', text)}
-                    autoCapitalize='none'
-                    returnKeyType='next'
-                    maxLength={20}
-                  />
-                  <View className='flex-row justify-between mt-1'>
-                    <Text className='text-gray-500 text-xs'>
-                      This will be your unique identifier (like @
-                      {formData.tag_name || 'tag_name'})
-                    </Text>
-                    {isCheckingTag ? (
-                      <Text className='text-yellow-500 text-xs'>
-                        Checking...
-                      </Text>
-                    ) : tagNameAvailable === true ? (
-                      <Text className='text-green-500 text-xs'>Available!</Text>
-                    ) : tagNameAvailable === false ? (
-                      <Text className='text-red-500 text-xs'>
-                        Not available
-                      </Text>
-                    ) : null}
-                  </View>
-                  {errors.tag_name && (
-                    <Text className='text-red-500 text-sm mt-1'>
-                      {errors.tag_name}
-                    </Text>
-                  )}
-                </View>
-
-                <View className='mb-4'>
-                  <CustomTextInput
-                    label='Bio (Optional)'
-                    icon='pencil-outline'
-                    placeholder='Tell us about yourself...'
-                    value={formData.about}
-                    onChangeText={(text) => updateFormData('about', text)}
-                    multiline
-                    numberOfLines={3}
-                    maxLength={160}
-                    returnKeyType='next'
-                  />
-                </View>
-              </View>
-
-              {/* Referral Code Input */}
-              <View>
-                <CustomTextInput
-                  label='Referral Code (Optional)'
-                  icon='gift-outline'
-                  placeholder='Enter referral code'
-                  value={formData.referral_code}
-                  onChangeText={(text) => updateFormData('referral_code', text)}
-                  autoCapitalize='none'
-                  returnKeyType='done'
-                />
-                <Text className='text-gray-500 text-xs mt-1'>
-                  Have a referral code? Enter it here for special rewards
-                </Text>
-                {errors.referral_code && (
-                  <Text className='text-red-500 text-sm mt-1'>
-                    {errors.referral_code}
-                  </Text>
-                )}
               </View>
             </View>
 
-            {/* Create Profile Button */}
-            <CustomButton
-              text={isLoading ? 'Creating Profile...' : 'Create Profile'}
-              onPress={handleSubmit}
-              type='primary'
-              className='mt-8 mb-6'
-              disabled={isLoading}
-            />
+            {/* Referral Code Input */}
+            <View>
+              <CustomTextInput
+                label='Referral Code (Optional)'
+                icon='gift-outline'
+                placeholder='Enter referral code'
+                value={formData.referral_code}
+                onChangeText={(text) => updateFormData('referral_code', text)}
+                autoCapitalize='none'
+                returnKeyType='done'
+              />
+              <Text className='text-gray-500 text-xs mt-1'>
+                Have a referral code? Enter it here for special rewards
+              </Text>
+              {errors.referral_code && (
+                <Text className='text-red-500 text-sm mt-1'>
+                  {errors.referral_code}
+                </Text>
+              )}
+            </View>
+          </View>
 
-            {/* Help Text */}
-            <Text className='text-gray-500 text-center text-sm mb-8'>
-              By creating your profile, you agree to our Terms of Service and
-              Privacy Policy
-            </Text>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+          {/* Create Profile Button */}
+          <CustomButton
+            text={isLoading ? 'Creating Profile...' : 'Create Profile'}
+            onPress={handleSubmit}
+            type='primary'
+            className='mt-8 mb-6'
+            disabled={isLoading}
+          />
+
+          {/* Help Text */}
+          <Text className='text-white text-center text-sm mb-8'>
+            By creating your profile, you agree to our Terms of Service and
+            Privacy Policy
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }

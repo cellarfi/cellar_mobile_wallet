@@ -92,29 +92,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   } | null>(null)
 
   // Handle deep link changes
-  useEffect(() => {
-    if (url && pathname.includes('/browser')) {
-      // console.log('AuthProvider: Deep link detected:', { url, pathname })
-      setPendingDeepLink({ url, pathname })
-    }
-  }, [url, pathname])
+  // useEffect(() => {
+  //   if (url && pathname.includes('/browser')) {
+  //     // console.log('AuthProvider: Deep link detected:', { url, pathname })
+  //     setPendingDeepLink({ url, pathname })
+  //   }
+  // }, [url, pathname])
 
-  // Handle deep link navigation when user is already authenticated
-  useEffect(() => {
-    if (pendingDeepLink && isAuthenticated && user && !isNavigating) {
-      // console.log(
-      //   'AuthProvider: Processing pending deep link:',
-      //   pendingDeepLink
-      // )
-      router.replace({
-        pathname: '/(modals)/browser',
-        params: {
-          url: pendingDeepLink.url,
-        },
-      })
-      setPendingDeepLink(null)
-    }
-  }, [pendingDeepLink, isAuthenticated, user, isNavigating])
+  // // Handle deep link navigation when user is already authenticated
+  // useEffect(() => {
+  //   if (pendingDeepLink && isAuthenticated && user && !isNavigating) {
+  //     // console.log(
+  //     //   'AuthProvider: Processing pending deep link:',
+  //     //   pendingDeepLink
+  //     // )
+  //     router.replace({
+  //       pathname: '/(modals)/browser',
+  //       params: {
+  //         url: pendingDeepLink.url,
+  //       },
+  //     })
+  //     setPendingDeepLink(null)
+  //   }
+  // }, [pendingDeepLink, isAuthenticated, user, isNavigating])
 
   // Get Privy access token
   const getPrivyIdentityToken = async () => {

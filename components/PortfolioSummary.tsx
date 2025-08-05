@@ -1,6 +1,7 @@
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { useClipboard } from '@/libs/clipboard'
 import { useAuthStore } from '@/store/authStore'
+import { useSettingsStore } from '@/store/settingsStore'
 import { Ionicons } from '@expo/vector-icons'
 import { formatWalletAddress } from '@privy-io/expo'
 import * as Haptics from 'expo-haptics'
@@ -12,6 +13,8 @@ export function PortfolioSummary() {
   const { portfolio, isLoading, isRefetching, error } = usePortfolio()
   const { activeWallet } = useAuthStore()
   const { copyToClipboard, copied } = useClipboard()
+  const { settings, updateSettings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
   const scaleAnim = useRef(new Animated.Value(1)).current
 
   const formatPortfolioValue = (value?: number) => {
@@ -29,6 +32,14 @@ export function PortfolioSummary() {
 
       await copyToClipboard(activeWallet.address)
     }
+  }
+
+  const handleLongPress = async () => {
+    // Haptic feedback
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+    // Toggle portfolio balance visibility
+    updateSettings({ hidePortfolioBalance: !hidePortfolioBalance })
   }
 
   const calculatePortfolioChange = () => {
@@ -125,25 +136,33 @@ export function PortfolioSummary() {
       end={{ x: 1, y: 1 }}
     >
       <Text className='text-white/80 text-sm mb-2'>Total Portfolio Value</Text>
-      <View className=' mb-3'>
-        <Text className='text-white text-3xl font-bold'>
-          ${formatPortfolioValue(portfolio?.totalUsd)}
-        </Text>
-        {(() => {
-          const change = formatPortfolioChange()
-          if (!change) return null
+      <TouchableOpacity
+        onLongPress={handleLongPress}
+        delayLongPress={500}
+        activeOpacity={1}
+      >
+        <View className=' mb-3'>
+          <Text className='text-white text-3xl font-bold'>
+            {hidePortfolioBalance
+              ? '••••••'
+              : `$${formatPortfolioValue(portfolio?.totalUsd)}`}
+          </Text>
+          {(() => {
+            const change = formatPortfolioChange()
+            if (!change || hidePortfolioBalance) return null
 
-          return (
-            <Text
-              className={`text-xs font-semibold ${
-                change.isPositive ? 'text-green-400' : 'text-red-300'
-              }`}
-            >
-              {change.text}
-            </Text>
-          )
-        })()}
-      </View>
+            return (
+              <Text
+                className={`text-xs font-semibold ${
+                  change.isPositive ? 'text-green-400' : 'text-red-300'
+                }`}
+              >
+                {change.text}
+              </Text>
+            )
+          })()}
+        </View>
+      </TouchableOpacity>
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <TouchableOpacity
           onPress={() => activeWallet?.address && handleCopyAddress()}

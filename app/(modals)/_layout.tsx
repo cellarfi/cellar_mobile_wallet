@@ -35,7 +35,8 @@ const modalScreens: ModalScreen[] = [
   { name: 'sign-transaction', options: { presentation: 'transparentModal' } },
   { name: 'points-history' },
   { name: 'user-profile/[tag_name]' },
-];
+  { name: 'launch-pumpfun' },
+]
 
 export default function ModalsLayout() {
   return (

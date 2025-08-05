@@ -51,6 +51,7 @@ export default function RootLayout() {
         <Stack.Screen name='browser' />
         <Stack.Screen name='setup-profile' />
         <Stack.Screen name='profile' />
+        <Stack.Screen name='launch' />
         <Stack.Screen name='+not-found' />
       </Stack>
       <StatusBar style='light' backgroundColor='#0a0a0b' />

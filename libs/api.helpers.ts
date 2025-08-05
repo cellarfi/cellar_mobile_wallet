@@ -36,7 +36,7 @@ export const httpRequest = (setLoading?: (loading: boolean) => void) => {
     }
 
     // Log the full request URL
-    const fullUrl = `${config.baseURL}${config.url}`
+    // const fullUrl = `${config.baseURL}${config.url}`
     // console.log('Full HTTP Request URL:', fullUrl)
     // console.log('Request Method:', config.method?.toUpperCase())
     // console.log('Request Headers:', config.headers)
