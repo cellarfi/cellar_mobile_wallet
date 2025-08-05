@@ -3,25 +3,23 @@ import { Text, TextInput } from 'react-native'
 import PostComposerToolbar from './PostComposerToolbar'
 
 interface ContentEditorProps {
-  value: string
-  onChangeText: (text: string) => void
-  onSelectionChange: (start: number, end: number) => void
-  onEmojiPress: () => void
-  onGifPress: () => void
-  onAttachPress: () => void
-  placeholder?: string
-  maxLength?: number
-  disabled?: boolean
-  error?: string
-  mediaCount?: number
-  maxAttachments?: number
+  value: string;
+  onChangeText: (text: string) => void;
+  onSelectionChange: (start: number, end: number) => void;
+  onGifPress: () => void;
+  onAttachPress: () => void;
+  placeholder?: string;
+  maxLength?: number;
+  disabled?: boolean;
+  error?: string;
+  mediaCount?: number;
+  maxAttachments?: number;
 }
 
 const ContentEditor: React.FC<ContentEditorProps> = ({
   value,
   onChangeText,
   onSelectionChange,
-  onEmojiPress,
   onGifPress,
   onAttachPress,
   placeholder = "What's on your mind?",
@@ -31,20 +29,20 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
   mediaCount = 0,
   maxAttachments = 5,
 }) => {
-  const textInputRef = useRef<TextInput>(null)
+  const textInputRef = useRef<TextInput>(null);
 
   const handleSelectionChange = ({ nativeEvent: { selection } }: any) => {
-    onSelectionChange(selection.start, selection.end)
-  }
+    onSelectionChange(selection.start, selection.end);
+  };
 
   return (
     <>
       {/* Text Input */}
       <TextInput
         ref={textInputRef}
-        className='bg-secondary-light text-white rounded-t-xl px-4 py-4'
+        className="bg-secondary-light text-white rounded-t-xl px-4 py-4"
         placeholder={placeholder}
-        placeholderTextColor='#888'
+        placeholderTextColor="#888"
         multiline
         value={value}
         onChangeText={onChangeText}
@@ -68,7 +66,6 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       <PostComposerToolbar
         contentLength={value.length}
         maxLength={maxLength}
-        onEmojiPress={onEmojiPress}
         onGifPress={onGifPress}
         onAttachPress={onAttachPress}
         disabled={disabled}
@@ -77,9 +74,9 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       />
 
       {/* Error Message */}
-      {error && <Text className='text-red-500 mt-2 text-sm'>{error}</Text>}
+      {error && <Text className="text-red-500 mt-2 text-sm">{error}</Text>}
     </>
-  )
-}
+  );
+};
 
 export default ContentEditor
