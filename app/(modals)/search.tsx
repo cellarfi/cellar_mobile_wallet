@@ -293,7 +293,7 @@ export default function SearchScreen() {
         {/* Price Info */}
         <View className='items-end'>
           <Text className='text-white font-semibold text-lg mb-1'>
-            ${item.price.toFixed(item.price >= 1 ? 2 : 6)}
+            ${item?.price?.toFixed(item?.price >= 1 ? 2 : 6) || '0.00'}
           </Text>
           <Text
             className={`text-sm font-medium ${
@@ -301,7 +301,7 @@ export default function SearchScreen() {
             }`}
           >
             {item.priceChange24h >= 0 ? '+' : ''}
-            {item?.priceChange24h?.toFixed(2)}%
+            {item?.priceChange24h?.toFixed(2) || '0.00'}%
           </Text>
         </View>
       </View>
@@ -312,12 +312,12 @@ export default function SearchScreen() {
         <Text className='text-gray-300 text-sm'>
           $
           {item.marketCap >= 1e9
-            ? `${(item.marketCap / 1e9).toFixed(2)}B`
+            ? `${(item.marketCap / 1e9)?.toFixed(2) || '0.00'}B`
             : item.marketCap >= 1e6
-              ? `${(item.marketCap / 1e6).toFixed(2)}M`
+              ? `${(item.marketCap / 1e6)?.toFixed(2)}M`
               : item.marketCap >= 1e3
-                ? `${(item.marketCap / 1e3).toFixed(2)}K`
-                : item.marketCap.toFixed(2)}
+                ? `${(item.marketCap / 1e3)?.toFixed(2) || '0.00'}K`
+                : item.marketCap?.toFixed(2) || '0.00'}
         </Text>
       </View>
     </TouchableOpacity>

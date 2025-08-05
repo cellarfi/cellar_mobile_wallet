@@ -1,6 +1,7 @@
 import { blurHashPlaceholder } from '@/constants/App'
 import { formatPriceChange, formatValue } from '@/libs/string.helpers'
 import { cn } from '@/libs/utils'
+
 import { useSettingsStore } from '@/store/settingsStore'
 import { BirdEyeTokenItem } from '@/types'
 import { Image } from 'expo-image'

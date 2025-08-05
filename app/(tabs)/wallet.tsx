@@ -94,7 +94,7 @@ export default function WalletScreen() {
                   },
                 })
               }
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               {/* <Ionicons name='search' size={20} color='#6366f1' /> */}
               <Ionicons name='search' size={20} color='white' />
@@ -109,7 +109,7 @@ export default function WalletScreen() {
                   },
                 })
               }}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               <Ionicons name='scan' size={20} color='white' />
             </TouchableOpacity>
