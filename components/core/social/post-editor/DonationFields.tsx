@@ -39,7 +39,7 @@ const DonationFields: React.FC<DonationFieldsProps> = ({
             USDC (USD Coin)
           </Text>
         </View>
-        <View className='flex-row items-center mb-2'>
+        {/* <View className='flex-row items-center mb-2'>
           <Text className='text-gray-400 text-sm'>⛓️ Chain: </Text>
           <Text className='text-white text-sm font-medium'>Solana</Text>
         </View>
@@ -48,7 +48,7 @@ const DonationFields: React.FC<DonationFieldsProps> = ({
           <Text className='text-white text-sm font-medium'>
             Your active wallet
           </Text>
-        </View>
+        </View> */}
       </View>
 
       {/* Target Amount */}
