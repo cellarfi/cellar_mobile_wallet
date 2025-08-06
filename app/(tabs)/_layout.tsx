@@ -4,12 +4,9 @@ import React from 'react'
 import { View } from 'react-native'
 
 import TabBarBackground from '@/components/ui/TabBarBackground'
-import { Colors } from '@/constants/Colors'
-import { useColorScheme } from '@/hooks/useColorScheme'
+import { Colors } from '@/constants/Colors';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme()
-
   return (
     <Tabs
       screenOptions={{
@@ -37,14 +34,12 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name='index'
+        name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
@@ -56,14 +51,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='wallet'
+        name="wallet"
         options={{
           title: 'Wallet',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'wallet' : 'wallet-outline'}
@@ -75,14 +68,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='trading'
+        name="trading"
         options={{
           title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'telescope' : 'telescope-outline'}
@@ -95,14 +86,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='social'
+        name="social"
         options={{
           title: 'Feed',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'people' : 'people-outline'}
@@ -114,14 +103,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='explore'
+        name="explore"
         options={{
           title: 'Browse',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'compass' : 'compass-outline'}
@@ -133,5 +120,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }
