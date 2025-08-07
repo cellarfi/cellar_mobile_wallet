@@ -1,6 +1,8 @@
 import { UploadRequests } from '@/libs/api_requests/upload.request';
 import { PostComposerProps } from '@/types/posts.interface';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,6 +20,10 @@ import {
   PostTypeSelector,
   TokenCallFields,
 } from './post-editor';
+
+// 10MB in bytes
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_ATTACHMENTS = 5;
 
 const PostComposer: React.FC<PostComposerProps> = ({
   form,
@@ -94,6 +100,93 @@ const PostComposer: React.FC<PostComposerProps> = ({
     }
   }, [mediaItems]);
 
+  const addMediaItems = useCallback((items: MediaItem[]) => {
+    setMediaItems((prev) => {
+      // Filter out any duplicate URIs
+      const newItems = items.filter(
+        (item) => !prev.some((existing) => existing.uri === item.uri)
+      );
+      return [...prev, ...newItems];
+    });
+  }, []);
+
+  // Open up selector
+  const handleMediaPick = useCallback(async () => {
+    if (mediaItems.length >= MAX_ATTACHMENTS) {
+      Alert.alert(
+        'Maximum attachments reached',
+        `You can only attach up to ${MAX_ATTACHMENTS} files.`
+      );
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images', 'videos', 'livePhotos'],
+        allowsMultipleSelection: true,
+        selectionLimit: MAX_ATTACHMENTS - mediaItems.length,
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      const newMediaItems: MediaItem[] = [];
+
+      for (const asset of result.assets) {
+        if (!asset.uri) continue;
+
+        // Check file size
+        if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
+          Alert.alert(
+            'File too large',
+            `${asset.fileName || 'File'} exceeds the 10MB size limit.`
+          );
+          continue;
+        }
+
+        // Explicitly handle the media type to match our MediaItem type
+        let type: 'image' | 'video' | 'gif' = 'image';
+        if (asset.type === 'video') {
+          type = 'video';
+        } else if (
+          asset.uri.endsWith('.gif') ||
+          asset.type === ('gif' as typeof asset.type)
+        ) {
+          type = 'gif';
+        }
+        let thumbnail = asset.uri;
+
+        // Generate thumbnail for videos
+        if (type === 'video') {
+          try {
+            const { uri } = await VideoThumbnails.getThumbnailAsync(asset.uri, {
+              time: 0,
+            });
+            thumbnail = uri;
+          } catch (e) {
+            console.warn('Failed to generate video thumbnail:', e);
+          }
+        }
+
+        newMediaItems.push({
+          uri: asset.uri,
+          type,
+          fileName: asset.fileName || undefined,
+          mimeType: asset.mimeType || undefined,
+          fileSize: asset.fileSize,
+          thumbnail,
+        });
+      }
+
+      if (newMediaItems.length > 0) {
+        addMediaItems(newMediaItems);
+      }
+    } catch (error) {
+      console.error('Error picking media:', error);
+      Alert.alert('Error', 'Failed to pick media. Please try again.');
+    }
+  }, [addMediaItems, mediaItems.length]);
+
   // Handle form submission
   const handleSubmit = useCallback(async () => {
     if (loading || uploading) return;
@@ -157,7 +250,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
           onChangeText={(text) => onFieldChange('content', text)}
           onSelectionChange={() => {}}
           onGifPress={() => setShowGifPicker(true)}
-          onAttachPress={() => {}}
+          onAttachPress={handleMediaPick}
           error={fieldErrors?.content}
           disabled={loading}
           mediaCount={mediaItems.length}
@@ -171,9 +264,10 @@ const PostComposer: React.FC<PostComposerProps> = ({
       {mediaItems.length > 0 && (
         <MediaAttachment
           mediaItems={mediaItems}
+          maxAttachments={MAX_ATTACHMENTS}
+          maxFileSize={MAX_FILE_SIZE}
           onMediaItemsChange={setMediaItems}
           onMediaSelect={() => {}}
-          onGifSelect={handleGifSelect}
           uploading={uploading}
           disabled={loading}
         />
