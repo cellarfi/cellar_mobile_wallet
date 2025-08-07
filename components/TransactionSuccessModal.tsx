@@ -1,9 +1,9 @@
 import CustomButton from '@/components/ui/CustomButton'
+import { useClipboard } from '@/libs/clipboard'
 import { Ionicons } from '@expo/vector-icons'
-import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import * as Linking from 'expo-linking'
-import React, { useState } from 'react'
+import React from 'react'
 import { Modal, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -18,7 +18,7 @@ export default function TransactionSuccessModal({
   txSignature,
   onClose,
 }: TransactionSuccessModalProps) {
-  const [txHashCopied, setTxHashCopied] = useState(false)
+  const { copyToClipboard, copied: txHashCopied } = useClipboard()
 
   const handleViewOnSolscan = () => {
     if (txSignature) {
@@ -30,17 +30,8 @@ export default function TransactionSuccessModal({
   const copyTransactionHash = async () => {
     if (!txSignature) return
 
-    try {
-      await Clipboard.setStringAsync(txSignature)
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-
-      setTxHashCopied(true)
-
-      // Reset copied state after 2 seconds
-      setTimeout(() => setTxHashCopied(false), 2000)
-    } catch (error) {
-      console.error('Failed to copy transaction hash:', error)
-    }
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    await copyToClipboard(txSignature)
   }
 
   const formatSignature = (signature: string) => {
@@ -55,7 +46,7 @@ export default function TransactionSuccessModal({
       animationType='slide'
       statusBarTranslucent
     >
-      <SafeAreaView className='flex-1 bg-dark-50'>
+      <SafeAreaView className='flex-1 bg-primary-main'>
         <View className='flex-1 justify-center items-center px-6'>
           {/* Success Icon */}
           <View className='w-24 h-24 bg-green-500/20 rounded-full justify-center items-center mb-8'>
@@ -74,7 +65,7 @@ export default function TransactionSuccessModal({
 
           {/* Transaction Details */}
           {txSignature && (
-            <View className='bg-dark-200 rounded-2xl p-6 mb-8 w-full'>
+            <View className='bg-secondary-light rounded-2xl p-6 mb-8 w-full'>
               <Text className='text-white font-semibold mb-3'>
                 Transaction Hash
               </Text>

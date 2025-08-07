@@ -190,6 +190,9 @@ export interface BirdEyeTokenOverview {
   marketCap: number
   fdv: number
   extensions: {
+    discord?: string
+    medium?: string
+    telegram?: string
     twitter?: string
     website?: string
     description?: string

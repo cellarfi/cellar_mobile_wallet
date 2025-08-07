@@ -1,9 +1,11 @@
 import { TokenChart } from '@/components/TokenChart'
+import TokenSocials from '@/components/TokenSocials'
 import { blurHashPlaceholder } from '@/constants/App'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { useTokenChart } from '@/hooks/useTokenChart'
 import { useTokenOverview } from '@/hooks/useTokenOverview'
 import { formatPercentage, formatValue } from '@/libs/string.helpers'
+import { useSettingsStore } from '@/store/settingsStore'
 import { BirdEyeTokenItem } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
@@ -34,6 +36,8 @@ export default function TokenDetailScreen() {
   const [addressCopied, setAddressCopied] = useState(false)
   const copyScaleAnim = useRef(new Animated.Value(1)).current
   const { tokenAddress } = useLocalSearchParams<{ tokenAddress: string }>()
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
 
   const {
     token,
@@ -86,7 +90,7 @@ export default function TokenDetailScreen() {
   if (isLoading && !token) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           <View className='flex-1 justify-center items-center'>
             <ActivityIndicator size='large' color='#6366f1' />
             <Text className='text-white mt-4 text-lg'>
@@ -102,7 +106,7 @@ export default function TokenDetailScreen() {
   if (error && !token) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           <View className='flex-1'>
             {/* Header */}
             <View className='flex-row items-center justify-between px-6 py-4'>
@@ -335,7 +339,7 @@ Powered by Cellar Wallet`
   const ActionButton = ({ icon, title, onPress, color = '#6366f1' }: any) => (
     <TouchableOpacity
       onPress={onPress}
-      className='flex-1 bg-dark-200 rounded-2xl p-4 items-center mx-1'
+      className='flex-1 bg-secondary-light rounded-2xl p-4 items-center mx-1'
     >
       <Ionicons name={icon} size={24} color={color} />
       <Text className='text-white font-medium text-sm mt-2'>{title}</Text>
@@ -343,7 +347,7 @@ Powered by Cellar Wallet`
   )
 
   const MetricCard = ({ label, value, trend }: any) => (
-    <View className='bg-dark-200 rounded-xl p-4 flex-1 mx-1'>
+    <View className='bg-secondary-light rounded-xl p-4 flex-1 mx-1'>
       <Text className='text-gray-400 text-sm mb-1'>{label}</Text>
       <Text className='text-white font-semibold text-lg'>{value}</Text>
       {trend && (
@@ -360,15 +364,15 @@ Powered by Cellar Wallet`
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView className='flex-1 bg-dark-50'>
+      <SafeAreaView className='flex-1 bg-primary-main'>
         <View className='flex-1'>
           {/* Header */}
           <View className='flex-row items-center justify-between px-6 py-4'>
             <TouchableOpacity
               onPress={() => router.back()}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10  rounded-full justify-center items-center'
             >
-              <Ionicons name='arrow-back' size={20} color='white' />
+              <Ionicons name='chevron-back' size={20} color='white' />
             </TouchableOpacity>
             {/* <Text className='text-white text-lg font-semibold'>
               {tokenOverview.symbol}
@@ -379,11 +383,11 @@ Powered by Cellar Wallet`
                   <ActivityIndicator size={16} color='#6366f1' />
                 </View>
               )}
-              <TouchableOpacity className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'>
+              <TouchableOpacity className='w-10 h-10 rounded-full justify-center items-center'>
                 <Ionicons name='star-outline' size={20} color='white' />
               </TouchableOpacity>
               <TouchableOpacity
-                className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+                className='w-10 h-10 rounded-full justify-center items-center'
                 onPress={shareToken}
               >
                 <Ionicons name='share-outline' size={20} color='white' />
@@ -490,7 +494,7 @@ Powered by Cellar Wallet`
                   >
                     <TouchableOpacity
                       onPress={copyMintAddress}
-                      className='flex-row items-center bg-dark-200/80 rounded-xl px-3 py-2 active:opacity-70'
+                      className='flex-row items-center bg-secondary-light/80 rounded-xl px-3 py-2 active:opacity-70'
                       activeOpacity={0.7}
                     >
                       <Ionicons
@@ -534,7 +538,7 @@ Powered by Cellar Wallet`
             {userHolding && (
               <View className='px-6 mb-6'>
                 <LinearGradient
-                  colors={['#6366f1', '#8b5cf6']}
+                  colors={['#122C41', '#122C41']}
                   style={{
                     borderRadius: 24,
                     padding: 24,
@@ -546,11 +550,15 @@ Powered by Cellar Wallet`
                     Your Holdings
                   </Text>
                   <Text className='text-white text-2xl font-bold mb-1'>
-                    ${formatValue(userHolding.valueUsd)}
+                    {hidePortfolioBalance
+                      ? '••••••'
+                      : `$${formatValue(userHolding.valueUsd)}`}
                   </Text>
                   <Text className='text-white/80 text-lg'>
                     {/* <Text className='text-white/80 text-lg mb-4'> */}
-                    {formatValue(userHolding.uiAmount)} {userHolding.symbol}
+                    {hidePortfolioBalance
+                      ? '••••••'
+                      : `${formatValue(userHolding.uiAmount)} ${userHolding.symbol}`}
                   </Text>
                   <View className='flex-row justify-between hidden'>
                     <View>
@@ -682,20 +690,28 @@ Powered by Cellar Wallet`
               <Text className='text-white text-lg font-semibold mb-4'>
                 About {tokenOverview.name}
               </Text>
-              <View className='bg-dark-200 rounded-2xl p-4'>
+              <View className='bg-secondary-light rounded-2xl p-4'>
                 <Text className='text-gray-300 leading-6'>
                   {tokenOverview.extensions?.description ||
                     `${tokenOverview.name} (${tokenOverview.symbol}) is a cryptocurrency token. Market cap: ${formatValue(tokenOverview.marketCap) + tokenOverview.symbol}, Liquidity: ${formatValue(tokenOverview.liquidity) + tokenOverview.symbol}.`}
                 </Text>
-                {tokenOverview.extensions?.website && (
-                  <Text className='text-primary-400 mt-2'>
-                    Website: {tokenOverview.extensions.website}
-                  </Text>
-                )}
-                {tokenOverview.extensions?.twitter && (
-                  <Text className='text-primary-400 mt-1'>
-                    Twitter: {tokenOverview.extensions.twitter}
-                  </Text>
+              </View>
+            </View>
+
+            {/* Socials */}
+            <View className='px-6 mb-8'>
+              <Text className='text-white text-lg font-semibold mb-4'>
+                Socials
+              </Text>
+              <View className='items-center flex-row mb-8'>
+                {['website', 'twitter', 'telegram', 'discord', 'medium'].map(
+                  (key) => {
+                    const link =
+                      tokenOverview.extensions?.[
+                        key as keyof typeof tokenOverview.extensions
+                      ]
+                    return link ? <TokenSocials key={key} link={link} /> : null
+                  }
                 )}
               </View>
             </View>

@@ -1,11 +1,11 @@
-import { Transaction } from '@/types/transaction.interface';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Transaction } from '@/types/transaction.interface'
+import { Ionicons } from '@expo/vector-icons'
+import React from 'react'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 
 interface TransactionCardProps {
-  transaction: Transaction;
-  onPress?: () => void;
+  transaction: Transaction
+  onPress?: () => void
 }
 
 export const TransactionCard: React.FC<TransactionCardProps> = ({
@@ -15,90 +15,90 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   const getIconName = () => {
     switch (transaction.type) {
       case 'send':
-        return 'arrow-up';
+        return 'arrow-up'
       case 'receive':
-        return 'arrow-down';
+        return 'arrow-down'
       case 'swap':
-        return 'swap-horizontal';
+        return 'swap-horizontal'
       case 'buy':
-        return 'add-circle-outline';
+        return 'add-circle-outline'
       case 'sell':
-        return 'remove-circle-outline';
+        return 'remove-circle-outline'
       default:
-        return 'time-outline';
+        return 'time-outline'
     }
-  };
+  }
 
   const getIconColor = () => {
     switch (transaction.type) {
       case 'send':
-        return '#ef4444'; // red for outgoing
+        return '#ef4444' // red for outgoing
       case 'receive':
-        return '#22c55e'; // green for incoming
+        return '#22c55e' // green for incoming
       case 'swap':
-        return '#6366f1'; // primary for swaps
+        return '#6366f1' // primary for swaps
       case 'buy':
-        return '#22c55e'; // green for buys
+        return '#22c55e' // green for buys
       case 'sell':
-        return '#ef4444'; // red for sells
+        return '#ef4444' // red for sells
       default:
-        return '#ffffff'; // white by default
+        return '#ffffff' // white by default
     }
-  };
+  }
 
   const getAmountPrefix = () => {
     return transaction.type === 'receive' || transaction.type === 'buy'
       ? '+'
       : transaction.type === 'send' || transaction.type === 'sell'
         ? '-'
-        : '';
-  };
-  
+        : ''
+  }
+
   const formatAmount = (amount: number) => {
     // For very small amounts (less than 0.01), show <0.01 instead of scientific notation
     if (amount > 0 && amount < 0.01) {
-      return '<0.01';
+      return '<0.01'
     }
-    
+
     // For regular amounts, format with up to 4 decimal places, removing trailing zeros
     return amount.toLocaleString('en-US', {
       maximumFractionDigits: 4,
-      minimumFractionDigits: 0
-    });
-  };
+      minimumFractionDigits: 0,
+    })
+  }
 
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+    const date = new Date(timestamp)
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    });
-  };
+    })
+  }
 
   const formatTransactionType = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  };
+    return type.charAt(0).toUpperCase() + type.slice(1)
+  }
 
   return (
     <TouchableOpacity
-      className="flex-row items-center bg-dark-200 rounded-2xl p-4 mb-3"
+      className='flex-row items-center bg-secondary-light rounded-2xl p-4 mb-3'
       onPress={onPress}
     >
-      <View className="w-10 h-10 rounded-full bg-dark-300 justify-center items-center mr-3">
+      <View className='w-10 h-10 rounded-full bg-secondary-light justify-center items-center mr-3'>
         {transaction.logoURI ? (
           <Image
             source={{ uri: transaction.logoURI }}
-            className="w-6 h-6 rounded-full"
+            className='w-6 h-6 rounded-full'
           />
         ) : (
           <Ionicons name={getIconName()} size={20} color={getIconColor()} />
         )}
       </View>
-      <View className="flex-1">
-        <View className="flex-row justify-between items-center">
-          <Text className="text-white font-semibold">
+      <View className='flex-1'>
+        <View className='flex-row justify-between items-center'>
+          <Text className='text-white font-semibold'>
             {formatTransactionType(transaction.type)} {transaction.symbol}
           </Text>
           <Text
@@ -111,11 +111,12 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             }`}
           >
             {getAmountPrefix()}
-            {formatAmount(transaction.amount)} {transaction.symbol.split('/')[0]}
+            {formatAmount(transaction.amount)}{' '}
+            {transaction.symbol.split('/')[0]}
           </Text>
         </View>
-        <View className="flex-row justify-between items-center mt-1">
-          <Text className="text-gray-400 text-sm">
+        <View className='flex-row justify-between items-center mt-1'>
+          <Text className='text-gray-400 text-sm'>
             {formatDate(transaction.timestamp)}
           </Text>
           <Text
@@ -133,5 +134,5 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
         </View>
       </View>
     </TouchableOpacity>
-  );
-};
+  )
+}

@@ -35,7 +35,7 @@ export const NFTsTab = forwardRef<NFTsTabRef>((props, ref) => {
           onPress={() => router.push('/nft-gallery')}
           className='flex-row items-center gap-1'
         >
-          <Text className='text-primary-400 font-medium'>View Gallery</Text>
+          <Text className='text-secondary font-medium'>View Gallery</Text>
           <Ionicons name='arrow-forward' size={14} color='#6366f1' />
         </TouchableOpacity>
       </View>
@@ -93,3 +93,5 @@ export const NFTsTab = forwardRef<NFTsTabRef>((props, ref) => {
     </View>
   )
 })
+
+NFTsTab.displayName = 'NFTsTab'

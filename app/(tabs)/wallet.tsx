@@ -4,6 +4,7 @@ import { NFTsTab, NFTsTabRef } from '@/components/core/wallet/NFTsTab'
 import { TokensTab, TokensTabRef } from '@/components/core/wallet/TokensTab'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { PortfolioSummary } from '@/components/PortfolioSummary'
+import { usePortfolio } from '@/hooks/usePortfolio'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
@@ -23,6 +24,9 @@ export default function WalletScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const { tab } = useLocalSearchParams()
 
+  // Add portfolio hook to subscribe to portfolio data changes
+  const { refetch: refetchPortfolio } = usePortfolio()
+
   // Refs for each tab component
   const tokensTabRef = useRef<TokensTabRef>(null)
   const nftsTabRef = useRef<NFTsTabRef>(null)
@@ -31,18 +35,22 @@ export default function WalletScreen() {
   const onRefresh = async () => {
     setRefreshing(true)
     try {
-      // Only refresh the currently active tab
-      switch (activeTab) {
-        case 'tokens':
-          tokensTabRef.current?.refetch()
-          break
-        case 'nfts':
-          nftsTabRef.current?.refetch()
-          break
-        case 'history':
-          historyTabRef.current?.refetch()
-          break
-      }
+      // Refresh portfolio summary and the currently active tab
+      await Promise.all([
+        refetchPortfolio(),
+        (() => {
+          switch (activeTab) {
+            case 'tokens':
+              return tokensTabRef.current?.refetch()
+            case 'nfts':
+              return nftsTabRef.current?.refetch()
+            case 'history':
+              return historyTabRef.current?.refetch()
+            default:
+              return Promise.resolve()
+          }
+        })(),
+      ])
     } finally {
       setRefreshing(false)
     }
@@ -60,7 +68,7 @@ export default function WalletScreen() {
   }, [tab])
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <ScrollView
         className='flex-1'
         showsVerticalScrollIndicator={false}
@@ -86,7 +94,7 @@ export default function WalletScreen() {
                   },
                 })
               }
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               {/* <Ionicons name='search' size={20} color='#6366f1' /> */}
               <Ionicons name='search' size={20} color='white' />
@@ -101,7 +109,7 @@ export default function WalletScreen() {
                   },
                 })
               }}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               <Ionicons name='scan' size={20} color='white' />
             </TouchableOpacity>
@@ -148,13 +156,13 @@ export default function WalletScreen() {
 
         {/* Tabs */}
         <View className='px-6 mb-4'>
-          <View className='flex-row bg-dark-200 rounded-2xl p-1'>
+          <View className='flex-row bg-secondary-light rounded-2xl p-1'>
             {(['tokens', 'nfts', 'history'] as const).map((tab) => (
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveTab(tab)}
                 className={`flex-1 py-3 rounded-xl ${
-                  activeTab === tab ? 'bg-primary-500' : ''
+                  activeTab === tab ? 'bg-secondary' : ''
                 }`}
               >
                 <Text

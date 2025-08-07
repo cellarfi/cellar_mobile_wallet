@@ -4,14 +4,26 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from '@solana/web3.js'
 import bs58 from 'bs58'
 
+export const NATIVE_SOL_ADDRESS = '11111111111111111111111111111111'
 export const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111111'
 export const WRAPPED_SOL_MINT = 'So11111111111111111111111111111111111111112'
+export const USDC_METADATA = {
+  address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  decimals: 6,
+  symbol: 'USDC',
+  name: 'USD Coin',
+  logoURI:
+    'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+}
 
 export const getConnection = () => {
-  return new Connection(ENV.RPC_URL)
+  return new Connection(ENV.RPC_URL, {
+    commitment: 'confirmed',
+  })
 }
 
 export const sendNativeSol = async (
@@ -119,3 +131,17 @@ export const isValidBase58PrivateKey = (key: string): boolean => {
 export const SUPPORTED_NETWORKS = ['solana', 'soon', 'sonic'] as const
 
 export type Network = (typeof SUPPORTED_NETWORKS)[number]
+
+export function serializeInstruction(inst: TransactionInstruction) {
+  return {
+    keys: inst.keys.map((key) => {
+      return {
+        pubkey: key.pubkey.toString(),
+        isSigner: key.isSigner,
+        isWritable: key.isWritable,
+      }
+    }),
+    programId: inst.programId.toString(),
+    data: inst.data.toString('base64'),
+  }
+}

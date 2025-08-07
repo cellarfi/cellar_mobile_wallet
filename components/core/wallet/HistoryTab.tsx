@@ -28,13 +28,13 @@ export const HistoryTab = forwardRef<HistoryTabRef>((props, ref) => {
         Transaction History
       </Text>
       {transactionsLoading && !transactionsRefetching ? (
-        <View className='bg-dark-200 rounded-2xl p-6 items-center'>
-          <View className='w-full h-16 bg-dark-300 rounded-xl mb-3 animate-pulse' />
-          <View className='w-full h-16 bg-dark-300 rounded-xl mb-3 animate-pulse' />
-          <View className='w-full h-16 bg-dark-300 rounded-xl animate-pulse' />
+        <View className='bg-secondary-light/50 rounded-2xl p-6 items-center'>
+          <View className='w-full h-16 bg-secondary-light rounded-xl mb-3 animate-pulse' />
+          <View className='w-full h-16 bg-secondary-light rounded-xl mb-3 animate-pulse' />
+          <View className='w-full h-16 bg-secondary-light rounded-xl animate-pulse' />
         </View>
       ) : transactionsError ? (
-        <View className='bg-dark-200 rounded-2xl p-6 items-center'>
+        <View className='bg-secondary-light rounded-2xl p-6 items-center'>
           <Ionicons name='alert-circle-outline' size={48} color='#ef4444' />
           <Text className='text-gray-400 text-center mt-4'>
             {transactionsError}
@@ -70,3 +70,5 @@ export const HistoryTab = forwardRef<HistoryTabRef>((props, ref) => {
     </View>
   )
 })
+
+HistoryTab.displayName = 'HistoryTab'

@@ -1,9 +1,9 @@
 import { blurHashPlaceholder } from '@/constants/App'
 import { useAssets } from '@/hooks/useAssets'
 import { getAssetUri } from '@/libs/asset.helpers'
+import { useClipboard } from '@/libs/clipboard'
 import { Ionicons } from '@expo/vector-icons'
 import { DasApiAsset } from '@metaplex-foundation/digital-asset-standard-api'
-import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
@@ -27,7 +27,6 @@ export default function NFTDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [nft, setNft] = useState<DasApiAsset | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-  const [copiedField, setCopiedField] = useState<string | null>(null)
   const [showSendModal, setShowSendModal] = useState(false)
   const [recipientAddress, setRecipientAddress] = useState('')
   const [sending, setSending] = useState(false)
@@ -35,6 +34,7 @@ export default function NFTDetailScreen() {
   const [sendSuccess, setSendSuccess] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
   const { assets, loading: assetsLoading, getAssetById, sendNFT } = useAssets()
+  const { copyToClipboard, copiedField, setCopiedField } = useClipboard(null)
 
   useEffect(() => {
     const loadAsset = async () => {
@@ -84,27 +84,16 @@ export default function NFTDetailScreen() {
     return nft?.content?.metadata?.attributes || []
   }
 
+  const handleCopy = async (text: string, field: string) => {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    setCopiedField(field)
+    await copyToClipboard(text)
+  }
+
   // Format address for display - show first 6 and last 4 characters
   const formatAddress = (address: string) => {
     if (!address || address.length < 10) return address
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`
-  }
-
-  // Copy to clipboard function
-  const copyToClipboard = async (text: string, field: string) => {
-    try {
-      await Clipboard.setStringAsync(text)
-      // Haptic feedback
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-      setCopiedField(field)
-
-      // Reset after 2 seconds
-      setTimeout(() => {
-        setCopiedField(null)
-      }, 2000)
-    } catch (error) {
-      console.error('Failed to copy:', error)
-    }
   }
 
   // Function to view on explorer
@@ -193,15 +182,15 @@ export default function NFTDetailScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.dismiss()}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name='arrow-back' size={20} color='white' />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-lg font-semibold'>NFT Details</Text>
           <View className='w-10' />
@@ -209,7 +198,7 @@ export default function NFTDetailScreen() {
 
         {/* NFT Display */}
         <View className='px-6'>
-          <View className='bg-dark-200 rounded-3xl p-6 mb-6 items-center'>
+          <View className='bg-secondary-light rounded-3xl p-6 mb-6 items-center'>
             {/* NFT Image */}
             <TouchableOpacity
               className='w-full h-64 rounded-2xl justify-center items-center'
@@ -245,7 +234,7 @@ export default function NFTDetailScreen() {
 
         {/* Description */}
         <View className='px-6 mb-6'>
-          <View className='bg-dark-200 rounded-2xl p-6'>
+          <View className='bg-secondary-light rounded-2xl p-6'>
             <Text className='text-white text-lg font-semibold mb-2'>
               Description
             </Text>
@@ -256,7 +245,7 @@ export default function NFTDetailScreen() {
         {/* Properties */}
         {getAttributes().length > 0 && (
           <View className='px-6 mb-6'>
-            <View className='bg-dark-200 rounded-2xl p-6'>
+            <View className='bg-secondary-light rounded-2xl p-6'>
               <Text className='text-white text-lg font-semibold mb-4'>
                 Properties
               </Text>
@@ -264,7 +253,7 @@ export default function NFTDetailScreen() {
                 {getAttributes().map((attr: any, index: number) => (
                   <View
                     key={index}
-                    className='bg-dark-300 rounded-xl p-3 mb-3 w-[48%]'
+                    className='bg-secondary/20 rounded-xl p-3 mb-3 w-[48%]'
                   >
                     <Text className='text-primary-400 text-xs'>
                       {attr.trait_type}
@@ -279,7 +268,7 @@ export default function NFTDetailScreen() {
 
         {/* Details */}
         <View className='px-6 mb-6'>
-          <View className='bg-dark-200 rounded-2xl p-6'>
+          <View className='bg-secondary-light rounded-2xl p-6'>
             <Text className='text-white text-lg font-semibold mb-4'>
               Details
             </Text>
@@ -292,7 +281,7 @@ export default function NFTDetailScreen() {
                   {formatAddress(getOwner())}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => copyToClipboard(getOwner(), 'owner')}
+                  onPress={() => handleCopy(getOwner(), 'owner')}
                 >
                   <Ionicons
                     name={
@@ -323,7 +312,7 @@ export default function NFTDetailScreen() {
                   {formatAddress(nft.id || '')}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => copyToClipboard(nft.id || '', 'tokenId')}
+                  onPress={() => handleCopy(nft.id || '', 'tokenId')}
                 >
                   <Ionicons
                     name={
@@ -346,7 +335,7 @@ export default function NFTDetailScreen() {
                   {formatAddress(getCollection())}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => copyToClipboard(getCollection(), 'collection')}
+                  onPress={() => handleCopy(getCollection(), 'collection')}
                 >
                   <Ionicons
                     name={
@@ -384,7 +373,7 @@ export default function NFTDetailScreen() {
         {/* Action Buttons */}
         <View className='flex-row gap-4 px-6 mb-8'>
           <TouchableOpacity
-            className='flex-1 bg-dark-200 rounded-xl p-4 items-center justify-center'
+            className='flex-1 bg-secondary-light rounded-xl p-4 items-center justify-center'
             onPress={() => setShowSendModal(true)}
           >
             <Ionicons name='send-outline' size={20} color='#6366f1' />
@@ -394,7 +383,7 @@ export default function NFTDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className='flex-1 bg-dark-200 rounded-xl p-4 items-center justify-center'
+            className='flex-1 bg-secondary-light rounded-xl p-4 items-center justify-center'
             onPress={viewOnExplorer}
           >
             <Ionicons name='open-outline' size={20} color='#6366f1' />
@@ -404,7 +393,7 @@ export default function NFTDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className='flex-1 bg-dark-200 rounded-xl p-4 items-center justify-center'
+            className='flex-1 bg-secondary-light rounded-xl p-4 items-center justify-center'
             onPress={shareNFT}
           >
             <Ionicons name='share-social-outline' size={20} color='#6366f1' />
@@ -434,7 +423,7 @@ export default function NFTDetailScreen() {
                 {!sendSuccess ? (
                   <>
                     <Text className='text-gray-400 mb-4 text-center'>
-                      Enter the recipient's wallet address to send this NFT
+                      Enter the recipient&apos;s wallet address to send this NFT
                     </Text>
                     <View className='bg-dark-200 rounded-xl w-full p-4 mb-2'>
                       <TextInput

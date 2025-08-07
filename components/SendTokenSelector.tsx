@@ -1,4 +1,5 @@
 import { blurHashPlaceholder } from '@/constants/App'
+import { useSettingsStore } from '@/store/settingsStore'
 import { BirdEyeTokenItem } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
@@ -26,6 +27,8 @@ export default function SendTokenSelector({
 }: SendTokenSelectorProps) {
   const [modalVisible, setModalVisible] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
 
   const formatBalance = (balance: number, decimals: number = 9) => {
     const actualBalance = balance / Math.pow(10, decimals)
@@ -60,7 +63,7 @@ export default function SendTokenSelector({
 
   const TokenListItem = ({ token }: { token: BirdEyeTokenItem }) => (
     <TouchableOpacity
-      className='flex-row items-center bg-dark-200 rounded-2xl p-4 mb-3'
+      className='flex-row items-center bg-secondary-light rounded-2xl p-4 mb-3'
       onPress={() => {
         onTokenSelect(token)
         handleModalClose()
@@ -87,12 +90,14 @@ export default function SendTokenSelector({
           {token.name || 'Unknown Token'}
         </Text>
         <Text className='text-gray-400 text-sm'>
-          {formatBalanceWithSymbol(token)}
+          {hidePortfolioBalance ? '••••••' : formatBalanceWithSymbol(token)}
         </Text>
       </View>
       <View className='items-end'>
         <Text className='text-white font-semibold'>
-          ${token.valueUsd?.toFixed(2) || '0.00'}
+          {hidePortfolioBalance
+            ? '••••••'
+            : `$${token.valueUsd?.toFixed(2) || '0.00'}`}
         </Text>
         {token.priceUsd && (
           <Text className='text-gray-400 text-xs'>
@@ -106,7 +111,7 @@ export default function SendTokenSelector({
   return (
     <>
       <TouchableOpacity
-        className='bg-dark-200 rounded-2xl p-4 mb-4'
+        className='bg-secondary-light rounded-2xl p-4 mb-4'
         onPress={() => setModalVisible(true)}
       >
         <Text className='text-gray-400 text-sm mb-2'>Token</Text>
@@ -131,7 +136,9 @@ export default function SendTokenSelector({
               </Text>
               <Text className='text-gray-400 text-sm'>
                 {selectedToken
-                  ? formatBalanceWithSymbol(selectedToken)
+                  ? hidePortfolioBalance
+                    ? '••••••'
+                    : formatBalanceWithSymbol(selectedToken)
                   : 'No token selected'}
               </Text>
             </View>
@@ -141,7 +148,10 @@ export default function SendTokenSelector({
             {selectedToken && (
               <View className='items-end mr-3'>
                 <Text className='text-white font-medium text-sm'>
-                  ≈ ${selectedToken.valueUsd?.toFixed(2) || '0.00'}
+                  ≈{' '}
+                  {hidePortfolioBalance
+                    ? '••••••'
+                    : `$${selectedToken.valueUsd?.toFixed(2) || '0.00'}`}
                 </Text>
                 {selectedToken.priceUsd && (
                   <Text className='text-gray-400 text-xs'>
@@ -165,12 +175,12 @@ export default function SendTokenSelector({
         animationType='slide'
         presentationStyle='pageSheet'
       >
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           {/* Header */}
           <View className='flex-row items-center justify-between px-6 py-4'>
             <TouchableOpacity
               onPress={handleModalClose}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 rounded-full justify-center items-center'
             >
               <Ionicons name='close' size={20} color='white' />
             </TouchableOpacity>
@@ -182,7 +192,7 @@ export default function SendTokenSelector({
 
           {/* Search Input */}
           <View className='px-6 mb-4'>
-            <View className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'>
+            <View className='bg-secondary-light rounded-2xl px-4 py-3 flex-row items-center'>
               <Ionicons name='search' size={20} color='#666672' />
               <TextInput
                 className='flex-1 text-white ml-3 text-lg'

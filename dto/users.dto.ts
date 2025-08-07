@@ -7,7 +7,7 @@ export const createUserSchema = z.object({
   tag_name: z.string().min(3).max(20),
   profile_picture_url: z.string().url().optional(),
   about: z.string().optional(),
-  referral_code: z.string().optional(),
+  referred_by: z.string().optional(),
 })
 export type CreateUserDto = z.infer<typeof createUserSchema>
 

@@ -1,13 +1,12 @@
 import CustomButton from '@/components/ui/CustomButton'
 import { Images } from '@/constants/Images'
+import { useClipboard } from '@/libs/clipboard'
 import { Ionicons } from '@expo/vector-icons'
 import { getUserEmbeddedSolanaWallet, usePrivy } from '@privy-io/expo'
-import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
-  Alert,
   Animated,
   ScrollView,
   Share,
@@ -20,65 +19,60 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ReceiveScreen() {
   const { user } = usePrivy()
-  const [copied, setCopied] = useState(false)
+  const { copied, copyToClipboard } = useClipboard()
   const [fadeAnim] = useState(new Animated.Value(0))
   const [scaleAnim] = useState(new Animated.Value(1))
 
   // Get the embedded wallet from Privy
-  const account = getUserEmbeddedSolanaWallet(user)
 
   // For demo purposes, we'll use a mock Solana address if no Ethereum wallet is found
   // In a real app, you'd want to get the actual Solana wallet address
-  const walletAddress =
-    account?.address || '7xKXtg2CWNfnN5p8RJ6N9W8BeFhJ4A2sP9dQvH3KwXhM'
+  // const walletAddress =
+  // account?.address || '7xKXtg2CWNfnN5p8RJ6N9W8BeFhJ4A2sP9dQvH3KwXhM'
+  const account = getUserEmbeddedSolanaWallet(user)
+  const walletAddress = account?.address || ''
 
-  const copyToClipboard = async () => {
-    try {
-      await Clipboard.setStringAsync(walletAddress)
-      setCopied(true)
+  const handleCopyAddress = useCallback(async () => {
+    // Haptic feedback
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
-      // Haptic feedback
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-
-      // Scale animation
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 0.95,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start()
-
-      // Fade in animation for copied indicator
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
+    // Scale animation
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 100,
         useNativeDriver: true,
-      }).start()
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start()
 
-      // Reset after 2 seconds
-      setTimeout(() => {
-        setCopied(false)
+    // Fade in animation for copied indicator
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start()
+
+    // Copy to clipboard
+    await copyToClipboard(walletAddress, {
+      onSuccess: () => {
         Animated.timing(fadeAnim, {
           toValue: 0,
           duration: 200,
           useNativeDriver: true,
         }).start()
-      }, 2000)
-    } catch (error) {
-      Alert.alert('Error', 'Failed to copy address to clipboard')
-    }
-  }
+      },
+    })
+  }, [walletAddress, fadeAnim, scaleAnim, copyToClipboard])
 
   const shareAddress = async () => {
     try {
       await Share.share({
-        message: `My wallet address: ${walletAddress}`,
+        message: `${walletAddress}`,
         title: 'Wallet Address',
       })
     } catch (error) {
@@ -86,26 +80,21 @@ export default function ReceiveScreen() {
     }
   }
 
-  const formatAddress = (address: string) => {
-    if (address.length <= 12) return address
-    return `${address.slice(0, 6)}...${address.slice(-6)}`
-  }
-
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name='arrow-back' size={20} color='white' />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-lg font-semibold'>Receive</Text>
           <TouchableOpacity
             onPress={shareAddress}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
             <Ionicons name='share-outline' size={20} color='white' />
           </TouchableOpacity>
@@ -157,23 +146,15 @@ export default function ReceiveScreen() {
           </View>
 
           {/* Address Section */}
-          <View className='bg-dark-200 rounded-3xl p-6 mb-6'>
+          <View className='bg-secondary-light rounded-3xl p-6 mb-6'>
             <View className='flex-row items-center justify-between mb-4'>
               <Text className='text-white font-semibold text-lg'>
                 Wallet Address
               </Text>
-              <View className='flex-row gap-2'>
-                <TouchableOpacity
-                  onPress={() => router.push('/(modals)/qr-scanner')}
-                  className='w-10 h-10 bg-dark-300 rounded-full justify-center items-center'
-                >
-                  <Ionicons name='scan' size={18} color='#6366f1' />
-                </TouchableOpacity>
-              </View>
             </View>
 
             {/* Address Display */}
-            <View className='bg-dark-50 rounded-2xl p-4 mb-4'>
+            <View className='bg-secondary-disabled rounded-2xl p-4 mb-4'>
               <Text className='text-white font-mono text-sm leading-6 text-center'>
                 {walletAddress}
               </Text>
@@ -183,8 +164,9 @@ export default function ReceiveScreen() {
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <CustomButton
                 text={copied ? 'Copied!' : 'Copy Address'}
-                onPress={copyToClipboard}
+                onPress={handleCopyAddress}
                 disabled={copied}
+                shallowGradient
               >
                 <Animated.View
                   style={{
@@ -199,7 +181,7 @@ export default function ReceiveScreen() {
                 </Animated.View>
               </CustomButton>
               {/* <TouchableOpacity
-                onPress={copyToClipboard}
+                onPress={handleCopyAddress}
                 className='active:scale-95'
                 disabled={copied}
               >
@@ -237,7 +219,7 @@ export default function ReceiveScreen() {
           </View>
 
           {/* Info Section */}
-          <View className='bg-dark-200 rounded-3xl p-6 mb-6'>
+          <View className='bg-secondary-light rounded-3xl p-6 mb-6'>
             <View className='flex-row items-center mb-4'>
               <View className='w-8 h-8 bg-primary-500/20 rounded-full justify-center items-center mr-3'>
                 <Ionicons name='information-circle' size={16} color='#6366f1' />
@@ -280,14 +262,23 @@ export default function ReceiveScreen() {
           {/* Warning */}
           <View className='bg-warning-500/10 border border-warning-500/20 rounded-2xl p-4 mb-6'>
             <View className='flex-row items-start'>
-              <Ionicons name='warning' size={20} color='#f59e0b' />
               <View className='flex-1 ml-3'>
                 <Text className='text-warning-400 font-medium mb-1'>
-                  Important
+                  ⚠️ Solana Address Only
                 </Text>
                 <Text className='text-sm text-gray-400 leading-5'>
-                  Only send compatible tokens to this address. Sending
-                  incompatible tokens may result in permanent loss.
+                  This address only accepts SOL and SPL tokens on the Solana
+                  network.
+                  {'\n\n'}
+                  <Text className='text-warning-400 font-medium'>
+                    Never send:
+                  </Text>
+                  {'\n'}• Bitcoin, Ethereum, or other blockchain tokens{'\n'}•
+                  Tokens from exchanges without network verification{'\n\n'}
+                  <Text className='text-red-400 font-medium'>
+                    Funds sent from incompatible networks will be permanently
+                    lost and cannot be recovered.
+                  </Text>
                 </Text>
               </View>
             </View>

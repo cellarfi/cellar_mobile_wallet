@@ -7,7 +7,11 @@ import { blurHashPlaceholder } from '@/constants/App'
 import { ENV } from '@/constants/Env'
 import { useRefetchContext } from '@/contexts/RefreshProvider'
 import { useAddress } from '@/hooks/useAddress'
+import { useDebouncedCallback } from '@/hooks/useDebounce'
 import { usePortfolio } from '@/hooks/usePortfolio'
+import { analyticsRequest } from '@/libs/api_requests/analytics.request'
+import { donationRequest } from '@/libs/api_requests/donation.request'
+import { userRequests } from '@/libs/api_requests/user.request'
 import {
   calculateFee,
   getConnection,
@@ -18,9 +22,13 @@ import {
 } from '@/libs/solana.lib'
 import { SendSplToken } from '@/libs/spl.helpers'
 import { useAuthStore } from '@/store/authStore'
-import { BirdEyeTokenItem } from '@/types'
+import { BirdEyeTokenItem, User } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
-import { useEmbeddedSolanaWallet, usePrivy } from '@privy-io/expo'
+import {
+  formatWalletAddress,
+  useEmbeddedSolanaWallet,
+  usePrivy,
+} from '@privy-io/expo'
 import {
   Connection,
   LAMPORTS_PER_SOL,
@@ -50,7 +58,6 @@ export default function SendScreen() {
     isRefetching,
   } = usePortfolio()
 
-  // Address book hook
   const {
     addresses,
     isLoading: addressesLoading,
@@ -73,6 +80,13 @@ export default function SendScreen() {
     isValidating: boolean
     isValid: boolean | null
   }>({ isValidating: false, isValid: null })
+
+  // Tag name resolution state
+  const [isResolvingTagName, setIsResolvingTagName] = useState(false)
+  const [resolvedTagUser, setResolvedTagUser] = useState<User | null>(null)
+  const [tagResolutionError, setTagResolutionError] = useState<string | null>(
+    null
+  )
   const [transactionFee, setTransactionFee] = useState<number | null>(null)
   const [calculatingFee, setCalculatingFee] = useState(false)
   const [isSending, setIsSending] = useState(false)
@@ -92,6 +106,8 @@ export default function SendScreen() {
     currentAmount,
     currentMemo,
     currentIsUsdMode,
+    donation,
+    postId,
   } = useLocalSearchParams<{
     recipient?: string
     scannedAddress?: string
@@ -100,6 +116,8 @@ export default function SendScreen() {
     currentAmount?: string
     currentMemo?: string
     currentIsUsdMode?: string
+    donation?: 'true' | 'false'
+    postId?: string
   }>()
 
   // Debug route parameters
@@ -297,9 +315,20 @@ export default function SendScreen() {
     }
   }, [availableTokens, selectedToken, selectedTokenParam])
 
-  // Validate recipient address
+  // Validate recipient address or resolve tag name
   useEffect(() => {
-    if (!recipient.trim()) {
+    // Reset resolved tag user and error when recipient changes
+    setResolvedTagUser(null)
+    setTagResolutionError(null)
+
+    if (!recipient || recipient.trim() === '') {
+      setAddressValidation({ isValidating: false, isValid: null })
+      return
+    }
+
+    // If it starts with @, we'll handle it separately in the onBlur event
+    if (recipient.trim().startsWith('@')) {
+      // Don't validate as Solana address yet
       setAddressValidation({ isValidating: false, isValid: null })
       return
     }
@@ -313,6 +342,85 @@ export default function SendScreen() {
 
     return () => clearTimeout(timeoutId)
   }, [recipient])
+
+  // Function to extract Solana address from a resolved user
+  const getSolanaAddressFromUser = (user: User | null): string | null => {
+    if (!user) return null
+    return (
+      user.wallets?.find((wallet) => wallet.chain_type === 'solana')?.address ||
+      null
+    )
+  }
+
+  // Function to resolve tag name to a Solana address
+  const resolveTagName = async (tagName: string) => {
+    if (!tagName.startsWith('@') || tagName.length <= 1) {
+      return
+    }
+
+    // Extract tag name without @ symbol
+    const cleanTagName = tagName.substring(1).trim()
+
+    // Only proceed if tag name has sufficient length
+    if (cleanTagName.length < 3) {
+      return
+    }
+
+    try {
+      setIsResolvingTagName(true)
+      setResolvedTagUser(null)
+      setTagResolutionError(null)
+
+      // Call the API to find user by tag name
+      const response = await userRequests.getUserByTagName(cleanTagName)
+
+      if (response.success && response.data) {
+        setResolvedTagUser(response.data)
+      } else {
+        setTagResolutionError(response.message || 'Failed to resolve tag name')
+      }
+    } catch (error: any) {
+      console.error('Error resolving tag name:', error)
+      setTagResolutionError(error?.message || 'Failed to resolve tag name')
+    } finally {
+      setIsResolvingTagName(false)
+    }
+  }
+
+  // Debounced version of resolveTagName
+  const debouncedResolveTagName = useDebouncedCallback(resolveTagName, 500)
+
+  // Handle recipient input change
+  const handleRecipientChange = (text: string) => {
+    setRecipient(text)
+
+    // Reset resolved user if input is changed
+    if (resolvedTagUser) {
+      setResolvedTagUser(null)
+      setTagResolutionError(null)
+    }
+
+    // Trigger tag name resolution if input starts with @ and has at least 3 chars after @
+    const trimmedText = text.trim()
+    if (trimmedText.startsWith('@') && trimmedText.length > 3) {
+      debouncedResolveTagName(trimmedText)
+    }
+  }
+
+  // Handle recipient input blur event to resolve tag names
+  const handleRecipientBlur = async () => {
+    if (recipient.trim().startsWith('@')) {
+      await resolveTagName(recipient.trim())
+    }
+  }
+
+  // Function to use the resolved address
+  const setRecipientToResolvedAddress = () => {
+    const resolvedAddress = getSolanaAddressFromUser(resolvedTagUser)
+    if (resolvedAddress) {
+      setRecipient(resolvedAddress)
+    }
+  }
 
   const formatBalance = (balance: number, decimals: number = 9) => {
     return balance / Math.pow(10, decimals)
@@ -490,7 +598,39 @@ export default function SendScreen() {
       return
     }
 
-    if (addressValidation.isValid === false) {
+    // If recipient is a tag name, prompt to use the resolved address instead
+    if (recipient.startsWith('@')) {
+      const resolvedAddress = resolvedTagUser?.wallets?.find(
+        (wallet) => wallet.chain_type === 'solana'
+      )?.address
+      if (resolvedAddress) {
+        Alert.alert(
+          'Use Resolved Address',
+          `Would you like to send to ${resolvedTagUser.display_name || resolvedTagUser.tag_name}'s address (${formatWalletAddress(resolvedAddress)}) instead?`,
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Use Address',
+              onPress: () => {
+                setRecipientToResolvedAddress()
+                // Don't continue with transaction yet, let the user verify the address first
+              },
+            },
+          ]
+        )
+        return
+      } else if (!isResolvingTagName) {
+        // If not currently resolving and no resolved user, show error
+        Alert.alert(
+          'Error',
+          'Please resolve a valid tag name or Solana address'
+        )
+        return
+      }
+    } else if (addressValidation.isValid === false) {
       Alert.alert('Error', 'Please enter a valid Solana address')
       return
     }
@@ -503,6 +643,27 @@ export default function SendScreen() {
     setStep('confirm')
     // Calculate fee when moving to confirm step
     await calculateTransactionFee()
+  }
+
+  const createDonation = async () => {
+    try {
+      const entry = {
+        post_id: postId || '',
+        amount: Number(amount),
+        token_symbol: selectedToken?.symbol,
+        transaction_id: txSignature,
+        wallet_address: recipient,
+        message: currentMemo,
+        donor_user_id: user?.id,
+      }
+
+      const response = await donationRequest.createDonation(entry)
+      if (!response.success) {
+        console.error('Failed to create donation:', response.message)
+      }
+    } catch (error) {
+      console.error('Error creating donation:', error)
+    }
   }
 
   const handleConfirmSend = async () => {
@@ -545,6 +706,21 @@ export default function SendScreen() {
 
       // Success - show success modal
       setTxSignature(result.signature)
+
+      // Check if this is a donation then create a donation record is true
+      if (donation === 'true') {
+        await createDonation()
+      }
+
+      // Create Transaction Record
+      await analyticsRequest.createTransaction({
+        amount: amount,
+        type: donation ? 'DONATION' : 'TRANSFER',
+        token_address: selectedToken.address,
+        token_name: selectedToken.name ?? '',
+        tx_hash: result.signature,
+      })
+
       setShowLoadingModal(false)
       setShowSuccessModal(true)
 
@@ -572,7 +748,7 @@ export default function SendScreen() {
   // Only show full loading screen if there's no portfolio data AND we're loading initially
   if (portfolioLoading && !portfolio) {
     return (
-      <SafeAreaView className='flex-1 bg-dark-50 justify-center items-center'>
+      <SafeAreaView className='flex-1 bg-primary-main justify-center items-center'>
         <ActivityIndicator size='large' color='#6366f1' />
         <Text className='text-white mt-4'>Loading portfolio...</Text>
       </SafeAreaView>
@@ -582,7 +758,7 @@ export default function SendScreen() {
   // Show empty state if no portfolio data and not loading
   if (showEmptyState) {
     return (
-      <SafeAreaView className='flex-1 bg-dark-50'>
+      <SafeAreaView className='flex-1 bg-primary-main'>
         <View className='flex-1'>
           {/* Header */}
           <View className='flex-row items-center justify-between px-6 py-4'>
@@ -614,15 +790,15 @@ export default function SendScreen() {
   if (step === 'confirm') {
     return (
       <>
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           <View className='flex-1'>
             {/* Header */}
             <View className='flex-row items-center justify-between px-6 py-4'>
               <TouchableOpacity
                 onPress={() => setStep('input')}
-                className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+                className='w-10 h-10 rounded-full justify-center items-center'
               >
-                <Ionicons name='arrow-back' size={20} color='white' />
+                <Ionicons name='chevron-back' size={20} color='white' />
               </TouchableOpacity>
               <Text className='text-white text-lg font-semibold'>
                 Confirm Transaction
@@ -632,7 +808,7 @@ export default function SendScreen() {
 
             <ScrollView className='flex-1 px-6'>
               {/* Transaction Summary */}
-              <View className='bg-dark-200 rounded-3xl p-6 mb-6'>
+              <View className='bg-secondary-light rounded-3xl p-6 mb-6'>
                 <View className='items-center mb-6'>
                   <View className='w-20 h-20 bg-primary-500/20 rounded-full justify-center items-center mb-4 overflow-hidden'>
                     {selectedToken?.logoURI ? (
@@ -723,7 +899,7 @@ export default function SendScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -732,22 +908,22 @@ export default function SendScreen() {
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name='arrow-back' size={20} color='white' />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-lg font-semibold'>Send</Text>
           <View className='flex-row gap-3'>
             {isRefetching && (
               <View className='w-10 h-10 justify-center items-center'>
-                <ActivityIndicator size={16} color='#6366f1' />
+                <ActivityIndicator size={16} color='#fff' />
               </View>
             )}
             <TouchableOpacity
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 rounded-full justify-center items-center'
               onPress={handleOpenQRScanner}
             >
-              <Ionicons name='scan' size={20} color='#6366f1' />
+              <Ionicons name='scan' size={20} color='#fff' />
             </TouchableOpacity>
           </View>
         </View>
@@ -777,9 +953,9 @@ export default function SendScreen() {
                   disabled={addressesLoading}
                 >
                   {addressesLoading ? (
-                    <ActivityIndicator size={16} color='#6366f1' />
+                    <ActivityIndicator size={16} color='#fff' />
                   ) : (
-                    <Ionicons name='refresh' size={16} color='#6366f1' />
+                    <Ionicons name='refresh' size={16} color='#fff' />
                   )}
                 </TouchableOpacity>
 
@@ -804,7 +980,7 @@ export default function SendScreen() {
 
             {addressesLoading ? (
               <View className='h-24 justify-center items-center'>
-                <ActivityIndicator size='small' color='#6366f1' />
+                <ActivityIndicator size='small' color='#fff' />
                 <Text className='text-gray-400 text-sm mt-2'>
                   Loading contacts...
                 </Text>
@@ -823,9 +999,9 @@ export default function SendScreen() {
                   {/* Add Contact Button */}
                   <TouchableOpacity
                     onPress={handleSeeAllContacts}
-                    className='bg-dark-200 rounded-2xl p-4 mr-3 w-32 items-center justify-center border-2 border-dashed border-gray-600'
+                    className='bg-secondary-light rounded-2xl p-4 mr-3 w-32 items-center justify-center border-2 border-dashed border-gray-600'
                   >
-                    <Ionicons name='add' size={24} color='#6366f1' />
+                    <Ionicons name='add' size={24} color='#fff' />
                     <Text className='text-primary-400 font-medium text-sm mt-2'>
                       See All
                     </Text>
@@ -835,9 +1011,9 @@ export default function SendScreen() {
             ) : (
               <TouchableOpacity
                 onPress={handleSeeAllContacts}
-                className='bg-dark-200 rounded-2xl p-6 items-center border-2 border-dashed border-gray-600'
+                className='bg-secondary-light rounded-2xl p-6 items-center border-2 border-dashed border-gray-600'
               >
-                <Ionicons name='people-outline' size={32} color='#6366f1' />
+                <Ionicons name='people-outline' size={32} color='#fff' />
                 <Text className='text-white font-medium text-base mt-2'>
                   No contacts yet
                 </Text>
@@ -853,15 +1029,16 @@ export default function SendScreen() {
             <Text className='text-white font-medium mb-2'>
               Recipient Address
             </Text>
-            <View className='bg-dark-200 rounded-2xl px-4 py-4 flex-row items-center'>
-              <Ionicons name='person-outline' size={20} color='#666672' />
+            <View className='bg-secondary-light rounded-2xl px-4 py-4 flex-row items-center'>
+              <Ionicons name='person-outline' size={20} color='#fff' />
               <TextInput
-                className='flex-1 text-white ml-3 text-lg'
-                placeholder='Enter wallet address or username'
+                className='flex-1 ml-3 text-white text-lg'
+                placeholder='Enter address or @tag_name'
                 placeholderTextColor='#666672'
                 value={recipient}
-                onChangeText={setRecipient}
-                multiline
+                onChangeText={handleRecipientChange}
+                onBlur={handleRecipientBlur}
+                autoCapitalize='none'
               />
               {/* Address validation indicator */}
               <View className='ml-2'>
@@ -885,6 +1062,55 @@ export default function SendScreen() {
                 Invalid Solana address
               </Text>
             )}
+
+            {/* Tag name resolution status */}
+            {isResolvingTagName && (
+              <View className='flex-row items-center mt-1'>
+                <ActivityIndicator size='small' color='#6366f1' />
+                <Text className='text-gray-400 text-sm ml-2'>
+                  Resolving tag name...
+                </Text>
+              </View>
+            )}
+
+            {/* Resolved tag name result */}
+            {resolvedTagUser &&
+              resolvedTagUser.wallets?.find(
+                (wallet) => wallet.chain_type === 'solana'
+              )?.address && (
+                <View className='bg-primary-500/10 border border-primary-500/30 rounded-xl p-3 mt-1'>
+                  <View className='flex-row justify-between items-center'>
+                    <View className='flex-1'>
+                      <Text className='text-white font-medium'>
+                        {resolvedTagUser.display_name ||
+                          resolvedTagUser.tag_name}
+                      </Text>
+                      <Text className='text-gray-400 text-sm font-mono'>
+                        {formatWalletAddress(
+                          resolvedTagUser.wallets?.find(
+                            (wallet) => wallet.chain_type === 'solana'
+                          )?.address
+                        )}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      className='bg-primary-500 rounded-lg px-3 py-2'
+                      onPress={setRecipientToResolvedAddress}
+                    >
+                      <Text className='text-white font-medium text-sm'>
+                        Use Address
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+            {/* Tag resolution error */}
+            {tagResolutionError && (
+              <Text className='text-red-400 text-sm mt-1'>
+                {tagResolutionError}
+              </Text>
+            )}
           </View>
 
           {/* Amount */}
@@ -895,7 +1121,7 @@ export default function SendScreen() {
                 <TouchableOpacity
                   onPress={() => setAmount(tokenBalance.toString())}
                 >
-                  <Text className='text-primary-400 font-medium'>Max</Text>
+                  <Text className='text-secondary font-medium'>Max</Text>
                 </TouchableOpacity>
                 {/* <TouchableOpacity
                   onPress={() => {
@@ -913,7 +1139,7 @@ export default function SendScreen() {
                     setIsUsdMode(!isUsdMode)
                     setAmount('')
                   }}
-                  className='bg-dark-300 rounded-2xl flex-row items-center overflow-hidden'
+                  className='bg-secondary-light rounded-2xl flex-row items-center overflow-hidden'
                 >
                   <View
                     className={`px-4 py-2 ${!isUsdMode ? 'bg-primary-500' : 'bg-transparent'}`}
@@ -936,7 +1162,7 @@ export default function SendScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-            <View className='bg-dark-200 rounded-2xl px-4 py-4 flex-row items-center'>
+            <View className='bg-secondary-light rounded-2xl px-4 py-4 flex-row items-center'>
               <TextInput
                 className='flex-1 text-white text-2xl font-bold'
                 placeholder='0.00'
@@ -968,7 +1194,7 @@ export default function SendScreen() {
           {/* Memo (Optional) */}
           <View className='mb-8'>
             <Text className='text-white font-medium mb-2'>Memo (Optional)</Text>
-            <View className='bg-dark-200 rounded-2xl px-4 py-4'>
+            <View className='bg-secondary-light rounded-2xl px-4 py-4'>
               <TextInput
                 className='text-white text-lg'
                 placeholder='Add a note...'

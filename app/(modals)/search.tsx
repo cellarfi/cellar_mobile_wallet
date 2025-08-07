@@ -1,7 +1,9 @@
+import CustomTextInput from '@/components/ui/CustomTextInput'
 import { blurHashPlaceholder } from '@/constants/App'
 import { useTrending } from '@/hooks/useTrending'
 import { birdEyeRequests } from '@/libs/api_requests/birdeye.request'
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '@/libs/solana.lib'
+import { isValidUrl } from '@/libs/string.helpers'
 import { BirdEyeSearchItem, BirdEyeSearchTokenResult } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
@@ -11,7 +13,6 @@ import {
   ActivityIndicator,
   FlatList,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
@@ -52,6 +53,29 @@ export default function SearchScreen() {
   const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
+
+  // Handle URL submission (when user presses enter or submits)
+  const handleUrlSubmit = () => {
+    if (!searchQuery.trim()) return
+
+    if (isValidUrl(searchQuery.trim())) {
+      let finalUrl = searchQuery.trim()
+
+      // Add https:// if no protocol is specified
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = 'https://' + finalUrl
+      }
+
+      // Navigate to browser with the URL
+      router.push({
+        pathname: '/(modals)/browser' as any,
+        params: { url: finalUrl, title: 'Browser' },
+      })
+    } else {
+      // If not a URL, perform regular token search
+      performSearch(searchQuery)
+    }
+  }
 
   // Convert trending tokens to SearchResult format
   const trendingTokensForSearch = useMemo(() => {
@@ -157,7 +181,16 @@ export default function SearchScreen() {
       clearTimeout(debounceTimeout.current)
     }
 
-    // Set new timeout for debounced search
+    // Check if it's a valid URL - if so, don't auto-search, wait for user to submit
+    if (isValidUrl(text.trim())) {
+      // Don't perform token search for URLs, let user press enter to navigate
+      setSearchResults([])
+      setError(null)
+      setIsLoading(false)
+      return
+    }
+
+    // Set new timeout for debounced search (only for non-URLs)
     debounceTimeout.current = setTimeout(() => {
       performSearch(text)
     }, 500)
@@ -203,22 +236,24 @@ export default function SearchScreen() {
       }
 
       // Return to the calling screen with the selected token
-      router.push({
-        pathname: `/(modals)/${returnTo}` as any,
-        params: { [returnParam]: JSON.stringify(tokenResult) },
-      })
+      router.back()
+
+      // Set the parameters after going back to preserve the existing state
+      setTimeout(() => {
+        router.setParams({ [returnParam]: JSON.stringify(tokenResult) })
+      }, 100)
     }
   }
 
   const renderToken = ({ item }: { item: SearchResult }) => (
     <TouchableOpacity
-      className='bg-dark-200 rounded-2xl p-4 mb-3 active:scale-95'
+      className='bg-secondary-light rounded-2xl p-4 mb-3 active:scale-95'
       onPress={() => handleTokenPress(item)}
     >
       <View className='flex-row items-center'>
         {/* Rank Badge for Trending Tokens */}
         {!searchQuery.trim() && item.rank && (
-          <View className='w-8 h-8 bg-primary-500/20 rounded-full justify-center items-center mr-3'>
+          <View className='w-8 h-8 bg-primary-900 rounded-full justify-center items-center mr-3'>
             <Text className='text-primary-400 text-xs font-bold'>
               #{item.rank}
             </Text>
@@ -258,7 +293,7 @@ export default function SearchScreen() {
         {/* Price Info */}
         <View className='items-end'>
           <Text className='text-white font-semibold text-lg mb-1'>
-            ${item.price.toFixed(item.price >= 1 ? 2 : 6)}
+            ${item?.price?.toFixed(item?.price >= 1 ? 2 : 6) || '0.00'}
           </Text>
           <Text
             className={`text-sm font-medium ${
@@ -266,7 +301,7 @@ export default function SearchScreen() {
             }`}
           >
             {item.priceChange24h >= 0 ? '+' : ''}
-            {item?.priceChange24h?.toFixed(2)}%
+            {item?.priceChange24h?.toFixed(2) || '0.00'}%
           </Text>
         </View>
       </View>
@@ -277,12 +312,12 @@ export default function SearchScreen() {
         <Text className='text-gray-300 text-sm'>
           $
           {item.marketCap >= 1e9
-            ? `${(item.marketCap / 1e9).toFixed(2)}B`
+            ? `${(item.marketCap / 1e9)?.toFixed(2) || '0.00'}B`
             : item.marketCap >= 1e6
-              ? `${(item.marketCap / 1e6).toFixed(2)}M`
+              ? `${(item.marketCap / 1e6)?.toFixed(2)}M`
               : item.marketCap >= 1e3
-                ? `${(item.marketCap / 1e3).toFixed(2)}K`
-                : item.marketCap.toFixed(2)}
+                ? `${(item.marketCap / 1e3)?.toFixed(2) || '0.00'}K`
+                : item.marketCap?.toFixed(2) || '0.00'}
         </Text>
       </View>
     </TouchableOpacity>
@@ -321,6 +356,32 @@ export default function SearchScreen() {
     }
 
     if (searchQuery.trim() && searchResults.length === 0) {
+      // Check if it's a valid URL
+      if (isValidUrl(searchQuery.trim())) {
+        return (
+          <View className='items-center py-12'>
+            <Ionicons name='globe-outline' size={48} color='#6366f1' />
+            <Text className='text-white text-lg font-semibold mt-4'>
+              Ready to Browse
+            </Text>
+            <Text className='text-gray-400 text-center mt-2 mb-4'>
+              Press Enter or tap &quot;Open&quot; to navigate to:
+            </Text>
+            <Text className='text-primary-400 text-center font-mono text-sm mb-6'>
+              {searchQuery.startsWith('http')
+                ? searchQuery
+                : `https://${searchQuery}`}
+            </Text>
+            <TouchableOpacity
+              onPress={handleUrlSubmit}
+              className='bg-primary-500 rounded-2xl px-6 py-3'
+            >
+              <Text className='text-white font-medium'>Open in Browser</Text>
+            </TouchableOpacity>
+          </View>
+        )
+      }
+
       return (
         <View className='items-center py-12'>
           <Ionicons name='search-outline' size={48} color='#666672' />
@@ -328,7 +389,7 @@ export default function SearchScreen() {
             No Results Found
           </Text>
           <Text className='text-gray-400 text-center mt-2'>
-            No tokens found for "{searchQuery}"
+            No tokens found for &quot;{searchQuery}&quot;
           </Text>
         </View>
       )
@@ -357,15 +418,15 @@ export default function SearchScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <View className='flex-1'>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
-            <Ionicons name='arrow-back' size={20} color='white' />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-lg font-semibold'>{title}</Text>
           <View className='w-10' />
@@ -373,39 +434,18 @@ export default function SearchScreen() {
 
         {/* Search Bar */}
         <View className='px-6 mb-4'>
-          <View className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'>
-            <Ionicons name='search' size={20} color='#666672' />
-            <TextInput
-              className='flex-1 text-white ml-3 text-lg'
-              placeholder={
-                !searchQuery.trim() && trending?.tokens?.length
-                  ? 'Search trending tokens or type new ones...'
-                  : 'Search tokens...'
-              }
-              placeholderTextColor='#666672'
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-              autoFocus
-              autoCapitalize='none'
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchQuery('')
-                  setSearchResults([])
-                  setError(null)
-                  // Clear the debounce timeout to prevent any pending searches
-                  if (debounceTimeout.current) {
-                    clearTimeout(debounceTimeout.current)
-                  }
-                }}
-                className='ml-2'
-              >
-                <Ionicons name='close-circle' size={20} color='#666672' />
-              </TouchableOpacity>
-            )}
-          </View>
+          <CustomTextInput
+            value={searchQuery}
+            onChangeText={handleSearchChange}
+            onSubmitEditing={handleUrlSubmit}
+            autoFocus
+            placeholder='Search tokens or enter URL...'
+            icon='search'
+            autoCapitalize='none'
+            autoCorrect={false}
+            returnKeyType='go'
+            isSearch
+          />
         </View>
 
         {/* Results */}
@@ -415,14 +455,18 @@ export default function SearchScreen() {
             <View className='mb-3'>
               <View className='flex-row items-center justify-between'>
                 <Text className='text-gray-400 text-sm font-medium'>
-                  {searchQuery.trim() ? 'Search Results' : 'Trending Tokens'}
+                  {searchQuery.trim()
+                    ? isValidUrl(searchQuery.trim())
+                      ? 'Tokens • Enter URL to browse'
+                      : 'Search Results'
+                    : 'Trending Tokens'}
                   {/* {tokensToShow.length > 0 && (
                     <Text className='text-gray-500'>
                       {' '}
                       ({tokensToShow.length})
                     </Text>
                   )} */}
-                  {searchQuery.trim() && (
+                  {searchQuery.trim() && !isValidUrl(searchQuery.trim()) && (
                     <Text className='text-gray-500'> • Verified first</Text>
                   )}
                 </Text>

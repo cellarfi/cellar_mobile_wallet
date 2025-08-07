@@ -1,7 +1,10 @@
+import PointsDisplay from '@/components/PointsDisplay'
 import { useAuthContext } from '@/contexts/AuthProvider'
+import { usePoints } from '@/hooks/usePoints'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { formatNumber } from '@/libs/string.helpers'
 import { useAuthStore } from '@/store/authStore'
+import { useSettingsStore } from '@/store/settingsStore'
 import { Ionicons } from '@expo/vector-icons'
 import { format } from 'date-fns'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -20,18 +23,18 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 // Mock user data
 const userData = {
   name: 'Alex Seeker',
-  username: '@alexseeker',
+  tag_name: '@alexseeker',
   email: 'alex@cellar.so',
   phone: '+1 (555) 123-4567',
   avatar: '🎯',
   verified: true,
   joinedDate: 'March 2024',
   stats: {
-    totalValue: '$12,847.32',
+    totalValue: '0',
     wallets: 1,
-    followers: '1.2K',
-    following: '456',
-    posts: '89',
+    followers: '0',
+    following: '0',
+    posts: '0',
   },
   preferences: {
     notifications: true,
@@ -57,6 +60,11 @@ const menuSections = [
         icon: 'notifications-outline',
         title: 'Notifications',
         action: 'notifications',
+      },
+      {
+        icon: 'trophy-outline',
+        title: 'Leaderboard',
+        action: 'leaderboard',
       },
     ],
   },
@@ -117,16 +125,27 @@ const menuSections = [
 export default function ProfileScreen() {
   const { profile } = useAuthStore()
   const { portfolio } = usePortfolio()
+  const { userPoints, isLoading } = usePoints()
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
+
+  // For pagination in points history
+  const [historyPage, setHistoryPage] = useState(0)
+  const historyLimit = 10
 
   const [preferences, setPreferences] = useState(userData.preferences)
   // const { logout } = usePrivy()
   const { logout } = useAuthContext()
+
+  // State variables for UI
 
   useEffect(() => {
     if (!profile) {
       router.replace('/setup-profile')
     }
   }, [profile])
+
+  // Points history modal is now accessible via PointsDisplay component
 
   const handleMenuAction = (action: string) => {
     switch (action) {
@@ -144,6 +163,9 @@ export default function ProfileScreen() {
         break
       case 'address-book':
         router.push('/(modals)/address-book')
+        break
+      case 'leaderboard':
+        router.push('/leaderboard' as any)
         break
       default:
         Alert.alert('Coming Soon', `${action} feature will be available soon!`)
@@ -173,7 +195,7 @@ export default function ProfileScreen() {
       <Text className='text-white text-lg font-semibold mb-4 px-6'>
         {section.title}
       </Text>
-      <View className='bg-dark-200 rounded-2xl mx-6'>
+      <View className='bg-secondary-light rounded-2xl mx-6'>
         {section.items.map((item: any, index: number) => (
           <TouchableOpacity
             key={index}
@@ -197,19 +219,32 @@ export default function ProfileScreen() {
     </View>
   )
 
-  const StatCard = ({ label, value }: any) => (
+  const StatCard = ({ label, value, extra }: any) => (
     <View className='items-center'>
       <Text className='text-white text-xl font-bold'>{value}</Text>
       <Text className='text-gray-400 text-sm'>{label}</Text>
+      {extra && (
+        <View className='bg-primary-500/30 rounded-full px-2 py-0.5 mt-1'>
+          <Text className='text-primary-300 text-xs font-medium'>{extra}</Text>
+        </View>
+      )}
     </View>
   )
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
-          <Text className='text-white text-2xl font-bold'>Profile</Text>
+          <View className='flex-row items-center gap-2'>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className='rounded-full p-2'
+            >
+              <Ionicons name='chevron-back' size={24} color='white' />
+            </TouchableOpacity>
+            <Text className='text-white text-2xl font-bold'>Profile</Text>
+          </View>
           <TouchableOpacity className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'>
             <Ionicons name='qr-code' size={20} color='#6366f1' />
           </TouchableOpacity>
@@ -218,7 +253,7 @@ export default function ProfileScreen() {
         {/* Profile Card */}
         <View className='px-6 mb-6'>
           <LinearGradient
-            colors={['#6366f1', '#8b5cf6']}
+            colors={['#122C41', '#1A2741']}
             style={{
               borderRadius: 24,
               padding: 24,
@@ -238,20 +273,23 @@ export default function ProfileScreen() {
                   {/* {userData.verified && ( */}
                   <Ionicons name='checkmark-circle' size={24} color='white' />
                   {/* )} */}
+                  <View className='ml-2'>
+                    <PointsDisplay size='small' showLabel={false} />
+                  </View>
                 </View>
                 <Text className='text-white/80 text-lg mb-1'>
                   @{profile?.tag_name}
                 </Text>
+                {profile?.about && (
+                  <Text className='text-white/70 text-center text-base my-2 px-4'>
+                    {profile.about}
+                  </Text>
+                )}
                 <Text className='text-white/60 text-sm'>
                   Member since{' '}
                   {profile?.created_at
                     ? format(new Date(profile.created_at), 'MMMM dd, yyyy')
                     : 'Unknown'}
-                  {/* {profile?.created_at
-                    ? formatDistanceToNow(new Date(profile.created_at), {
-                        addSuffix: true,
-                      })
-                    : 'Unknown'} */}
                 </Text>
               </View>
             </View>
@@ -260,11 +298,24 @@ export default function ProfileScreen() {
             <View className='flex-row justify-around'>
               <StatCard
                 label='Portfolio'
-                value={'$' + formatNumber(portfolio?.totalUsd || 0)}
+                value={
+                  hidePortfolioBalance
+                    ? '••••••'
+                    : '$' + formatNumber(portfolio?.totalUsd || 0)
+                }
               />
+              <View className='items-center'>
+                {isLoading ? (
+                  <Text className='text-white text-xl font-bold'>...</Text>
+                ) : (
+                  <Text className='text-white text-xl font-bold'>
+                    {userPoints?.level || 0}
+                  </Text>
+                )}
+                <Text className='text-gray-400 text-sm'>Level</Text>
+              </View>
               <StatCard label='Wallets' value={userData.stats.wallets} />
               <StatCard label='Followers' value={userData.stats.followers} />
-              <StatCard label='Posts' value={userData.stats.posts} />
             </View>
           </LinearGradient>
         </View>
@@ -277,7 +328,7 @@ export default function ProfileScreen() {
           <View className='flex-row gap-3'>
             <TouchableOpacity
               onPress={() => router.push('/(modals)/edit-profile')}
-              className='flex-1 bg-dark-200 rounded-2xl p-4 items-center'
+              className='flex-1 bg-secondary-light rounded-2xl p-4 items-center'
             >
               <Ionicons name='create-outline' size={24} color='#6366f1' />
               <Text className='text-white font-medium text-sm mt-2'>
@@ -286,14 +337,14 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/(modals)/qr-code')}
-              className='flex-1 bg-dark-200 rounded-2xl p-4 items-center'
+              className='flex-1 bg-secondary-light rounded-2xl p-4 items-center'
             >
               <Ionicons name='qr-code-outline' size={24} color='#6366f1' />
               <Text className='text-white font-medium text-sm mt-2'>My QR</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/(modals)/share-profile')}
-              className='flex-1 bg-dark-200 rounded-2xl p-4 items-center'
+              className='flex-1 bg-secondary-light rounded-2xl p-4 items-center'
             >
               <Ionicons name='share-outline' size={24} color='#6366f1' />
               <Text className='text-white font-medium text-sm mt-2'>Share</Text>
@@ -311,7 +362,7 @@ export default function ProfileScreen() {
           <Text className='text-white text-lg font-semibold mb-4 px-6'>
             App Settings
           </Text>
-          <View className='bg-dark-200 rounded-2xl mx-6'>
+          <View className='bg-secondary-light rounded-2xl mx-6'>
             <View className='flex-row items-center justify-between p-4 border-b border-dark-300'>
               <View className='flex-row items-center flex-1'>
                 <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-4'>
@@ -388,8 +439,8 @@ export default function ProfileScreen() {
 
         {/* App Version */}
         <View className='items-center pb-8'>
-          <Text className='text-gray-500 text-sm'>Cellar v0.0.1</Text>
-          <Text className='text-gray-600 text-xs mt-1'>Build 2025.7.5</Text>
+          <Text className='text-gray-500 text-sm'>Cellar v1.0.0</Text>
+          <Text className='text-gray-600 text-xs mt-1'>Build 2025.7.30</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

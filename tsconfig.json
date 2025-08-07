@@ -4,9 +4,11 @@
     "strict": true,
     // Allows us to use conditional/deep imports on published packages
     "moduleResolution": "Bundler",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": [
     "**/*.ts",
@@ -15,6 +17,7 @@
     "expo-env.d.ts",
     "app/index.js",
     "nativewind-env.d.ts",
-    "libs/fsPolyfills.js"
+    "libs/fsPolyfills.js",
+    "types/**/*.d.ts"
   ]
 }

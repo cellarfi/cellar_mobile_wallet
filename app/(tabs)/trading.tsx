@@ -120,7 +120,7 @@ export default function TradingScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <FlatList
         data={filteredTokens}
         renderItem={renderToken}
@@ -142,11 +142,11 @@ export default function TradingScreen() {
             {/* Header */}
             <View className='flex-row items-center justify-between py-4'>
               <Text className='text-white text-2xl font-bold'>Trading</Text>
-              <View className='flex-row space-x-3'>
-                <TouchableOpacity className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'>
+              <View className='flex-row gap-3'>
+                <TouchableOpacity className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'>
                   <Ionicons name='filter' size={20} color='#6366f1' />
                 </TouchableOpacity>
-                <TouchableOpacity className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'>
+                <TouchableOpacity className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'>
                   <Ionicons name='bookmark-outline' size={20} color='white' />
                 </TouchableOpacity>
               </View>
@@ -155,7 +155,7 @@ export default function TradingScreen() {
             {/* Search */}
             <View className='mb-6'>
               <TouchableOpacity
-                className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'
+                className='bg-secondary-light rounded-2xl px-4 py-3 flex-row items-center'
                 onPress={() => router.push('/(modals)/search')}
               >
                 <Ionicons name='search' size={20} color='#666672' />
@@ -275,7 +275,7 @@ export default function TradingScreen() {
                   <View className='bg-dark-200 rounded-2xl p-6 items-center'>
                     <Ionicons name='search-outline' size={48} color='#666672' />
                     <Text className='text-gray-400 text-center mt-4'>
-                      No tokens found for "{searchQuery}"
+                      No tokens found for &quot;{searchQuery}&quot;
                     </Text>
                   </View>
                 </View>

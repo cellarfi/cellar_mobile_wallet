@@ -31,6 +31,21 @@ import {
   JupiterQuoteOrderResponse,
 } from './jupiter_interface'
 import { PrivyWalletAccount } from './misc'
+import {
+  LeaderboardEntry,
+  LeaderboardFilterOptions,
+  LeaderboardResponse,
+  LeaderboardTimeFrame,
+  PointTransaction,
+  PointsHistoryFilterOptions,
+  PointsHistoryResponse,
+  UserPoint,
+} from './points.interface'
+import {
+  CreateTokenFormData,
+  PumpFunToken,
+  PumpFunTokenStatus,
+} from './pumpfun.interface'
 import { Risk, RugResponse, TokenHolder } from './rug.interface'
 import { Session } from './session.interface'
 import { CreateUserDto, UpdateUserDto, User } from './user.interface'
@@ -62,15 +77,26 @@ export {
   BirdEyeWalletBalanceChangeTokenInfo,
   BirdEyeWalletPortfolio,
   BirdEyeWalletTransactionHistory,
+  CreateTokenFormData,
   CreateUserDto,
   JupiterExecuteOrderResponse,
   JupiterOrderRequest,
   JupiterQuoteOrderResponse,
+  LeaderboardEntry,
+  LeaderboardFilterOptions,
+  LeaderboardResponse,
+  LeaderboardTimeFrame,
+  PointTransaction,
+  PointsHistoryFilterOptions,
+  PointsHistoryResponse,
   PrivyWalletAccount,
+  PumpFunToken,
+  PumpFunTokenStatus,
   Risk,
   RugResponse,
   Session,
   TokenHolder,
   UpdateUserDto,
   User,
+  UserPoint,
 }

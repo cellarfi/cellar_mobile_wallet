@@ -1,10 +1,9 @@
-import AppLogo from '@/components/ui/AppLogo'
 import CustomButton from '@/components/ui/CustomButton'
 import CustomTextInput from '@/components/ui/CustomTextInput'
+import { Colors } from '@/constants/Colors'
 import { Images } from '@/constants/Images'
 import { Ionicons } from '@expo/vector-icons'
 import { useLoginWithEmail } from '@privy-io/expo'
-import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
@@ -61,42 +60,42 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
-      <LinearGradient
-        colors={['#0a0a0b', '#1a1a1f', '#0a0a0b']}
+    <SafeAreaView className='flex-1 bg-primary-main'>
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <ScrollView
+          className='flex-1 px-6'
+          showsVerticalScrollIndicator={false}
+          contentContainerClassName='grow'
         >
-          <ScrollView
-            className='flex-1 px-6'
-            showsVerticalScrollIndicator={false}
-          >
+          <View className=''>
             {/* Header */}
             <View className='flex-row items-center justify-between pt-4 mb-8'>
               <TouchableOpacity
-                onPress={() => router.back()}
+                onPress={() => router.replace('/(auth)')}
                 className='p-2 -ml-2'
               >
-                <Ionicons name='arrow-back' size={24} color='white' />
+                <Ionicons
+                  name='chevron-back'
+                  size={20}
+                  color={Colors.dark.secondary}
+                />
               </TouchableOpacity>
-              <Text className='text-lg font-semibold text-white'>Sign In</Text>
               <View className='w-8' />
             </View>
-            {/* Logo */}
-            <View className='items-center mb-8'>
-              <View className='mb-6 shadow-glow'>
-                <AppLogo size={64} />
-              </View>
-              <Text className='text-2xl font-bold text-white mb-2'>
-                Welcome Back
+
+            {/* Welcome */}
+            <View className='mt-10 mb-10'>
+              <Text className='text-[24px] font-bold text-white mb-2'>
+                Sign in
               </Text>
-              <Text className='text-gray-400 text-center'>
-                Sign in to your Cellar account
+              <Text className='text-[14px] text-[#ABA7B5]'>
+                Login into your account to continue trading
               </Text>
             </View>
+
             {/* Form */}
             <View className='gap-6'>
               {/* Email Input */}
@@ -119,31 +118,33 @@ export default function LoginScreen() {
                 )}
               </View>
             </View>
-            {/* Sign In Button */}
-            <CustomButton
-              text={isLoading ? 'Sending Code...' : 'Continue with Email'}
-              onPress={handleLogin}
-              type='primary'
-              className='mt-6 mb-6'
-            />
+          </View>
 
-            {/* Sign Up Link */}
-            <View className='flex-row justify-center items-center mb-8'>
-              <Text className='text-gray-400'>Protected by </Text>
-              <TouchableOpacity
-                className='flex-row items-center'
-                onPress={() => Linking.openURL('https://privy.io')}
-              >
-                <Image
-                  source={Images.privyLogo}
-                  className='w-12 h-12'
-                  resizeMode='contain'
-                />
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+          {/* Sign In Button */}
+          <CustomButton
+            text={isLoading ? 'Sending Code...' : 'Continue with Email'}
+            onPress={handleLogin}
+            type='primary'
+            className='mt-6 mb-3'
+            disabled={!z.string().email().safeParse(email).success}
+          />
+
+          {/* Sign Up Link */}
+          <View className='flex-row justify-center items-center mb-8'>
+            <Text className='text-gray-400'>Protected by </Text>
+            <TouchableOpacity
+              className='flex-row items-center'
+              onPress={() => Linking.openURL('https://privy.io')}
+            >
+              <Image
+                source={Images.privyLogo}
+                className='w-12 h-12'
+                resizeMode='contain'
+              />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }

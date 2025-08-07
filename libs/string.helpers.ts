@@ -16,7 +16,9 @@ export const formatValue = (value?: number) => {
     const digits = match
       ? match[1]
       : valueStr.split('.')[1]?.slice(0, 2) || '00'
-    return `0.${'0'.repeat(valueStr.split('.')[1]?.indexOf(digits) ?? 0)}${digits}`
+    return `0.${'0'.repeat(
+      valueStr.split('.')[1]?.indexOf(digits) ?? 0
+    )}${digits}`
   } else {
     return `${value.toFixed(2)}`
   }
@@ -44,4 +46,40 @@ export const formatNumber = (value?: number) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
+}
+
+export const formatAddress = (address: string) => {
+  if (!address) return ''
+  return address.length > 12
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : address
+}
+
+// Copy wallet address handler
+// const handleCopyWallet = async (address: string) => {
+//   try {
+//     await Clipboard.setStringAsync(address);
+//     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+//     setCopied(true);
+//     setTimeout(() => setCopied(false), 1500);
+//   } catch (e) {
+//     // Optionally handle error
+//   }
+// };
+
+// URL validation function
+export const isValidUrl = (string: string) => {
+  try {
+    // Check for common URL patterns
+    const urlRegex =
+      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i
+    const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+
+    // Remove protocol if present for domain checking
+    const withoutProtocol = string.replace(/^https?:\/\//, '')
+
+    return urlRegex.test(string) || domainRegex.test(withoutProtocol)
+  } catch (error) {
+    return false
+  }
 }

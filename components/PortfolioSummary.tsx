@@ -1,21 +1,21 @@
 import { usePortfolio } from '@/hooks/usePortfolio'
+import { useClipboard } from '@/libs/clipboard'
 import { useAuthStore } from '@/store/authStore'
+import { useSettingsStore } from '@/store/settingsStore'
 import { Ionicons } from '@expo/vector-icons'
 import { formatWalletAddress } from '@privy-io/expo'
-import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import { Animated, Text, TouchableOpacity, View } from 'react-native'
 
-interface PortfolioSummaryProps {}
-
-export function PortfolioSummary({}: PortfolioSummaryProps) {
+export function PortfolioSummary() {
   const { portfolio, isLoading, isRefetching, error } = usePortfolio()
   const { activeWallet } = useAuthStore()
-  const [copied, setCopied] = useState(false)
+  const { copyToClipboard, copied } = useClipboard()
+  const { settings, updateSettings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
   const scaleAnim = useRef(new Animated.Value(1)).current
-  const opacityAnim = useRef(new Animated.Value(0)).current
 
   const formatPortfolioValue = (value?: number) => {
     if (!value) return '0.00'
@@ -23,6 +23,23 @@ export function PortfolioSummary({}: PortfolioSummaryProps) {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })
+  }
+
+  const handleCopyAddress = async () => {
+    if (activeWallet?.address) {
+      // Haptic feedback
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+      await copyToClipboard(activeWallet.address)
+    }
+  }
+
+  const handleLongPress = async () => {
+    // Haptic feedback
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+    // Toggle portfolio balance visibility
+    updateSettings({ hidePortfolioBalance: !hidePortfolioBalance })
   }
 
   const calculatePortfolioChange = () => {
@@ -71,55 +88,10 @@ export function PortfolioSummary({}: PortfolioSummaryProps) {
     }
   }
 
-  const copyToClipboard = async () => {
-    if (!activeWallet?.address) return
-
-    try {
-      await Clipboard.setStringAsync(activeWallet.address)
-
-      // Haptic feedback
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-
-      // Start animations
-      setCopied(true)
-
-      // Scale animation
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 0.95,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start()
-
-      // Opacity animation for copy feedback
-      Animated.sequence([
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.delay(1500),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => setCopied(false))
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
-    }
-  }
-
   if (isLoading && !portfolio) {
     return (
       <LinearGradient
-        colors={['#6366f1', '#8b5cf6']}
+        colors={['#122C41', '#122C41']}
         style={{
           borderRadius: 24,
           padding: 24,
@@ -143,7 +115,7 @@ export function PortfolioSummary({}: PortfolioSummaryProps) {
 
   if (error) {
     return (
-      <View className='bg-dark-200 rounded-2xl p-6 items-center'>
+      <View className='bg-secondary-light rounded-2xl p-6 items-center'>
         <Ionicons name='warning-outline' size={48} color='#ef4444' />
         <Text className='text-gray-400 text-center mt-4'>
           Failed to load portfolio
@@ -155,7 +127,7 @@ export function PortfolioSummary({}: PortfolioSummaryProps) {
 
   return (
     <LinearGradient
-      colors={['#6366f1', '#8b5cf6']}
+      colors={['#122C41', '#1A2741']}
       style={{
         borderRadius: 24,
         padding: 24,
@@ -163,53 +135,40 @@ export function PortfolioSummary({}: PortfolioSummaryProps) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      {/* {onWalletSwitch && (
-        <View className='flex-row items-center justify-between mb-4'>
-          <View>
-            <Text className='text-white/80 text-sm'>Active Wallet</Text>
-            <Text className='text-white text-lg font-semibold'>
-              Main Wallet
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => router.push('/(modals)/wallet-switcher')}
-            className='bg-white/20 rounded-full p-2'
-          >
-            <Ionicons name='swap-horizontal' size={20} color='white' />
-          </TouchableOpacity>
-        </View>
-      )} */}
-
       <Text className='text-white/80 text-sm mb-2'>Total Portfolio Value</Text>
-      <View className=' mb-3'>
-        <Text className='text-white text-3xl font-bold'>
-          ${formatPortfolioValue(portfolio?.totalUsd)}
-        </Text>
-        {(() => {
-          const change = formatPortfolioChange()
-          if (!change) return null
+      <TouchableOpacity
+        onLongPress={handleLongPress}
+        delayLongPress={500}
+        activeOpacity={1}
+      >
+        <View className=' mb-3'>
+          <Text className='text-white text-3xl font-bold'>
+            {hidePortfolioBalance
+              ? '••••••'
+              : `$${formatPortfolioValue(portfolio?.totalUsd)}`}
+          </Text>
+          {(() => {
+            const change = formatPortfolioChange()
+            if (!change || hidePortfolioBalance) return null
 
-          return (
-            <Text
-              className={`text-xs font-semibold ${
-                change.isPositive ? 'text-green-400' : 'text-red-300'
-              }`}
-            >
-              {change.text}
-            </Text>
-          )
-        })()}
-      </View>
-      {/* <View className='flex-row items-center'>
-        <Text className='text-success-300 font-semibold mr-2'>{'+10.58'}</Text>
-        <Text className='text-success-300 font-semibold'>({'+2.04%'})</Text>
-        <Text className='text-white/80 ml-2'>today</Text>
-      </View> */}
+            return (
+              <Text
+                className={`text-xs font-semibold ${
+                  change.isPositive ? 'text-green-400' : 'text-red-300'
+                }`}
+              >
+                {change.text}
+              </Text>
+            )
+          })()}
+        </View>
+      </TouchableOpacity>
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <TouchableOpacity
-          onPress={copyToClipboard}
+          onPress={() => activeWallet?.address && handleCopyAddress()}
           className='flex-row items-center gap-3 active:opacity-70'
           activeOpacity={0.7}
+          disabled={!activeWallet?.address}
         >
           <Text className='text-white/60 text-sm font-mono'>
             {formatWalletAddress(activeWallet?.address)}{' '}

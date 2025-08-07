@@ -5,10 +5,12 @@ import { useRefetchContext } from '@/contexts/RefreshProvider'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { usePrivySign } from '@/hooks/usePrivySign'
 import { useTrending } from '@/hooks/useTrending'
+import { analyticsRequest } from '@/libs/api_requests/analytics.request'
 import { jupiterRequests } from '@/libs/api_requests/jupiter.request'
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '@/libs/solana.lib'
 import { getSplTokenAddress } from '@/libs/spl.helpers'
 import { useAuthStore } from '@/store/authStore'
+import { useSettingsStore } from '@/store/settingsStore'
 import {
   BirdEyeSearchTokenResult,
   BirdEyeTokenItem,
@@ -42,6 +44,7 @@ const TokenSelectorCard = React.memo(
     placeholder,
     isInput = true,
     formatBalance,
+    hidePortfolioBalance,
   }: {
     token: BirdEyeTokenItem | BirdEyeSearchTokenResult | null
     amount: string
@@ -52,15 +55,19 @@ const TokenSelectorCard = React.memo(
     placeholder: string
     isInput?: boolean
     formatBalance: (balance: number, decimals?: number) => string
+    hidePortfolioBalance: boolean
   }) => (
-    <View className='bg-dark-200 rounded-2xl p-4'>
+    <View className='bg-secondary-light rounded-2xl p-4'>
       <View className='flex-row items-center justify-between mb-3'>
         <Text className='text-gray-400 text-sm'>
           {isInput ? 'You Pay' : 'You Receive'}
         </Text>
         {isInput && token && 'balance' in token && (
           <Text className='text-gray-400 text-sm'>
-            Balance: {formatBalance(token.balance, token.decimals)}
+            Balance:{' '}
+            {hidePortfolioBalance
+              ? '••••••'
+              : formatBalance(token.balance, token.decimals)}
           </Text>
         )}
       </View>
@@ -77,12 +84,12 @@ const TokenSelectorCard = React.memo(
             keyboardType='numeric'
           />
           <Text className='text-gray-400 text-sm mt-1'>
-            ~${usdValue.toFixed(2)}
+            ~{hidePortfolioBalance ? '••••••' : `$${usdValue.toFixed(2)}`}
           </Text>
         </View>
 
         <TouchableOpacity
-          className='flex-row items-center bg-dark-300 rounded-xl p-3'
+          className='flex-row items-center bg-secondary-disabled rounded-xl p-3'
           onPress={onPress}
         >
           {token ? (
@@ -123,10 +130,14 @@ const TokenSelectorCard = React.memo(
   )
 )
 
+TokenSelectorCard.displayName = 'TokenSelectorCard'
+
 export default function SwapScreen() {
   const { portfolio } = usePortfolio()
   const { refetchPortfolio } = useRefetchContext()
   const { activeWallet } = useAuthStore()
+  const { settings } = useSettingsStore()
+  const { hidePortfolioBalance } = settings
   const { signTransaction } = usePrivySign()
   const { trending } = useTrending()
 
@@ -183,6 +194,7 @@ export default function SwapScreen() {
         const parsedToken: BirdEyeTokenItem = JSON.parse(inputTokenParam)
         console.log('Preselecting input token:', parsedToken)
         setInputToken(parsedToken)
+        setHasSetDefaultToken(true) // Mark that we have set a token
         // Clear the parameter to avoid re-triggering
         router.setParams({ inputToken: undefined })
       } catch (error) {
@@ -233,6 +245,9 @@ export default function SwapScreen() {
   // USDC mint address
   const USDC_MINT = getSplTokenAddress('usdc')
 
+  // Track if we've already set a default token to prevent resets
+  const [hasSetDefaultToken, setHasSetDefaultToken] = useState(false)
+
   // Select default input token (SOL first, then USDC, then first available) - but only if no token preselected
   useEffect(() => {
     // Don't run default selection if we have a preselected input token parameter
@@ -240,6 +255,12 @@ export default function SwapScreen() {
       return
     }
 
+    // Don't run if we've already set a default - this prevents resets
+    if (hasSetDefaultToken) {
+      return
+    }
+
+    // Only run if we have available tokens and no input token is currently set
     if (availableTokens.length > 0 && !inputToken) {
       // First try to find SOL
       const nativeSol = availableTokens.find(
@@ -251,6 +272,7 @@ export default function SwapScreen() {
       if (nativeSol) {
         console.log('Setting default input token to SOL:', nativeSol)
         setInputToken(nativeSol)
+        setHasSetDefaultToken(true)
         return
       }
 
@@ -263,6 +285,7 @@ export default function SwapScreen() {
         if (usdc) {
           console.log('Setting default input token to USDC:', usdc)
           setInputToken(usdc)
+          setHasSetDefaultToken(true)
           return
         }
       }
@@ -273,8 +296,9 @@ export default function SwapScreen() {
         availableTokens[0]
       )
       setInputToken(availableTokens[0])
+      setHasSetDefaultToken(true)
     }
-  }, [availableTokens, inputToken, inputTokenParam, USDC_MINT])
+  }, [availableTokens, inputTokenParam, USDC_MINT, hasSetDefaultToken])
 
   // Filter input tokens based on search
   const filteredInputTokens = useMemo(() => {
@@ -395,6 +419,7 @@ export default function SwapScreen() {
 
       if (response.success && response.data) {
         setJupiterQuote(response.data)
+        console.log('Jupiter quote:', response.data)
         setQuoteError(null)
         // Update output amount based on Jupiter quote for accuracy
         const quotedOutputAmount =
@@ -444,6 +469,15 @@ export default function SwapScreen() {
         setShowLoadingModal(false)
         setShowSuccessModal(true)
         setTxSignature(response.data?.signature || 'Unknown')
+
+        // Create Transaction Record
+        await analyticsRequest.createTransaction({
+          amount: outputAmount,
+          type: 'SWAP',
+          token_address: outputToken?.address ?? '',
+          token_name: outputToken?.name ?? '',
+          tx_hash: response.data?.signature ?? '',
+        })
 
         // Trigger background portfolio refresh
         refetchPortfolio()
@@ -603,9 +637,10 @@ export default function SwapScreen() {
 
   const InputTokenListItem = ({ token }: { token: BirdEyeTokenItem }) => (
     <TouchableOpacity
-      className='flex-row items-center bg-dark-200 rounded-2xl p-4 mb-3'
+      className='flex-row items-center bg-secondary-light rounded-2xl p-4 mb-3'
       onPress={() => {
         setInputToken(token)
+        setHasSetDefaultToken(true) // Mark that user has selected a token
         setShowInputTokenModal(false)
         setInputSearchQuery('')
       }}
@@ -627,12 +662,16 @@ export default function SwapScreen() {
         <Text className='text-white font-semibold text-lg'>{token.symbol}</Text>
         <Text className='text-gray-400 text-sm'>{token.name}</Text>
         <Text className='text-gray-400 text-sm'>
-          {formatBalance(token.balance, token.decimals)} {token.symbol}
+          {hidePortfolioBalance
+            ? '••••••'
+            : `${formatBalance(token.balance, token.decimals)} ${token.symbol}`}
         </Text>
       </View>
       <View className='items-end'>
         <Text className='text-white font-semibold'>
-          ${token.valueUsd?.toFixed(2) || '0.00'}
+          {hidePortfolioBalance
+            ? '••••••'
+            : `$${token.valueUsd?.toFixed(2) || '0.00'}`}
         </Text>
         {token.priceUsd && (
           <Text className='text-gray-400 text-xs'>
@@ -673,20 +712,22 @@ export default function SwapScreen() {
     setInsufficientBalance(false)
     setQuoteError(null)
     setTxSignature('')
-    // Navigate back immediately, portfolio refresh continues in background
-    router.back()
+    setHasSetDefaultToken(false)
+
+    // Navigate back home immediately, portfolio refresh continues in background
+    router.push('/')
   }, [])
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       <View className='flex-1'>
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+            className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center'
           >
-            <Ionicons name='arrow-back' size={20} color='white' />
+            <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
           <Text className='text-white text-lg font-semibold'>Swap</Text>
           <View className='w-10' />
@@ -704,6 +745,7 @@ export default function SwapScreen() {
             placeholder='Select Token'
             isInput={true}
             formatBalance={formatBalance}
+            hidePortfolioBalance={hidePortfolioBalance}
           />
 
           {/* Percentage Buttons */}
@@ -715,7 +757,7 @@ export default function SwapScreen() {
                   className={`flex-1 mx-1 py-2 rounded-xl ${
                     activePercentageButton === percentage
                       ? 'bg-primary-500'
-                      : 'bg-dark-200'
+                      : 'bg-secondary-light'
                   }`}
                   onPress={() => handlePercentageClick(percentage)}
                 >
@@ -743,7 +785,8 @@ export default function SwapScreen() {
                 </Text>
               </View>
               <Text className='text-danger-300/80 text-sm mt-1'>
-                You don't have enough {inputToken?.symbol} to complete this swap
+                You don&apos;t have enough {inputToken?.symbol} to complete this
+                swap
               </Text>
             </View>
           )}
@@ -751,7 +794,7 @@ export default function SwapScreen() {
           {/* Swap Button */}
           <View className='items-center my-4'>
             <TouchableOpacity
-              className='w-12 h-12 bg-primary-500 rounded-full justify-center items-center'
+              className='w-12 h-12 bg-primary-500/20 rounded-full justify-center items-center'
               onPress={swapTokens}
               disabled={!inputToken || !outputToken}
             >
@@ -780,12 +823,13 @@ export default function SwapScreen() {
             placeholder='Select Token'
             isInput={false}
             formatBalance={formatBalance}
+            hidePortfolioBalance={hidePortfolioBalance}
           />
 
           {/* Get Quote Button */}
           <TouchableOpacity
             className={`rounded-2xl p-4 mt-6 ${
-              isReadyForQuote ? 'bg-primary-500' : 'bg-gray-600'
+              isReadyForQuote ? 'bg-primary-500' : 'bg-primary-500/20'
             }`}
             onPress={handleGetQuote}
             disabled={!isReadyForQuote}
@@ -812,13 +856,13 @@ export default function SwapScreen() {
         animationType='slide'
         presentationStyle='pageSheet'
       >
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           <View className='flex-row items-center justify-between px-6 py-4'>
             <TouchableOpacity
               onPress={() => setShowInputTokenModal(false)}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center'
             >
-              <Ionicons name='close' size={20} color='white' />
+              <Ionicons name='chevron-back' size={20} color='white' />
             </TouchableOpacity>
             <Text className='text-white text-lg font-semibold'>
               Select Token
@@ -827,7 +871,7 @@ export default function SwapScreen() {
           </View>
 
           <View className='px-6 mb-4'>
-            <View className='bg-dark-200 rounded-2xl px-4 py-3 flex-row items-center'>
+            <View className='bg-secondary-light rounded-2xl px-4 py-3 flex-row items-center'>
               <Ionicons name='search' size={20} color='#666672' />
               <TextInput
                 className='flex-1 text-white ml-3 text-lg'

@@ -60,25 +60,25 @@ export const addressBookRequests = {
   addAddressBookEntry: async (
     entry: Omit<AddressBookEntry, 'id' | 'created_at' | 'updated_at'>
   ) => {
-    try {
-      const api = httpRequest()
-      const response = await api.post(`/wallet/address-book`, entry)
-      return apiResponse<AddressBookEntry>(
-        true,
-        'Address book entry added successfully',
-        response.data.data
-      )
-    } catch (err: any) {
-      console.log('Error adding address book entry:', err?.response?.data)
-      return apiResponse(
-        false,
-        err?.response?.data?.error ||
-          err?.response?.data?.message ||
-          err?.message ||
-          'Error adding address book entry',
-        err
-      )
-    }
+  try {
+    const api = httpRequest()
+    const response = await api.post(`/wallet/address-book`, entry)
+    return apiResponse<AddressBookEntry>(
+      true,
+      'Address book entry added successfully',
+      response.data.data
+    )
+  } catch (err: any) {
+    console.log('Error adding address book entry:', err?.response?.data)
+    return apiResponse(
+      false,
+      err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Error adding address book entry',
+      err
+    )
+  }
   },
 
   /**

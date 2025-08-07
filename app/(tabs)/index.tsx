@@ -1,5 +1,6 @@
 import { SocialCard } from '@/components/core/home/SocialCard'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
+import PointsDisplay from '@/components/PointsDisplay'
 import { PortfolioSummary } from '@/components/PortfolioSummary'
 import { QuickActionButton } from '@/components/QuickActionButton'
 import { TokenCard } from '@/components/TokenCard'
@@ -8,14 +9,15 @@ import { TransactionCard } from '@/components/TransactionCard'
 import { TrendingCard } from '@/components/TrendingCard'
 import { TrendingCardSkeleton } from '@/components/TrendingCardSkeleton'
 import { socialPosts } from '@/constants/App'
+import { Colors } from '@/constants/Colors'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useTrending } from '@/hooks/useTrending'
+import { useAuthStore } from '@/store/authStore'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
-  Dimensions,
   FlatList,
   RefreshControl,
   ScrollView,
@@ -25,11 +27,10 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-const { width } = Dimensions.get('window')
-
 export default function HomeScreen() {
+  const { profile } = useAuthStore()
   const [refreshing, setRefreshing] = useState(false)
-  const { portfolio, isLoading, isRefetching, error, refetch } = usePortfolio()
+  const { portfolio, isLoading, error, refetch } = usePortfolio()
   const {
     trending,
     isLoading: trendingLoading,
@@ -54,7 +55,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50' edges={['top']}>
+    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       <ScrollView
         className='flex-1'
         showsVerticalScrollIndicator={false}
@@ -68,11 +69,24 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View className='flex-row items-center justify-between px-6 py-4'>
-          <View>
-            <Text className='text-gray-400 text-sm'>Good morning</Text>
-            <Text className='text-white text-2xl font-bold'>Seeker</Text>
+          <View className='flex-row items-center gap-2'>
+            <TouchableOpacity
+              onPress={() => router.push('/profile')}
+              className='bg-secondary-light rounded-full p-2'
+            >
+              <Ionicons name='person' size={24} color='white' />
+            </TouchableOpacity>
+            <View>
+              <Text className='text-gray-400 text-sm'>
+                {profile?.tag_name ? `@${profile?.tag_name}` : ''}
+              </Text>
+              <Text className='text-white text-lg font-bold'>
+                {profile?.display_name || ''}
+              </Text>
+            </View>
           </View>
-          <View className='flex-row gap-3'>
+          <View className='flex-row gap-3 items-center'>
+            <PointsDisplay size='small' showLabel={false} />
             <TouchableOpacity
               onPress={() =>
                 router.push({
@@ -83,7 +97,7 @@ export default function HomeScreen() {
                   },
                 })
               }
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               <Ionicons name='search' size={20} color='white' />
             </TouchableOpacity>
@@ -97,7 +111,7 @@ export default function HomeScreen() {
                   },
                 })
               }}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               <Ionicons name='scan' size={20} color='white' />
             </TouchableOpacity>
@@ -141,9 +155,9 @@ export default function HomeScreen() {
               onPress={() => router.push('/(modals)/swap')}
             />
             <QuickActionButton
-              icon='trending-up'
-              title='Trade'
-              onPress={() => router.push('/trading')}
+              icon='rocket-outline'
+              title='Launch'
+              onPress={() => router.push('/launch')}
             />
           </View>
         </View>
@@ -160,7 +174,7 @@ export default function HomeScreen() {
           {isLoading && !portfolio ? (
             <TokenCardSkeleton count={3} />
           ) : error ? (
-            <View className='bg-dark-200 rounded-2xl p-6 items-center'>
+            <View className='bg-secondary-light rounded-2xl p-6 items-center'>
               <Ionicons name='warning-outline' size={48} color='#ef4444' />
               <Text className='text-gray-400 text-center mt-4'>{error}</Text>
               <TouchableOpacity
@@ -209,9 +223,9 @@ export default function HomeScreen() {
                 <Ionicons
                   name='trending-down-outline'
                   size={48}
-                  color='#ef4444'
+                  color={Colors.dark.text}
                 />
-                <Text className='text-gray-400 text-center mt-4'>
+                <Text className='text-text-light text-center mt-4'>
                   {trendingError}
                 </Text>
                 <TouchableOpacity
@@ -232,18 +246,33 @@ export default function HomeScreen() {
             />
           ) : (
             <View className='px-6'>
-              <View className='bg-dark-200 rounded-2xl p-6 items-center'>
+              <View className='bg-secondary-light rounded-2xl p-6 items-center'>
                 <Ionicons
                   name='trending-up-outline'
                   size={48}
-                  color='#666672'
+                  color={Colors.dark.text}
                 />
-                <Text className='text-gray-400 text-center mt-4'>
+                <Text className='text-text-light text-center mt-4'>
                   No trending tokens available
                 </Text>
               </View>
             </View>
           )}
+        </View>
+
+        {/* Social Feed */}
+        <View className='px-6 mb-6'>
+          <View className='flex-row items-center justify-between mb-4'>
+            <Text className='text-white text-xl font-bold'>
+              Community Pulse
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/social')}>
+              <Text className='text-primary-400 font-medium'>View All</Text>
+            </TouchableOpacity>
+          </View>
+          {socialPosts?.map((post) => (
+            <SocialCard key={post.id} post={post} />
+          ))}
         </View>
 
         {/* Activity */}
@@ -262,13 +291,13 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           {transactionsLoading && !transactionsRefetching ? (
-            <View className='bg-dark-200 rounded-2xl p-6 items-center'>
-              <View className='w-full h-16 bg-dark-300 rounded-xl mb-3 animate-pulse' />
-              <View className='w-full h-16 bg-dark-300 rounded-xl mb-3 animate-pulse' />
-              <View className='w-full h-16 bg-dark-300 rounded-xl animate-pulse' />
+            <View className='bg-secondary-light/50 rounded-2xl p-6 items-center'>
+              <View className='w-full h-16 bg-secondary-light rounded-xl mb-3 animate-pulse' />
+              <View className='w-full h-16 bg-secondary-light rounded-xl mb-3 animate-pulse' />
+              <View className='w-full h-16 bg-secondary-light rounded-xl animate-pulse' />
             </View>
           ) : transactionsError ? (
-            <View className='bg-dark-200 rounded-2xl p-6 items-center'>
+            <View className='bg-secondary-light rounded-2xl p-6 items-center'>
               <Ionicons name='alert-circle-outline' size={48} color='#ef4444' />
               <Text className='text-gray-400 text-center mt-4'>
                 {transactionsError}
@@ -282,7 +311,7 @@ export default function HomeScreen() {
             </View>
           ) : transactions && transactions.length > 0 ? (
             <>
-              {transactions.slice(0, 3).map((transaction) => (
+              {transactions?.slice(0, 3)?.map((transaction) => (
                 <TransactionCard
                   key={transaction.id}
                   transaction={transaction}
@@ -303,21 +332,6 @@ export default function HomeScreen() {
               </Text>
             </View>
           )}
-        </View>
-
-        {/* Social Feed */}
-        <View className='px-6 mb-6'>
-          <View className='flex-row items-center justify-between mb-4'>
-            <Text className='text-white text-xl font-bold'>
-              Community Pulse
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/social')}>
-              <Text className='text-primary-400 font-medium'>View All</Text>
-            </TouchableOpacity>
-          </View>
-          {socialPosts.map((post) => (
-            <SocialCard key={post.id} post={post} />
-          ))}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -4,21 +4,23 @@ import React from 'react'
 import { View } from 'react-native'
 
 import TabBarBackground from '@/components/ui/TabBarBackground'
-import { useColorScheme } from '@/hooks/useColorScheme'
+import { Colors } from '@/constants/Colors';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme()
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#6366f1',
+        // tabBarActiveTintColor: '#6366f1',
+        tabBarActiveTintColor: Colors.dark.secondary,
         tabBarInactiveTintColor: '#666672',
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1E1E1E',
-          borderTopColor: '#2d2d35',
-          borderTopWidth: 1,
+          // backgroundColor: '#1E1E1E',
+          // backgroundColor: Colors.dark.secondaryLight,
+          backgroundColor: '#0c1424',
+          // borderTopColor: '#2d2d35',
+          borderTopColor: Colors.dark.secondary,
+          borderTopWidth: 0,
           height: 90,
           paddingBottom: 25,
           paddingTop: 8,
@@ -32,14 +34,12 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name='index'
+        name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
@@ -51,14 +51,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='wallet'
+        name="wallet"
         options={{
           title: 'Wallet',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'wallet' : 'wallet-outline'}
@@ -70,17 +68,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='trading'
+        name="trading"
         options={{
-          title: 'Trading',
+          title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
-                name={focused ? 'trending-up' : 'trending-up-outline'}
+                name={focused ? 'telescope' : 'telescope-outline'}
+                // name={focused ? 'trending-up' : 'trending-up-outline'}
                 size={22}
                 color={color}
               />
@@ -89,14 +86,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='social'
+        name="social"
         options={{
           title: 'Feed',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
                 name={focused ? 'people' : 'people-outline'}
@@ -108,17 +103,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='profile'
+        name="explore"
         options={{
-          title: 'Profile',
+          title: 'Browse',
           tabBarIcon: ({ color, focused }) => (
             <View
-              className={`p-1.5 rounded-lg ${
-                focused ? 'bg-primary-500/20' : ''
-              }`}
+              className={`rounded-lg ${focused ? 'bg-primary-500/20' : ''}`}
             >
               <Ionicons
-                name={focused ? 'person' : 'person-outline'}
+                name={focused ? 'compass' : 'compass-outline'}
                 size={22}
                 color={color}
               />
@@ -127,5 +120,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }
