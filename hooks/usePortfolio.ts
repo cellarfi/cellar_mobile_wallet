@@ -1,11 +1,13 @@
 import { birdEyeRequests } from '@/libs/api_requests/birdeye.request'
 import { useAuthStore } from '@/store/authStore'
+import { useNetworkStore } from '@/store/networkStore'
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { BirdEyeWalletPortfolio } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 
 export function usePortfolio() {
   const { activeWallet } = useAuthStore()
+  const { isOnline } = useNetworkStore()
   const {
     portfolio,
     isLoading: storeLoading,
@@ -32,6 +34,11 @@ export function usePortfolio() {
         throw new Error('No wallet address available')
       }
 
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - using cached data')
+      }
+
       setLoading(true)
       setError(null)
 
@@ -49,13 +56,19 @@ export function usePortfolio() {
       setPortfolio(response.data)
       return response.data
     },
-    enabled: !!walletAddress,
-    staleTime: 30 * 1000, // 30 seconds
-
-    // refetchInterval: 60 * 1000, // Refetch every 60 seconds
-    refetchIntervalInBackground: false,
-    retry: 3,
+    enabled: !!walletAddress && isOnline !== false, // Only enable when online
+    staleTime: isOnline === false ? Infinity : 30 * 1000, // Never stale when offline
+    gcTime: 10 * 60 * 1000, // Keep cached data for 10 minutes
+    // Disable retries when offline (handled by global config, but being explicit)
+    retry: (failureCount, error) => {
+      if (isOnline === false) return false
+      return failureCount < 3
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Disable background refetch when offline
+    refetchOnWindowFocus: isOnline === true,
+    refetchOnReconnect: isOnline === true,
+    refetchIntervalInBackground: false,
   })
 
   // Handle errors

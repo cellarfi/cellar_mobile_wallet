@@ -273,7 +273,7 @@ Powered by Cellar Wallet`
   const handleSellPress = () => {
     if (portfolioToken) {
       router.push({
-        pathname: '/(modals)/swap' as any,
+        pathname: '/(screens)/swap' as any,
         params: {
           inputToken: JSON.stringify(portfolioToken),
         },
@@ -314,7 +314,7 @@ Powered by Cellar Wallet`
       }
 
       router.push({
-        pathname: '/(modals)/swap' as any,
+        pathname: '/(screens)/swap' as any,
         params: {
           outputToken: JSON.stringify(searchTokenResult),
         },
@@ -325,7 +325,7 @@ Powered by Cellar Wallet`
   const handleSwapPress = () => {
     if (portfolioToken) {
       router.push({
-        pathname: '/(modals)/swap' as any,
+        pathname: '/(screens)/swap' as any,
         params: {
           inputToken: JSON.stringify(portfolioToken),
         },

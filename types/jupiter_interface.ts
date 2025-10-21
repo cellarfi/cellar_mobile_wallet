@@ -1,7 +1,7 @@
 export interface JupiterOrderRequest {
   inputMint: string
   outputMint: string
-  amount: number
+  amount: string | number
   taker: string
   referralAccount?: string
   referralFee?: number
@@ -21,6 +21,7 @@ interface SwapInfo {
 interface RoutePlan {
   swapInfo: SwapInfo
   percent: number
+  bps: number
 }
 
 interface DynamicSlippageReport {
@@ -36,26 +37,47 @@ interface DynamicSlippageReport {
   useIncurredSlippageForQuoting: null
 }
 
+interface PlatformFee {
+  amount: string
+  feeBps: number
+}
+
 export interface JupiterQuoteOrderResponse {
-  swapType: string
-  requestId: string
+  mode?: string
+  inputMint: string
+  outputMint: string
   inAmount: string
   outAmount: string
   otherAmountThreshold: string
   swapMode: string
   slippageBps: number
+  inUsdValue?: number
+  outUsdValue?: number
+  priceImpact?: number
+  swapUsdValue?: number
   priceImpactPct: string
   routePlan: RoutePlan[]
-  inputMint: string
-  outputMint: string
+  feeMint?: string
   feeBps: number
-  taker: string
-  gasless: boolean
+  signatureFeeLamports?: number
+  prioritizationFeeLamports?: number
+  rentFeeLamports?: number
+  swapType: string
+  router?: 'aggregator' | string
   transaction: string
-  prioritizationType: string
-  prioritizationFeeLamports: number
-  dynamicSlippageReport: DynamicSlippageReport
+  gasless: boolean
+  requestId: string
   totalTime: number
+  taker: string
+  quoteId?: string
+  maker?: string
+  expireAt?: string
+  platformFee?: PlatformFee
+  errorCode?: number
+  errorMessage?: string
+  // Legacy fields (may be deprecated)
+  prioritizationType?: string
+  dynamicSlippageReport?: DynamicSlippageReport
 }
 
 interface SwapEvent {

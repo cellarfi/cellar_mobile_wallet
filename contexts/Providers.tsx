@@ -1,4 +1,5 @@
 import { ENV } from '@/constants/Env'
+import { useNetworkStore } from '@/store/networkStore'
 import { PrivyProvider } from '@privy-io/expo'
 import { PrivyElements } from '@privy-io/expo/ui'
 import { DarkTheme, ThemeProvider } from '@react-navigation/native'
@@ -23,7 +24,52 @@ const CryptoDarkTheme = {
 }
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
-  const queryClient = new QueryClient()
+  // Create QueryClient with offline-aware configuration
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Disable retries when offline to prevent crashes
+        retry: (failureCount, error) => {
+          const { isOnline } = useNetworkStore.getState()
+
+          // Don't retry if offline
+          if (isOnline === false) {
+            return false
+          }
+
+          // Default retry logic when online (max 3 retries)
+          return failureCount < 3
+        },
+        // Disable background refetch when offline
+        refetchOnWindowFocus: () => {
+          const { isOnline } = useNetworkStore.getState()
+          return isOnline === true
+        },
+        refetchOnReconnect: () => {
+          const { isOnline } = useNetworkStore.getState()
+          return isOnline === true
+        },
+        // Increase stale time to reduce unnecessary requests
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        // Cache data longer when offline
+        gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime in v4)
+      },
+      mutations: {
+        // Disable mutation retries when offline
+        retry: (failureCount, error) => {
+          const { isOnline } = useNetworkStore.getState()
+
+          // Don't retry mutations if offline
+          if (isOnline === false) {
+            return false
+          }
+
+          // Default retry logic when online (max 3 retries)
+          return failureCount < 3
+        },
+      },
+    },
+  })
 
   return (
     <ThemeProvider value={CryptoDarkTheme}>

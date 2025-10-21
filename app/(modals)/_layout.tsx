@@ -15,12 +15,9 @@ type ModalScreen = {
 }
 
 const modalScreens: ModalScreen[] = [
-  { name: 'token-detail' },
   { name: 'send' },
   { name: 'receive' },
-  { name: 'swap' },
   { name: 'buy-crypto' },
-  { name: 'nft-detail' },
   { name: 'wallet-switcher' },
   { name: 'post-comments' },
   { name: 'qr-code' },
@@ -29,13 +26,22 @@ const modalScreens: ModalScreen[] = [
   { name: 'security-settings' },
   { name: 'notification-settings' },
   { name: 'qr-scanner' },
-  { name: 'browser' },
   { name: 'connect-wallet', options: { presentation: 'transparentModal' } },
   { name: 'sign-message', options: { presentation: 'transparentModal' } },
   { name: 'sign-transaction', options: { presentation: 'transparentModal' } },
   { name: 'points-history' },
-  { name: 'user-profile/[tag_name]' },
   { name: 'launch-pumpfun' },
+  { name: 'address-book' },
+  { name: 'edit-address' },
+  { name: 'create-post' },
+  { name: 'create-comment' },
+  { name: 'comment-thread' },
+  { name: 'edit-profile' },
+  { name: 'find-posts' },
+  { name: 'hashtag-posts' },
+  { name: 'tip-user' },
+  { name: 'transaction-details' },
+  { name: 'user-profile' },
 ]
 
 export default function ModalsLayout() {

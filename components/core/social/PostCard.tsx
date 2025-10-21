@@ -107,7 +107,7 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
 
   const handlePress = () => {
     router.push({
-      pathname: '/(modals)/post-details',
+      pathname: '/(screens)/post-details',
       params: { postId: post.id },
     })
   }

@@ -80,7 +80,7 @@ const TokenCallCard = React.memo(({ token_meta }: TokenCallCardProps) => {
   const handleBuyPress = () => {
     if (token_meta?.token_address) {
       router.push({
-        pathname: '/(modals)/swap',
+        pathname: '/(screens)/swap',
         params: {
           outputToken: JSON.stringify({
             name:

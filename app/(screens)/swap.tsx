@@ -5,12 +5,11 @@ import { useRefetchContext } from '@/contexts/RefreshProvider'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { usePrivySign } from '@/hooks/usePrivySign'
 import { useTrending } from '@/hooks/useTrending'
-import { analyticsRequest } from '@/libs/api_requests/analytics.request'
 import { jupiterRequests } from '@/libs/api_requests/jupiter.request'
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '@/libs/solana.lib'
 import { getSplTokenAddress } from '@/libs/spl.helpers'
+import { formatNumber } from '@/libs/string.helpers'
 import { useAuthStore } from '@/store/authStore'
-import { useSettingsStore } from '@/store/settingsStore'
 import {
   BirdEyeSearchTokenResult,
   BirdEyeTokenItem,
@@ -44,7 +43,6 @@ const TokenSelectorCard = React.memo(
     placeholder,
     isInput = true,
     formatBalance,
-    hidePortfolioBalance,
   }: {
     token: BirdEyeTokenItem | BirdEyeSearchTokenResult | null
     amount: string
@@ -55,7 +53,6 @@ const TokenSelectorCard = React.memo(
     placeholder: string
     isInput?: boolean
     formatBalance: (balance: number, decimals?: number) => string
-    hidePortfolioBalance: boolean
   }) => (
     <View className='bg-secondary-light rounded-2xl p-4'>
       <View className='flex-row items-center justify-between mb-3'>
@@ -64,10 +61,7 @@ const TokenSelectorCard = React.memo(
         </Text>
         {isInput && token && 'balance' in token && (
           <Text className='text-gray-400 text-sm'>
-            Balance:{' '}
-            {hidePortfolioBalance
-              ? '••••••'
-              : formatBalance(token.balance, token.decimals)}
+            Balance: {formatBalance(token.balance, token.decimals)}
           </Text>
         )}
       </View>
@@ -84,12 +78,12 @@ const TokenSelectorCard = React.memo(
             keyboardType='numeric'
           />
           <Text className='text-gray-400 text-sm mt-1'>
-            ~{hidePortfolioBalance ? '••••••' : `$${usdValue.toFixed(2)}`}
+            ~${usdValue.toFixed(2)}
           </Text>
         </View>
 
         <TouchableOpacity
-          className='flex-row items-center bg-secondary-disabled rounded-xl p-3'
+          className='flex-row items-center bg-primary-500/15 rounded-xl p-3'
           onPress={onPress}
         >
           {token ? (
@@ -130,14 +124,10 @@ const TokenSelectorCard = React.memo(
   )
 )
 
-TokenSelectorCard.displayName = 'TokenSelectorCard'
-
 export default function SwapScreen() {
   const { portfolio } = usePortfolio()
   const { refetchPortfolio } = useRefetchContext()
   const { activeWallet } = useAuthStore()
-  const { settings } = useSettingsStore()
-  const { hidePortfolioBalance } = settings
   const { signTransaction } = usePrivySign()
   const { trending } = useTrending()
 
@@ -194,7 +184,6 @@ export default function SwapScreen() {
         const parsedToken: BirdEyeTokenItem = JSON.parse(inputTokenParam)
         console.log('Preselecting input token:', parsedToken)
         setInputToken(parsedToken)
-        setHasSetDefaultToken(true) // Mark that we have set a token
         // Clear the parameter to avoid re-triggering
         router.setParams({ inputToken: undefined })
       } catch (error) {
@@ -245,9 +234,6 @@ export default function SwapScreen() {
   // USDC mint address
   const USDC_MINT = getSplTokenAddress('usdc')
 
-  // Track if we've already set a default token to prevent resets
-  const [hasSetDefaultToken, setHasSetDefaultToken] = useState(false)
-
   // Select default input token (SOL first, then USDC, then first available) - but only if no token preselected
   useEffect(() => {
     // Don't run default selection if we have a preselected input token parameter
@@ -255,12 +241,6 @@ export default function SwapScreen() {
       return
     }
 
-    // Don't run if we've already set a default - this prevents resets
-    if (hasSetDefaultToken) {
-      return
-    }
-
-    // Only run if we have available tokens and no input token is currently set
     if (availableTokens.length > 0 && !inputToken) {
       // First try to find SOL
       const nativeSol = availableTokens.find(
@@ -272,7 +252,6 @@ export default function SwapScreen() {
       if (nativeSol) {
         console.log('Setting default input token to SOL:', nativeSol)
         setInputToken(nativeSol)
-        setHasSetDefaultToken(true)
         return
       }
 
@@ -285,7 +264,6 @@ export default function SwapScreen() {
         if (usdc) {
           console.log('Setting default input token to USDC:', usdc)
           setInputToken(usdc)
-          setHasSetDefaultToken(true)
           return
         }
       }
@@ -296,9 +274,8 @@ export default function SwapScreen() {
         availableTokens[0]
       )
       setInputToken(availableTokens[0])
-      setHasSetDefaultToken(true)
     }
-  }, [availableTokens, inputTokenParam, USDC_MINT, hasSetDefaultToken])
+  }, [availableTokens, inputToken, inputTokenParam, USDC_MINT])
 
   // Filter input tokens based on search
   const filteredInputTokens = useMemo(() => {
@@ -419,7 +396,6 @@ export default function SwapScreen() {
 
       if (response.success && response.data) {
         setJupiterQuote(response.data)
-        console.log('Jupiter quote:', response.data)
         setQuoteError(null)
         // Update output amount based on Jupiter quote for accuracy
         const quotedOutputAmount =
@@ -469,15 +445,6 @@ export default function SwapScreen() {
         setShowLoadingModal(false)
         setShowSuccessModal(true)
         setTxSignature(response.data?.signature || 'Unknown')
-
-        // Create Transaction Record
-        await analyticsRequest.createTransaction({
-          amount: outputAmount,
-          type: 'SWAP',
-          token_address: outputToken?.address ?? '',
-          token_name: outputToken?.name ?? '',
-          tx_hash: response.data?.signature ?? '',
-        })
 
         // Trigger background portfolio refresh
         refetchPortfolio()
@@ -623,7 +590,26 @@ export default function SwapScreen() {
       const inputAmountNum = outputUsdValue / inputToken.priceUsd
       setInputAmount(inputAmountNum?.toFixed(6) || '0')
     }
-  }, [inputToken, outputToken, inputAmount, outputAmount, isInputFocused])
+  }, [inputToken, inputAmount, outputAmount, isInputFocused])
+
+  // Separate effect to recalculate output amount when output token changes (but preserve input amount)
+  useEffect(() => {
+    // Only recalculate if we have input amount and both tokens with prices
+    if (
+      isInputFocused &&
+      inputAmount &&
+      parseFloat(inputAmount) > 0 &&
+      inputToken?.priceUsd &&
+      outputToken?.price
+    ) {
+      const inputAmountNum = parseFloat(inputAmount)
+      if (!isNaN(inputAmountNum)) {
+        const inputUsdValue = inputAmountNum * inputToken.priceUsd
+        const outputAmountNum = inputUsdValue / outputToken.price
+        setOutputAmount(outputAmountNum?.toFixed(6) || '0')
+      }
+    }
+  }, [outputToken?.address, outputToken?.price]) // Only depend on output token address and price changes
 
   // Check if ready for quote
   const isReadyForQuote =
@@ -640,7 +626,6 @@ export default function SwapScreen() {
       className='flex-row items-center bg-secondary-light rounded-2xl p-4 mb-3'
       onPress={() => {
         setInputToken(token)
-        setHasSetDefaultToken(true) // Mark that user has selected a token
         setShowInputTokenModal(false)
         setInputSearchQuery('')
       }}
@@ -662,16 +647,12 @@ export default function SwapScreen() {
         <Text className='text-white font-semibold text-lg'>{token.symbol}</Text>
         <Text className='text-gray-400 text-sm'>{token.name}</Text>
         <Text className='text-gray-400 text-sm'>
-          {hidePortfolioBalance
-            ? '••••••'
-            : `${formatBalance(token.balance, token.decimals)} ${token.symbol}`}
+          {formatBalance(token.balance, token.decimals)} {token.symbol}
         </Text>
       </View>
       <View className='items-end'>
         <Text className='text-white font-semibold'>
-          {hidePortfolioBalance
-            ? '••••••'
-            : `$${token.valueUsd?.toFixed(2) || '0.00'}`}
+          ${token.valueUsd?.toFixed(2) || '0.00'}
         </Text>
         {token.priceUsd && (
           <Text className='text-gray-400 text-xs'>
@@ -712,10 +693,8 @@ export default function SwapScreen() {
     setInsufficientBalance(false)
     setQuoteError(null)
     setTxSignature('')
-    setHasSetDefaultToken(false)
-
-    // Navigate back home immediately, portfolio refresh continues in background
-    router.push('/')
+    // Navigate back immediately, portfolio refresh continues in background
+    router.back()
   }, [])
 
   return (
@@ -725,7 +704,7 @@ export default function SwapScreen() {
         <View className='flex-row items-center justify-between px-6 py-4'>
           <TouchableOpacity
             onPress={() => router.back()}
-            className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center'
+            className='w-10 h-10 rounded-full justify-center items-center'
           >
             <Ionicons name='chevron-back' size={20} color='white' />
           </TouchableOpacity>
@@ -745,7 +724,6 @@ export default function SwapScreen() {
             placeholder='Select Token'
             isInput={true}
             formatBalance={formatBalance}
-            hidePortfolioBalance={hidePortfolioBalance}
           />
 
           {/* Percentage Buttons */}
@@ -785,8 +763,7 @@ export default function SwapScreen() {
                 </Text>
               </View>
               <Text className='text-danger-300/80 text-sm mt-1'>
-                You don&apos;t have enough {inputToken?.symbol} to complete this
-                swap
+                You don't have enough {inputToken?.symbol} to complete this swap
               </Text>
             </View>
           )}
@@ -794,7 +771,7 @@ export default function SwapScreen() {
           {/* Swap Button */}
           <View className='items-center my-4'>
             <TouchableOpacity
-              className='w-12 h-12 bg-primary-500/20 rounded-full justify-center items-center'
+              className='w-12 h-12 bg-primary-500 rounded-full justify-center items-center'
               onPress={swapTokens}
               disabled={!inputToken || !outputToken}
             >
@@ -809,7 +786,7 @@ export default function SwapScreen() {
             usdValue={getOutputUsdValue()}
             onPress={() => {
               router.push({
-                pathname: '/(modals)/search',
+                pathname: '/(screens)/search',
                 params: {
                   mode: 'select',
                   returnTo: 'swap',
@@ -823,13 +800,12 @@ export default function SwapScreen() {
             placeholder='Select Token'
             isInput={false}
             formatBalance={formatBalance}
-            hidePortfolioBalance={hidePortfolioBalance}
           />
 
           {/* Get Quote Button */}
           <TouchableOpacity
             className={`rounded-2xl p-4 mt-6 ${
-              isReadyForQuote ? 'bg-primary-500' : 'bg-primary-500/20'
+              isReadyForQuote ? 'bg-primary-500' : 'bg-secondary-disabled'
             }`}
             onPress={handleGetQuote}
             disabled={!isReadyForQuote}
@@ -860,7 +836,7 @@ export default function SwapScreen() {
           <View className='flex-row items-center justify-between px-6 py-4'>
             <TouchableOpacity
               onPress={() => setShowInputTokenModal(false)}
-              className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center'
+              className='w-10 h-10 rounded-full justify-center items-center'
             >
               <Ionicons name='chevron-back' size={20} color='white' />
             </TouchableOpacity>
@@ -905,16 +881,16 @@ export default function SwapScreen() {
           setQuoteError(null)
         }}
       >
-        <SafeAreaView className='flex-1 bg-dark-50'>
+        <SafeAreaView className='flex-1 bg-primary-main'>
           <View className='flex-row items-center justify-between px-6 py-4'>
             <TouchableOpacity
               onPress={() => {
                 setShowQuoteModal(false)
                 setQuoteError(null)
               }}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 rounded-full justify-center items-center'
             >
-              <Ionicons name='close' size={20} color='white' />
+              <Ionicons name='chevron-back' size={20} color='white' />
             </TouchableOpacity>
             <Text className='text-white text-lg font-semibold'>Swap Quote</Text>
             <View className='w-10' />
@@ -922,7 +898,7 @@ export default function SwapScreen() {
 
           <View className='flex-1 px-6'>
             {/* Swap Summary */}
-            <View className='bg-dark-200 rounded-2xl p-4 mb-4'>
+            <View className='bg-secondary-light rounded-2xl p-4 mb-4'>
               <Text className='text-white font-semibold mb-3'>
                 Swap Summary
               </Text>
@@ -930,7 +906,7 @@ export default function SwapScreen() {
               {/* From */}
               <View className='flex-row items-center justify-between mb-3'>
                 <View className='flex-row items-center flex-1'>
-                  <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-3 overflow-hidden'>
+                  <View className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center mr-3 overflow-hidden'>
                     {inputToken?.logoURI ? (
                       <Image
                         source={{ uri: inputToken.logoURI }}
@@ -962,7 +938,7 @@ export default function SwapScreen() {
               {/* To */}
               <View className='flex-row items-center justify-between'>
                 <View className='flex-row items-center flex-1'>
-                  <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-3 overflow-hidden'>
+                  <View className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center mr-3 overflow-hidden'>
                     {outputToken?.logo_uri ? (
                       <Image
                         source={{ uri: outputToken.logo_uri }}
@@ -977,10 +953,16 @@ export default function SwapScreen() {
                   </View>
                   <View>
                     <Text className='text-white font-semibold'>
-                      {outputAmount} {outputToken?.symbol}
+                      {formatNumber(
+                        Number(jupiterQuote?.outAmount || 0) / 1e6 ||
+                          Number(outputAmount)
+                      )}{' '}
+                      {outputToken?.symbol}
                     </Text>
                     <Text className='text-gray-400 text-sm'>
-                      ${getOutputUsdValue().toFixed(2)}
+                      $
+                      {formatNumber(jupiterQuote?.outUsdValue) ||
+                        getOutputUsdValue().toFixed(2)}
                     </Text>
                   </View>
                 </View>
@@ -990,7 +972,7 @@ export default function SwapScreen() {
 
             {/* Quote Details */}
             {isGettingQuote ? (
-              <View className='bg-dark-200 rounded-2xl p-6 mb-4'>
+              <View className='bg-secondary-light rounded-2xl p-6 mb-4'>
                 <Text className='text-white font-semibold mb-4'>
                   Getting Best Quote...
                 </Text>
@@ -1001,8 +983,8 @@ export default function SwapScreen() {
                       key={i}
                       className='flex-row justify-between items-center'
                     >
-                      <View className='w-20 h-4 bg-dark-300 rounded animate-pulse' />
-                      <View className='w-16 h-4 bg-dark-300 rounded animate-pulse' />
+                      <View className='w-20 h-4 bg-primary-500/10 rounded animate-pulse' />
+                      <View className='w-16 h-4 bg-primary-500/10 rounded animate-pulse' />
                     </View>
                   ))}
                 </View>
@@ -1014,11 +996,11 @@ export default function SwapScreen() {
                 </View>
               </View>
             ) : jupiterQuote ? (
-              <View className='bg-dark-200 rounded-2xl p-4 mb-4'>
+              <View className='bg-secondary-light rounded-2xl p-4 mb-4'>
                 <Text className='text-white font-semibold mb-3'>
                   Quote Details
                 </Text>
-                <View className='space-y-3'>
+                <View className='gap-y-3'>
                   <View className='flex-row justify-between'>
                     <Text className='text-gray-400'>Rate</Text>
                     <Text className='text-white'>
@@ -1063,10 +1045,33 @@ export default function SwapScreen() {
                       {outputToken?.symbol}
                     </Text>
                   </View>
+                  <View className='flex-row justify-between'>
+                    <Text className='text-gray-400'>You will receive</Text>
+                    <Text className='text-white font-semibold'>
+                      {formatNumber(
+                        Number(jupiterQuote?.outAmount || 0) / 1e6 ||
+                          Number(outputAmount)
+                      )}{' '}
+                      {outputToken?.symbol}
+                    </Text>
+                  </View>
+                  <View className='flex-row justify-between'>
+                    <Text className='text-gray-400'>Worth</Text>
+                    <Text className='text-white font-semibold'>
+                      ~$
+                      {(jupiterQuote?.outUsdValue || 0).toLocaleString(
+                        'en-US',
+                        {
+                          maximumFractionDigits: 2,
+                          minimumFractionDigits: 2,
+                        }
+                      )}
+                    </Text>
+                  </View>
                 </View>
               </View>
             ) : quoteError ? (
-              <View className='bg-dark-200 rounded-2xl p-6 mb-4'>
+              <View className='bg-secondary-light rounded-2xl p-6 mb-4'>
                 <View className='items-center'>
                   <Ionicons name='warning-outline' size={48} color='#ef4444' />
                   <Text className='text-white text-lg font-semibold mt-4'>
@@ -1089,7 +1094,7 @@ export default function SwapScreen() {
                 </View>
               </View>
             ) : (
-              <View className='bg-dark-200 rounded-2xl p-6 mb-4'>
+              <View className='bg-secondary-light rounded-2xl p-6 mb-4'>
                 <Text className='text-gray-400 text-center'>
                   No quote available. Please try again.
                 </Text>

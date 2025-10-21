@@ -199,7 +199,7 @@ const PostDetailsModal = () => {
 
   const redirectToUserProfile = (tagName: string) => {
     router.push({
-      pathname: '/(modals)/user-profile',
+      pathname: '/(screens)/user-profile/[tag_name]',
       params: { tagName },
     })
   }
@@ -811,7 +811,7 @@ const PostDetailsModal = () => {
     tokenName: string
   ) {
     router.push({
-      pathname: '/(modals)/swap',
+      pathname: '/(screens)/swap',
       params: {
         outputToken: token ? JSON.stringify(token) : '',
         tokenSymbol,

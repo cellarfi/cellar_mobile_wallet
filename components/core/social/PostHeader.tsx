@@ -74,7 +74,7 @@ const PostHeader = React.memo(({ post, onEdit }: PostHeaderProps) => {
   const handleViewProfile = () => {
     closeMenu()
     router.push({
-      pathname: '/(modals)/user-profile',
+      pathname: '/(screens)/user-profile/[tag_name]',
       params: { tagName: post.user.tag_name },
     })
   }

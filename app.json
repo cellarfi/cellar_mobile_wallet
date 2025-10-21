@@ -11,11 +11,15 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
-      "associatedDomains": ["webcredentials:cellar.so"],
+      "associatedDomains": [
+        "webcredentials:cellar.so",
+        "webcredentials:cellar.so"
+      ],
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "ITSAppUsesNonExemptEncryption": false
       },
       "icon": {
         "dark": "./assets/icons/ios-dark.png",
@@ -27,7 +31,10 @@
       "adaptiveIcon": {
         "backgroundColor": "#15162B"
       },
-      "package": "com.cellar.so"
+      "package": "com.cellar.so",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",

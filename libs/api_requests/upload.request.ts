@@ -38,6 +38,7 @@ export const UploadRequests = {
 
       return apiResponse(true, 'File uploaded successfully', response.data.data)
     } catch (err: any) {
+      console.error('Error err?.response:', err?.response)
       console.error('Error uploading file:', err?.response?.data)
       return apiResponse(
         false,

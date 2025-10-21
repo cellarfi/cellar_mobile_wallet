@@ -195,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             // Check if we have a pending deep link
             if (pendingDeepLink) {
               router.replace({
-                pathname: '/(modals)/browser',
+                pathname: '/(screens)/browser',
                 params: {
                   url: pendingDeepLink.url,
                 },
