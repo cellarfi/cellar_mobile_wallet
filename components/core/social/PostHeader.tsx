@@ -73,10 +73,7 @@ const PostHeader = React.memo(({ post, onEdit }: PostHeaderProps) => {
 
   const handleViewProfile = () => {
     closeMenu()
-    router.push({
-      pathname: '/(screens)/user-profile/[tag_name]',
-      params: { tagName: post.user.tag_name },
-    })
+    router.push(`/profile/${post.user.tag_name}` as any)
   }
 
   const formatTimeAgo = (dateString: string) => {
