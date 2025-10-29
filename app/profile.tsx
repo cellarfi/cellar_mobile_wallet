@@ -6,9 +6,10 @@ export default function ProfileScreen() {
   const { profile } = useAuthStore()
 
   if (!profile) {
-    return <Redirect href='/setup-profile' />
+    return <Redirect href='/settings' />
+    // return <Redirect href='/setup-profile' />
   }
 
   // Redirect to dynamic profile route with current user's tag_name
-  return <Redirect href={`/profile/${profile.tag_name}`} />
+  return <Redirect href={`/profile/${profile?.tag_name}`} />
 }

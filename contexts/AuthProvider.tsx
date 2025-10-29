@@ -3,7 +3,8 @@ import { userRequests } from '@/libs/api_requests/user.request'
 import { useAuthStore } from '@/store/authStore'
 import { useNetworkStore } from '@/store/networkStore'
 import { useIdentityToken, usePrivy } from '@privy-io/expo'
-import { router, useGlobalSearchParams, usePathname } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { router } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import React, {
   createContext,
@@ -56,8 +57,8 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const pathname = usePathname()
-  const { url } = useGlobalSearchParams<{ url: string }>()
+  // const pathname = usePathname()
+  // const { url } = useGlobalSearchParams<{ url: string }>()
 
   // Privy hooks
   const {
@@ -132,14 +133,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Enhanced logout function that clears both Privy and local state
   const enhancedLogout = async () => {
     try {
-      // First clear local state
+      console.log('Starting logout process...')
+
+      // 1. Clear Zustand store state
       storeLogout()
 
-      // Then try to logout from Privy if online
-      if (privyIsReady && privyUser) {
+      // 2. Clear only user-specific AsyncStorage data (not app settings)
+      // Note: settings-storage is intentionally excluded to preserve user preferences
+      const userDataKeys = [
+        'auth-storage', // authStore.ts
+        'portfolio-storage', // portfolioStore.ts
+        'assets-storage', // assetsStore.ts
+        'points-storage', // pointsStore.ts
+        'transactions-storage', // transactionsStore.ts
+        'token-storage', // tokenStore.ts
+        'trending-storage', // trendingStore.ts
+        'address-storage', // addressStore.ts
+        'address-book-storage', // addressBookStore.ts
+        // 'settings-storage' - preferences should persist
+      ]
+
+      await AsyncStorage.multiRemove(userDataKeys)
+
+      // 3. Clear SecureStore items
+      await SecureStore.deleteItemAsync(Keys.PRIVY_IDENTITY_TOKEN)
+      // 4. Then try to logout from Privy if online
+      // if (privyIsReady && privyUser) {
+      if (privyIsReady) {
         await privyLogout()
-        await SecureStore.deleteItemAsync(Keys.PRIVY_IDENTITY_TOKEN)
       }
+
+      console.log('Logout process completed successfully')
     } catch (error) {
       console.error('Error during logout:', error)
       // Even if Privy logout fails, we've cleared local state

@@ -1033,6 +1033,7 @@ export default function SendScreen() {
               <Ionicons name='person-outline' size={20} color='#fff' />
               <TextInput
                 className='flex-1 ml-3 text-white text-lg'
+                style={{ padding: 0, margin: 0, lineHeight: 22, height: 22 }}
                 placeholder='Enter address or @tag_name'
                 placeholderTextColor='#666672'
                 value={recipient}

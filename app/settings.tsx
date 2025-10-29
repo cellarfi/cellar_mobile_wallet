@@ -58,17 +58,17 @@ const menuSections = [
         title: 'Address Book',
         action: 'address-book',
       },
-      { icon: 'key-outline', title: 'Backup & Recovery', action: 'backup' },
-      {
-        icon: 'settings-outline',
-        title: 'Wallet Settings',
-        action: 'wallet-settings',
-      },
-      {
-        icon: 'refresh-outline',
-        title: 'Transaction History',
-        action: 'history',
-      },
+      // { icon: 'key-outline', title: 'Backup & Recovery', action: 'backup' },
+      // {
+      //   icon: 'settings-outline',
+      //   title: 'Wallet Settings',
+      //   action: 'wallet-settings',
+      // },
+      // {
+      //   icon: 'refresh-outline',
+      //   title: 'Transaction History',
+      //   action: 'history',
+      // },
     ],
   },
   {

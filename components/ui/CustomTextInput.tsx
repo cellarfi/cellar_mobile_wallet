@@ -88,13 +88,14 @@ export default function CustomTextInput({
         <TextInput
           className='flex-1 text-text-light text-[16px] font-medium'
           style={[
-            inputStyle,
             {
               padding: 0,
+              paddingVertical: 0,
               margin: 0,
-              lineHeight: 20, // Match icon size
-              height: 20, // Match icon size
+              lineHeight: 20,
+              includeFontPadding: false,
             },
+            inputStyle,
           ]}
           placeholderTextColor={Colors.dark.text}
           secureTextEntry={finalSecureTextEntry}
