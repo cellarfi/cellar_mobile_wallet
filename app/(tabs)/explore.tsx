@@ -225,7 +225,7 @@ const Explore = () => {
 
   const openDApp = (dapp: DApp) => {
     router.push({
-      pathname: '/(screens)/browser' as any,
+      pathname: '/(screen)/browser' as any,
       params: { url: dapp.url, title: dapp.name },
     })
   }

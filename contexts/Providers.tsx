@@ -1,10 +1,12 @@
+import BiometricLockScreen from '@/components/BiometricLockScreen'
 import { ENV } from '@/constants/Env'
 import { useNetworkStore } from '@/store/networkStore'
 import { PrivyProvider } from '@privy-io/expo'
 import { PrivyElements } from '@privy-io/expo/ui'
 import { DarkTheme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from './AuthProvider'
+import { Modal } from 'react-native'
+import { AuthProvider, useAuthContext } from './AuthProvider'
 import { ClusterProvider } from './ClusterProvider'
 import { ConnectionProvider } from './ConnectionProvider'
 import { RefreshProvider } from './RefreshProvider'
@@ -21,6 +23,26 @@ const CryptoDarkTheme = {
     border: '#2d2d35',
     notification: '#6366f1',
   },
+}
+
+// Inner component that has access to auth context
+const ProvidersInner = ({ children }: { children: React.ReactNode }) => {
+  const { appIsLocked, unlockApp } = useAuthContext()
+
+  return (
+    <>
+      <RefreshProvider>{children}</RefreshProvider>
+
+      {/* Biometric Lock Screen Overlay */}
+      <Modal
+        visible={appIsLocked}
+        animationType='fade'
+        presentationStyle='fullScreen'
+      >
+        <BiometricLockScreen onUnlock={unlockApp} />
+      </Modal>
+    </>
+  )
 }
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
@@ -90,7 +112,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
           <ClusterProvider>
             <ConnectionProvider>
               <AuthProvider>
-                <RefreshProvider>{children}</RefreshProvider>
+                <ProvidersInner>{children}</ProvidersInner>
               </AuthProvider>
             </ConnectionProvider>
           </ClusterProvider>

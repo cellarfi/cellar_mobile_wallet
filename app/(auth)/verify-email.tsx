@@ -2,12 +2,17 @@ import CustomButton from '@/components/ui/CustomButton'
 import { Keys } from '@/constants/App'
 import { Colors } from '@/constants/Colors'
 import { userRequests } from '@/libs/api_requests/user.request'
+import {
+  checkBiometricCapabilities,
+  shouldShowBiometricPrompt,
+} from '@/libs/biometric.lib'
+import { useSettingsStore } from '@/store/settingsStore'
 import { Ionicons } from '@expo/vector-icons'
 import { useIdentityToken, useLoginWithEmail } from '@privy-io/expo'
 import * as Clipboard from 'expo-clipboard'
 import { router, useLocalSearchParams } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   AppState,
@@ -25,6 +30,7 @@ export default function VerifyEmailScreen() {
   const { sendCode, loginWithCode } = useLoginWithEmail()
   const { getIdentityToken } = useIdentityToken()
   const { email } = useLocalSearchParams<{ email: string }>()
+  const { settings } = useSettingsStore()
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
   const [timer, setTimer] = useState(60)
@@ -45,7 +51,7 @@ export default function VerifyEmailScreen() {
   }
 
   // Function to check clipboard for OTP - only if it's a 6-digit code
-  const checkClipboardForOTP = async () => {
+  const checkClipboardForOTP = useCallback(async () => {
     try {
       const text = await Clipboard.getStringAsync()
       // Only process if the text is exactly 6 digits
@@ -55,7 +61,8 @@ export default function VerifyEmailScreen() {
     } catch (error) {
       console.log('Error checking clipboard:', error)
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Handle app state changes - only check clipboard on resume
   useEffect(() => {
@@ -73,7 +80,7 @@ export default function VerifyEmailScreen() {
     return () => {
       subscription.remove()
     }
-  }, [])
+  }, [checkClipboardForOTP])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -199,7 +206,14 @@ export default function VerifyEmailScreen() {
             // User profile exists, store it and navigate to main app
             setProfile(profileResponse.data)
             console.log('User profile stored successfully')
-            router.replace('/(tabs)')
+
+            // Check if we should show biometric setup
+            const showBiometricSetup = await checkIfShouldShowBiometricSetup()
+            if (showBiometricSetup) {
+              router.push('/(modals)/setup-biometric')
+            } else {
+              router.replace('/(tabs)')
+            }
           } else {
             // Check if it's a "User not found" error
             if (profileResponse.message === 'User not found') {
@@ -212,7 +226,14 @@ export default function VerifyEmailScreen() {
                 'Warning',
                 'Could not fetch profile data. You can set it up later.'
               )
-              router.replace('/(tabs)')
+
+              // Check if we should show biometric setup
+              const showBiometricSetup = await checkIfShouldShowBiometricSetup()
+              if (showBiometricSetup) {
+                router.push('/(modals)/setup-biometric')
+              } else {
+                router.replace('/(tabs)')
+              }
             }
           }
         } catch (profileError) {
@@ -221,7 +242,14 @@ export default function VerifyEmailScreen() {
             'Warning',
             'Could not fetch profile data. You can set it up later.'
           )
-          router.replace('/(tabs)')
+
+          // Check if we should show biometric setup
+          const showBiometricSetup = await checkIfShouldShowBiometricSetup()
+          if (showBiometricSetup) {
+            router.push('/(modals)/setup-biometric')
+          } else {
+            router.replace('/(tabs)')
+          }
         }
       }
     } catch (error: any) {
@@ -234,6 +262,21 @@ export default function VerifyEmailScreen() {
     }
   }
 
+  const checkIfShouldShowBiometricSetup = async (): Promise<boolean> => {
+    // Check if biometric hardware is available
+    const capabilities = await checkBiometricCapabilities()
+    if (!capabilities.isAvailable) {
+      return false
+    }
+
+    // Check if we should show the prompt based on user's history
+    return shouldShowBiometricPrompt(
+      settings.lastBiometricPromptDate,
+      settings.biometricPromptSkipCount,
+      settings.biometricSetupCompleted
+    )
+  }
+
   const handleResend = async () => {
     try {
       await sendCode({
@@ -241,7 +284,7 @@ export default function VerifyEmailScreen() {
       })
       setTimer(60)
       Alert.alert('Success', 'Verification code sent!')
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to resend code. Please try again.')
     }
   }

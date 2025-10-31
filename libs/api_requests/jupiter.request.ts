@@ -21,20 +21,14 @@ const api: AxiosInstance = axios.create({
     // 'Content-Type': 'application/json',
     // 'x-api-key': '9e318e1f-08ee-4243-aba0-c8206936ad12',
   },
-  paramsSerializer: {
-    serialize: (params) => {
-      // Simple query string serialization without encoding issues
-      return Object.entries(params)
-        .map(([key, value]) => `${key}=${value}`)
-        .join('&')
-    },
-  },
-})
-
-api.interceptors.request.use((config) => {
-  console.log('Jupiter API Request URL:', config.url)
-  console.log('Jupiter API Request Params:', config.params)
-  return config
+  // paramsSerializer: {
+  //   serialize: (params) => {
+  //     // Simple query string serialization without encoding issues
+  //     return Object.entries(params)
+  //       .map(([key, value]) => `${key}=${value}`)
+  //       .join('&')
+  //   },
+  // },
 })
 
 /**
@@ -79,31 +73,21 @@ export const jupiterRequests = {
       const inputMint = normalizeSolMint(params.inputMint)
       const outputMint = normalizeSolMint(params.outputMint)
 
-      console.log('Jupiter API Request Validated:', {
-        inputMint: inputMint,
-        outputMint: outputMint,
-        originalInputMint:
-          params.inputMint !== inputMint ? params.inputMint : undefined,
-        originalOutputMint:
-          params.outputMint !== outputMint ? params.outputMint : undefined,
-        amount: params.amount,
-        taker: params.taker,
-        baseURL: api.defaults.baseURL,
-      })
-
       const res = await api.get<JupiterQuoteOrderResponse>('/order', {
         params: {
           inputMint: inputMint,
           outputMint: outputMint,
-          amount: params.amount, // Keep as string - Jupiter expects string
+          amount: params.amount,
           taker: params.taker,
-          referralFee: 100, // In basis points (1%)
-          referralAccount: 'HSKt4ztFYEDsTskHxmKqGD4nZjo3qLc5DcFAF3576HtT',
-          // referralAccount: 'HSKt4ztFYEDsTskHxmKqGD4nZjo3qLc5DcFAF3576HtT',
           // referralFee: 100, // In basis points (1%)
+          // referralAccount: 'HSKt4ztFYEDsTskHxmKqGD4nZjo3qLc5DcFAF3576HtT',
+          // payer: params.taker,
+          // closeAuthority: params.taker,
         },
         timeout: 15000, // 15 second timeout
       })
+
+      console.log('Jupiter API Response:', res.data)
 
       console.log('✅ Jupiter API Success:', {
         status: res.status,
@@ -111,6 +95,7 @@ export const jupiterRequests = {
         inAmount: res.data?.inAmount,
         outAmount: res.data?.outAmount,
         hasTransaction: !!res.data?.transaction,
+        // transaction: res.data?.transaction,
       })
 
       if (!res.data) {
@@ -175,6 +160,8 @@ export const jupiterRequests = {
     orderResponse: JupiterQuoteOrderResponse,
     signedTransaction: VersionedTransaction
   ) => {
+    console.log('Executing Jupiter order:', orderResponse)
+
     try {
       // Serialize the signed transaction to base64 format
       const serializedTransaction = Buffer.from(

@@ -19,6 +19,7 @@ const userData = {
     autoLock: true,
     darkMode: true,
     priceAlerts: true,
+    mwa: false,
   },
 }
 
@@ -32,7 +33,7 @@ const menuSections = [
         title: 'Security & Privacy',
         action: 'security',
       },
-      { icon: 'card-outline', title: 'Payment Methods', action: 'payment' },
+      // { icon: 'card-outline', title: 'Payment Methods', action: 'payment' },
       {
         icon: 'notifications-outline',
         title: 'Notifications',
@@ -201,7 +202,25 @@ export default function SettingsScreen() {
           <Text className='text-white text-lg font-semibold mb-4 px-6'>
             App Settings
           </Text>
+
           <View className='bg-secondary-light rounded-2xl mx-6'>
+            <View className='flex-row items-center justify-between p-4 border-b border-dark-300'>
+              <View className='flex-row items-center flex-1'>
+                <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-4'>
+                  <Ionicons name='notifications' size={20} color='#6366f1' />
+                </View>
+                <Text className='text-white font-medium text-lg'>Use MWA</Text>
+              </View>
+              <Switch
+                value={preferences.mwa}
+                onValueChange={(value) =>
+                  setPreferences({ ...preferences, mwa: value })
+                }
+                trackColor={{ false: '#2d2d35', true: '#6366f1' }}
+                thumbColor={preferences.mwa ? '#ffffff' : '#666672'}
+              />
+            </View>
+
             <View className='flex-row items-center justify-between p-4 border-b border-dark-300'>
               <View className='flex-row items-center flex-1'>
                 <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-4'>
@@ -218,25 +237,6 @@ export default function SettingsScreen() {
                 }
                 trackColor={{ false: '#2d2d35', true: '#6366f1' }}
                 thumbColor={preferences.notifications ? '#ffffff' : '#666672'}
-              />
-            </View>
-
-            <View className='flex-row items-center justify-between p-4 border-b border-dark-300'>
-              <View className='flex-row items-center flex-1'>
-                <View className='w-10 h-10 bg-primary-500/20 rounded-full justify-center items-center mr-4'>
-                  <Ionicons name='finger-print' size={20} color='#6366f1' />
-                </View>
-                <Text className='text-white font-medium text-lg'>
-                  Biometric Login
-                </Text>
-              </View>
-              <Switch
-                value={preferences.biometric}
-                onValueChange={(value) =>
-                  setPreferences({ ...preferences, biometric: value })
-                }
-                trackColor={{ false: '#2d2d35', true: '#6366f1' }}
-                thumbColor={preferences.biometric ? '#ffffff' : '#666672'}
               />
             </View>
 

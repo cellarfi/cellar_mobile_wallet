@@ -1,5 +1,6 @@
 import TransactionLoadingModal from '@/components/TransactionLoadingModal'
 import TransactionSuccessModal from '@/components/TransactionSuccessModal'
+import CustomButton from '@/components/ui/CustomButton'
 import { blurHashPlaceholder } from '@/constants/App'
 import { useRefetchContext } from '@/contexts/RefreshProvider'
 import { usePortfolio } from '@/hooks/usePortfolio'
@@ -424,9 +425,13 @@ export default function SwapScreen() {
     setIsSwapping(true)
     setShowLoadingModal(true)
     try {
+      console.log('Creating transaction from Jupiter order:', jupiterQuote)
+
       // Create transaction from Jupiter order
       const transaction =
         jupiterRequests.createTransactionFromOrder(jupiterQuote)
+
+      console.log('Transaction:', transaction)
 
       // Sign transaction with Privy
       const signedTransaction = (await signTransaction(
@@ -976,7 +981,7 @@ export default function SwapScreen() {
                 <Text className='text-white font-semibold mb-4'>
                   Getting Best Quote...
                 </Text>
-                <View className='space-y-3'>
+                <View className='gap-3'>
                   {/* Skeleton loaders */}
                   {[1, 2, 3, 4].map((i) => (
                     <View
@@ -1102,7 +1107,17 @@ export default function SwapScreen() {
             )}
 
             {/* Swap Button */}
-            <TouchableOpacity
+            <CustomButton
+              className='mt-auto mb-6'
+              type='primary'
+              text={
+                jupiterQuote && !quoteError ? 'Confirm Swap' : 'Quote Required'
+              }
+              onPress={executeSwap}
+              disabled={!jupiterQuote || isSwapping || !!quoteError}
+              loading={isSwapping}
+            />
+            {/* <TouchableOpacity
               className={`rounded-2xl p-4 mt-auto mb-6 ${
                 jupiterQuote && !isSwapping && !quoteError
                   ? 'bg-primary-500'
@@ -1116,7 +1131,7 @@ export default function SwapScreen() {
                   ? 'Confirm Swap'
                   : 'Quote Required'}
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </SafeAreaView>
       </Modal>

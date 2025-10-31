@@ -1,14 +1,16 @@
-import { ENV } from './Env';
+import { ENV } from './Env'
 
 export const Keys = {
   PRIVY_IDENTITY_TOKEN: 'privy_identity_token',
-};
+  BIOMETRIC_ENABLED: 'biometric_enabled',
+  APP_LOCKED: 'app_locked',
+}
 
 // Number of days required between tag name updates
-export const TAG_NAME_UPDATE_RATE_LIMIT = 7;
+export const TAG_NAME_UPDATE_RATE_LIMIT = 7
 
 export const blurHashPlaceholder =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
 export const ENDPOINTS = {
   // Use the SERVER_URL from env
@@ -30,7 +32,7 @@ export const ENDPOINTS = {
   // Helius RPC endpoint from env
   helius: `https://mainnet.helius-rpc.com/?api-key=${ENV.HELIUS_API_KEY}`,
   tensorFlowBaseUrl: 'https://api.mainnet.tensordev.io',
-};
+}
 
 export const PUBLIC_KEYS = {
   wSolMint: 'So11111111111111111111111111111111111111112',
@@ -46,7 +48,7 @@ export const PUBLIC_KEYS = {
     'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
     '3AVi9Tg9Uo68tJfuvoKvqKNWKc5wPdSSdeBnizKZ6jT',
   ],
-};
+}
 
 export enum SolanaRpcMethod {
   sol_connect = 'sol_connect',
@@ -55,7 +57,6 @@ export enum SolanaRpcMethod {
   sol_signTransactions = 'sol_signTransactions',
   sol_signAndSendTransactions = 'sol_signAndSendTransactions',
 }
-
 
 // Mock data
 export const portfolioData = {
@@ -96,7 +97,7 @@ export const portfolioData = {
       logo: '🐕',
     },
   ],
-};
+}
 
 export const trendingTokens = [
   {
@@ -131,7 +132,7 @@ export const trendingTokens = [
     volume: '$19.8M',
     logo: '📡',
   },
-];
+]
 
 export const socialPosts = [
   {
@@ -151,7 +152,7 @@ export const socialPosts = [
     tips: 8,
     timeAgo: '4h',
   },
-];
+]
 
 // Mock data
 export const walletData = {
@@ -175,7 +176,7 @@ export const walletData = {
       isActive: false,
     },
   ],
-};
+}
 
 export const tokens = [
   {
@@ -228,7 +229,7 @@ export const tokens = [
     logo: '🪐',
     color: '#FFA500',
   },
-];
+]
 
 export const POINT_SOURCES = {
   // Social engagement
@@ -282,4 +283,4 @@ export const POINT_SOURCES = {
     label: 'Referral Signup',
     points: 100,
   },
-} as const;
+} as const

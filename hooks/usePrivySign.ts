@@ -62,7 +62,6 @@ export const usePrivySign = () => {
       // tx.recentBlockhash = blockhash
       // tx.lastValidBlockHeight = lastValidBlockHeight
 
-      console.log('111111111111')
       const { signature, ...rest } = await provider.request({
         method: 'signAndSendTransaction',
         params: {
@@ -71,8 +70,6 @@ export const usePrivySign = () => {
           connection: getConnection(),
         },
       })
-      console.log('rest', rest)
-      console.log('222222222222', signature)
 
       return signature
     } catch (error) {
