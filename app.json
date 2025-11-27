@@ -33,6 +33,7 @@
         "backgroundColor": "#15162B"
       },
       "package": "com.cellar.so",
+      "versionCode": 2,
       "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "plugins": [

@@ -369,7 +369,7 @@ export default function QRScannerScreen() {
           </View>
 
           {/* Action buttons */}
-          <View className='flex-row space-x-3'>
+          <View className='flex-row gap-3'>
             {/* Manual input option */}
             <TouchableOpacity
               onPress={() => {

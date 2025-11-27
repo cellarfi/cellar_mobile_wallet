@@ -20,6 +20,7 @@ gradleAssemble:
 
 gradleCleanAssemble:
 	cd android && ./gradlew assembleRelease
+	
 # Build Android App Bundle for release
 bundleRelease:
 	cd android && ./gradlew bundleRelease

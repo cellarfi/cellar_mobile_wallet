@@ -2,11 +2,6 @@ import CustomButton from '@/components/ui/CustomButton'
 import { Keys } from '@/constants/App'
 import { Colors } from '@/constants/Colors'
 import { userRequests } from '@/libs/api_requests/user.request'
-import {
-  checkBiometricCapabilities,
-  shouldShowBiometricPrompt,
-} from '@/libs/biometric.lib'
-import { useSettingsStore } from '@/store/settingsStore'
 import { Ionicons } from '@expo/vector-icons'
 import { useIdentityToken, useLoginWithEmail } from '@privy-io/expo'
 import * as Clipboard from 'expo-clipboard'
@@ -30,12 +25,13 @@ export default function VerifyEmailScreen() {
   const { sendCode, loginWithCode } = useLoginWithEmail()
   const { getIdentityToken } = useIdentityToken()
   const { email } = useLocalSearchParams<{ email: string }>()
-  const { settings } = useSettingsStore()
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
   const [timer, setTimer] = useState(60)
   const inputRefs = useRef<TextInput[]>([])
   const appState = useRef(AppState.currentState)
+  const isVerifying = useRef(false)
+  const hasNavigated = useRef(false)
 
   // Function to handle pasted text
   const handlePaste = (text: string) => {
@@ -165,12 +161,19 @@ export default function VerifyEmailScreen() {
   }
 
   const handleVerify = async (otpString?: string) => {
+    // Prevent multiple simultaneous verification attempts
+    if (isVerifying.current) {
+      console.log('Verification already in progress, skipping duplicate call')
+      return
+    }
+
     const code = otpString || otp.join('')
     if (code.length !== 6) {
       Alert.alert('Error', 'Please enter the complete verification code')
       return
     }
 
+    isVerifying.current = true
     setIsLoading(true)
     try {
       const session = await loginWithCode({
@@ -197,84 +200,71 @@ export default function VerifyEmailScreen() {
           console.log('Error getting/storing identity token:', tokenError)
         }
 
-        // Fetch user profile
+        // Fetch user profile and determine navigation
+        let shouldNavigateToProfileSetup = false
+        let shouldShowWarning = false
+
         try {
           const profileResponse = await userRequests.getProfile()
           console.log('Profile response:', profileResponse)
 
           if (profileResponse.success && profileResponse.data) {
-            // User profile exists, store it and navigate to main app
+            // User profile exists, store it
             setProfile(profileResponse.data)
             console.log('User profile stored successfully')
-
-            // Check if we should show biometric setup
-            const showBiometricSetup = await checkIfShouldShowBiometricSetup()
-            if (showBiometricSetup) {
-              router.push('/(modals)/setup-biometric')
-            } else {
-              router.replace('/(tabs)')
-            }
+          } else if (profileResponse.message === 'User not found') {
+            // User needs to set up profile
+            console.log('User not found, redirecting to profile setup')
+            shouldNavigateToProfileSetup = true
           } else {
-            // Check if it's a "User not found" error
-            if (profileResponse.message === 'User not found') {
-              console.log('User not found, redirecting to profile setup')
-              router.replace('/setup-profile')
-            } else {
-              // Other error, show alert but still navigate to main app
-              console.log('Profile fetch failed:', profileResponse.message)
-              Alert.alert(
-                'Warning',
-                'Could not fetch profile data. You can set it up later.'
-              )
-
-              // Check if we should show biometric setup
-              const showBiometricSetup = await checkIfShouldShowBiometricSetup()
-              if (showBiometricSetup) {
-                router.push('/(modals)/setup-biometric')
-              } else {
-                router.replace('/(tabs)')
-              }
-            }
+            // Other error, show warning but continue
+            console.log('Profile fetch failed:', profileResponse.message)
+            shouldShowWarning = true
           }
         } catch (profileError) {
           console.log('Error fetching profile:', profileError)
+          shouldShowWarning = true
+        }
+
+        // Show warning if needed
+        if (shouldShowWarning) {
           Alert.alert(
             'Warning',
             'Could not fetch profile data. You can set it up later.'
           )
+        }
 
-          // Check if we should show biometric setup
-          const showBiometricSetup = await checkIfShouldShowBiometricSetup()
-          if (showBiometricSetup) {
-            router.push('/(modals)/setup-biometric')
-          } else {
-            router.replace('/(tabs)')
-          }
+        // Navigate based on the outcome - ensure we only navigate once
+        if (hasNavigated.current) {
+          console.log(
+            'Navigation already triggered, skipping duplicate navigation'
+          )
+          return
+        }
+
+        hasNavigated.current = true
+
+        if (shouldNavigateToProfileSetup) {
+          router.replace('/setup-profile')
+        } else {
+          // Navigate to tabs - AuthProvider will handle biometric setup prompt
+          router.replace('/(tabs)')
         }
       }
     } catch (error: any) {
       console.log('error', error?.message)
-      if (error?.message?.includes('Already logged in'))
-        router.replace('/(tabs)')
-      else Alert.alert('Error', 'Invalid verification code. Please try again.')
+      if (error?.message?.includes('Already logged in')) {
+        if (!hasNavigated.current) {
+          hasNavigated.current = true
+          router.replace('/(tabs)')
+        }
+      } else {
+        Alert.alert('Error', 'Invalid verification code. Please try again.')
+      }
     } finally {
+      isVerifying.current = false
       setIsLoading(false)
     }
-  }
-
-  const checkIfShouldShowBiometricSetup = async (): Promise<boolean> => {
-    // Check if biometric hardware is available
-    const capabilities = await checkBiometricCapabilities()
-    if (!capabilities.isAvailable) {
-      return false
-    }
-
-    // Check if we should show the prompt based on user's history
-    return shouldShowBiometricPrompt(
-      settings.lastBiometricPromptDate,
-      settings.biometricPromptSkipCount,
-      settings.biometricSetupCompleted
-    )
   }
 
   const handleResend = async () => {

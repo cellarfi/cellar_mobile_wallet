@@ -125,6 +125,8 @@ const TokenSelectorCard = React.memo(
   )
 )
 
+TokenSelectorCard.displayName = 'TokenSelectorCard'
+
 export default function SwapScreen() {
   const { portfolio } = usePortfolio()
   const { refetchPortfolio } = useRefetchContext()

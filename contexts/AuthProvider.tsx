@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Wait a bit before showing the modal to avoid jarring UX
       setTimeout(() => {
         router.push('/(modals)/setup-biometric')
-      }, 1000)
+      }, 0)
     }
   }, [
     settings.lastBiometricPromptDate,

@@ -450,12 +450,13 @@ export default function SetupBiometricModal() {
       {/* Header */}
       <View className='flex-row items-center justify-between px-6 py-4'>
         <TouchableOpacity
-          onPress={step === 'intro' ? router.back : () => setStep('intro')}
+          onPress={step === 'intro' ? handleSkip : () => setStep('intro')}
+          // onPress={step === 'intro' ? router.back : () => setStep('intro')}
           className='p-2 -ml-2'
         >
           <Ionicons name='close' size={24} color='#ABA7B5' />
         </TouchableOpacity>
-        <View className='flex-row space-x-2'>
+        <View className='flex-row gap-2'>
           {['intro', 'pin-setup', 'pin-confirm', 'test'].map((s, i) => (
             <View
               key={s}
