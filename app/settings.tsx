@@ -1,3 +1,4 @@
+import app from '@/app.json'
 import { useAuthContext } from '@/contexts/AuthProvider'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
@@ -278,8 +279,12 @@ export default function SettingsScreen() {
 
         {/* App Version */}
         <View className='items-center pb-8'>
-          <Text className='text-gray-500 text-sm'>Cellar v1.0.0</Text>
-          <Text className='text-gray-600 text-xs mt-1'>Build 2025.7.30</Text>
+          <Text className='text-gray-500 text-sm'>
+            Cellar v{app.expo.version}
+          </Text>
+          <Text className='text-gray-600 text-xs mt-1'>
+            Build {app.expo.android.versionCode}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

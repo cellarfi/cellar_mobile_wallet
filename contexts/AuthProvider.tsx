@@ -89,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     updateFromPrivy,
     logout: storeLogout,
     setProfile,
+    clearStore,
   } = useAuthStore()
   const { isOnline, connectionType, isInternetReachable } = useNetworkStore()
   const { settings } = useSettingsStore()
@@ -158,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Wait a bit before showing the modal to avoid jarring UX
       setTimeout(() => {
         router.push('/(modals)/setup-biometric')
-      }, 0)
+      }, 1000)
     }
   }, [
     settings.lastBiometricPromptDate,
@@ -205,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [
       isAuthenticated,
       settings.enableBiometricAuth,
+
       settings.autoLockEnabled,
       settings.autoLockTimeout,
       checkAndPromptBiometricSetup,
@@ -276,6 +278,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         'settings-storage', // - preferences should persist
       ]
 
+      await clearStore()
+
       await AsyncStorage.multiRemove(userDataKeys)
 
       // 3. Clear SecureStore items
@@ -305,6 +309,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       console.log('Logout process completed successfully')
+
+      router.replace('/(auth)')
     } catch (error) {
       console.error('Error during logout:', error)
       // Even if Privy logout fails, we've cleared local state

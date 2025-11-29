@@ -20,6 +20,7 @@ export const UploadRequests = {
       const api = httpRequest()
       const formData = new FormData()
 
+      // Android-compatible file object structure
       formData.append('file', {
         uri: file.uri,
         type: file.type,
@@ -36,10 +37,12 @@ export const UploadRequests = {
         }
       )
 
+      console.log('Upload successful:', response.data)
       return apiResponse(true, 'File uploaded successfully', response.data.data)
     } catch (err: any) {
-      console.error('Error err?.response:', err?.response)
-      console.error('Error uploading file:', err?.response?.data)
+      console.error('Error uploading file:', err?.message)
+      console.error('Error response:', err?.response?.data)
+      console.error('Error config:', err?.config?.url)
       return apiResponse(
         false,
         err?.response?.data?.error ||
@@ -81,8 +84,9 @@ export const UploadRequests = {
         response.data.data
       )
     } catch (err: any) {
-      console.error('Error uploading files:', err?.response?.data)
-      console.log(err?.response)
+      console.error('Error uploading files:', err?.message)
+      console.error('Error response:', err?.response?.data)
+      console.error('Error config:', err?.config?.url)
       return apiResponse(
         false,
         err?.response?.data?.error ||

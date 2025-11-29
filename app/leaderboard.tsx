@@ -137,7 +137,12 @@ const LeaderboardScreen = () => {
         className={`flex-row items-center p-4 border-b border-dark-300 ${
           isCurrentUser ? 'bg-primary-500/10' : ''
         }`}
-        onPress={() => router.push(`/(screens)/user-profile/${item.tag_name}`)}
+        onPress={() =>
+          router.push({
+            pathname: '/profile/[tag_name]',
+            params: { tag_name: item.tag_name },
+          })
+        }
       >
         {/* Rank */}
         <View className='w-10 items-center'>

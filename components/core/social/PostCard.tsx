@@ -15,9 +15,10 @@ import PostHeader from './PostHeader'
 interface PostCardProps {
   post: Post
   onLike?: (postId: string) => void
+  onDelete?: (postId: string) => void
 }
 
-const PostCard = ({ post, onLike }: PostCardProps) => {
+const PostCard = ({ post, onLike, onDelete }: PostCardProps) => {
   const [showCommentInput, setShowCommentInput] = useState(false)
   const [comments, setComments] = useState<ThreadComment[]>([])
   const [posting, setPosting] = useState(false)
@@ -119,7 +120,11 @@ const PostCard = ({ post, onLike }: PostCardProps) => {
       className='bg-secondary-light rounded-2xl mb-4 p-4 shadow-sm'
     >
       {/* Post Header */}
-      <PostHeader post={post} onEdit={handleEdit} />
+      <PostHeader
+        post={post}
+        onEdit={handleEdit}
+        onDelete={() => onDelete?.(post.id)}
+      />
 
       {/* Post Content */}
       <PostContent post={post} />

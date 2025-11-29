@@ -87,6 +87,7 @@ export interface Post {
     status: string
   } | null
   token_meta: {
+    initial_price: string | null
     token_name: string
     token_symbol: string
     token_address: string

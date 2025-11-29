@@ -110,8 +110,8 @@ export default function FindPostsModal() {
       className='bg-dark-200 rounded-xl p-4 mb-2 border border-dark-300 flex-row items-center'
       onPress={() =>
         router.push({
-          pathname: '/(screens)/user-profile/[tag_name]',
-          params: { tagName: item.tag_name },
+          pathname: '/profile/[tag_name]',
+          params: { tag_name: item.tag_name },
         })
       }
       activeOpacity={0.9}
@@ -138,8 +138,8 @@ export default function FindPostsModal() {
         className='ml-4 px-3 py-1 rounded-xl bg-primary-500'
         onPress={() =>
           router.push({
-            pathname: '/(screens)/user-profile/[tag_name]',
-            params: { tagName: item.tag_name },
+            pathname: '/profile/[tag_name]',
+            params: { tag_name: item.tag_name },
           })
         }
       >

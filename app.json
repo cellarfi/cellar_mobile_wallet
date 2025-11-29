@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cellar",
     "slug": "cellarfi",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icons/adaptive-icon.png",
     "scheme": "cellarfi",
@@ -11,10 +11,7 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
-      "associatedDomains": [
-        "webcredentials:cellar.so",
-        "webcredentials:cellar.so"
-      ],
+      "associatedDomains": ["webcredentials:cellar.so"],
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -33,7 +30,7 @@
         "backgroundColor": "#15162B"
       },
       "package": "com.cellar.so",
-      "versionCode": 2,
+      "versionCode": 4,
       "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "plugins": [

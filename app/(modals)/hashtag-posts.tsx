@@ -56,7 +56,7 @@ export default function HashtagPostsModal() {
             <TouchableOpacity
               onPress={() =>
                 router.push({
-                  pathname: '/(screens)/user-profile/[tag_name]',
+                  pathname: '/profile/[tag_name]',
                   params: { userId: post.user.id },
                 })
               }
@@ -79,8 +79,8 @@ export default function HashtagPostsModal() {
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
-                      pathname: '/(screens)/user-profile/[tag_name]',
-                      params: { userId: post.user.id },
+                      pathname: '/profile/[tag_name]',
+                      params: { tag_name: post.user.tag_name },
                     })
                   }
                 >
@@ -93,8 +93,8 @@ export default function HashtagPostsModal() {
               <TouchableOpacity
                 onPress={() =>
                   router.push({
-                    pathname: '/(screens)/user-profile/[tag_name]',
-                    params: { userId: post.user.id },
+                    pathname: '/profile/[tag_name]',
+                    params: { tag_name: post.user.tag_name },
                   })
                 }
               >

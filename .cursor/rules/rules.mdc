@@ -1,0 +1,25 @@
+---
+alwaysApply: true
+---
+- Use functional React components instead of class components.
+- Apply Tailwind CSS for styling; avoid inline styles.
+- Components should be modular and reusable.
+- Maintain a consistent and clear component structure.
+- api requests should be in /libs/api_requests
+
+**CRITICAL: Never modify design, styling, UI components, or visual elements unless explicitly requested by the user.**
+
+- Do not change colors, spacing, layout, or styling
+- Do not modify component styles, Tailwind classes, or CSS
+- Do not alter UI/UX patterns or component structure for visual purposes
+- Do not "improve" or "modernize" the design without explicit user request
+- Do not refactor styling code unless specifically asked
+- Preserve all existing design patterns and visual consistency
+
+When making code changes:
+- Focus only on functionality, logic, and bug fixes
+- If design changes are needed, wait for explicit user instruction
+- If you notice styling issues, mention them but do not fix them automatically
+
+## Exception
+Only modify design/styling when the user explicitly asks for design changes, UI improvements, or styling modifications.

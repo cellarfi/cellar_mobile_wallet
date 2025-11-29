@@ -199,8 +199,9 @@ const PostDetailsModal = () => {
 
   const redirectToUserProfile = (tagName: string) => {
     router.push({
-      pathname: '/(screens)/user-profile/[tag_name]',
-      params: { tagName },
+      // pathname: '/(screens)/user-profile/[tag_name]',
+      pathname: '/profile/[tag_name]',
+      params: { tag_name: tagName },
     })
   }
 

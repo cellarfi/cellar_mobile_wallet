@@ -46,7 +46,7 @@ export default function ProfileScreen() {
     try {
       const response = await userRequests.getUserByTagName(tagName)
       if (response.success) {
-        setUserProfile(response.data)
+        setUserProfile(response.data || null)
       } else {
         setError(response.message || 'Failed to fetch user profile')
       }

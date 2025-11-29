@@ -360,7 +360,7 @@ export default function VerifyEmailScreen() {
 
             {/* Verify Button */}
             <CustomButton
-              text={isLoading ? 'Verifying...' : 'Verify & Continue'}
+              text={isLoading ? 'Verifying...' : 'Verify'}
               onPress={() => handleVerify()}
               disabled={isLoading || otp.join('').length !== 6}
               className=' mb-6'

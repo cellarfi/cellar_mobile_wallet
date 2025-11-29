@@ -37,6 +37,23 @@ export const PostsRequests = {
     }
   },
 
+  deletePost: async (id: string) => {
+    try {
+      const api = httpRequest()
+      const response = await api.delete(`/posts/${id}`)
+      return apiResponse(true, 'Post deleted', response.data)
+    } catch (err: any) {
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error while deleting post',
+        err
+      )
+    }
+  },
+
   getPosts: async (page: string) => {
     try {
       const api = httpRequest()
