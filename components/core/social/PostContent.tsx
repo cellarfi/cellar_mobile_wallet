@@ -32,7 +32,9 @@ const PostContent = React.memo(({ post }: PostContentProps) => {
         </View>
       )}
       {/* Donation Card */}
-      {post.funding_meta && <DonationCard funding_meta={post.funding_meta} />}
+      {post.funding_meta && (
+        <DonationCard funding_meta={post.funding_meta} postId={post.id} />
+      )}
     </View>
   )
 

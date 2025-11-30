@@ -214,4 +214,23 @@ export const PostsRequests = {
       )
     }
   },
+
+  incrementFundingAmount: async (postId: string, amount: number) => {
+    try {
+      const api = httpRequest()
+      const response = await api.patch(`/posts/${postId}/increment-funding`, {
+        amount,
+      })
+      return apiResponse(true, 'Funding amount updated', response.data.data)
+    } catch (err: any) {
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error updating funding amount',
+        err
+      )
+    }
+  },
 }
