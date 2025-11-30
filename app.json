@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cellar",
     "slug": "cellarfi",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icons/adaptive-icon.png",
     "scheme": "cellarfi",
@@ -15,7 +15,9 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "We use Face ID to securely unlock your wallet and protect your assets."
       },
       "icon": {
         "dark": "./assets/icons/ios-dark.png",
@@ -27,11 +29,14 @@
       "adaptiveIcon": {
         "backgroundColor": "#15162B"
       },
-      "package": "com.cellar.so"
+      "package": "com.cellar.so",
+      "versionCode": 4,
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-local-authentication",
       "expo-apple-authentication",
       "expo-font",
       [

@@ -9,6 +9,14 @@ interface Settings {
   enableNotifications: boolean
   // Wallet preferences
   walletProvider: 'cellar' | 'mwa' // 'cellar' for built-in wallet, 'mwa' for external wallets (Phantom, Solflare, etc.)
+  // Biometric settings
+  biometricSetupCompleted: boolean
+  biometricPinHash: string | null // Hashed PIN for additional security
+  lastBiometricPromptDate: number | null // Timestamp of last prompt
+  biometricPromptSkipCount: number // Number of times user skipped the prompt
+  // Auto-lock settings
+  autoLockEnabled: boolean
+  autoLockTimeout: number // in milliseconds (0 = immediate)
 }
 
 interface SettingsState {
@@ -25,6 +33,12 @@ const defaultSettings: Settings = {
   enableBiometricAuth: false,
   enableNotifications: false,
   walletProvider: 'cellar', // Default to built-in Cellar wallet
+  biometricSetupCompleted: false,
+  biometricPinHash: null,
+  lastBiometricPromptDate: null,
+  biometricPromptSkipCount: 0,
+  autoLockEnabled: true, // Enabled by default
+  autoLockTimeout: 0, // Immediate by default
 }
 
 export const useSettingsStore = create<SettingsState>()(

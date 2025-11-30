@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../solana-app-kit-server"
+		}
+	],
+	"settings": {}
+}

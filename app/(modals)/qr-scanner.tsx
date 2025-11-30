@@ -1,3 +1,4 @@
+import CustomButton from '@/components/ui/CustomButton'
 import { isValidSolanaAddress } from '@/libs/solana.lib'
 import { Ionicons } from '@expo/vector-icons'
 import { CameraView, useCameraPermissions } from 'expo-camera'
@@ -226,8 +227,8 @@ export default function QRScannerScreen() {
   if (!permission.granted) {
     // Camera permissions are not granted yet
     return (
-      <SafeAreaView className='flex-1 bg-dark-50'>
-        <View className='flex-1 justify-center items-center px-6'>
+      <SafeAreaView className='flex-1 bg-primary-main'>
+        <View className='flex-1 items-center px-6'>
           {/* Header */}
           <View className='flex-row items-center justify-between w-full mb-8'>
             <TouchableOpacity
@@ -240,29 +241,24 @@ export default function QRScannerScreen() {
             <View className='w-10' />
           </View>
 
-          <View className='w-16 h-16 bg-primary-500/20 rounded-full justify-center items-center mb-6'>
-            <Ionicons name='camera' size={32} color='#6366f1' />
-          </View>
-          <Text className='text-white text-xl font-semibold mb-4'>
-            Camera Permission Required
-          </Text>
-          <Text className='text-gray-400 text-center mb-8 leading-6'>
-            We need access to your camera to scan QR codes for wallet addresses.
-          </Text>
+          <View className='flex-1 justify-center items-center'>
+            <View className='w-16 h-16 bg-primary-500/20 rounded-full justify-center items-center mb-6'>
+              <Ionicons name='camera' size={32} color='#6366f1' />
+            </View>
+            <Text className='text-white text-xl font-semibold mb-4'>
+              Camera Permission Required
+            </Text>
+            <Text className='text-gray-400 text-center mb-8 leading-6'>
+              We need access to your camera to scan QR codes for wallet
+              addresses.
+            </Text>
 
-          <TouchableOpacity
-            onPress={requestPermission}
-            className='active:scale-95 w-full'
-          >
-            <LinearGradient
-              colors={['#6366f1', '#8b5cf6']}
-              className='py-4 rounded-2xl'
-            >
-              <Text className='text-white text-center text-lg font-semibold'>
-                Grant Camera Access
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            <CustomButton
+              text='Grant Camera Access'
+              onPress={requestPermission}
+              type='primary'
+            />
+          </View>
         </View>
       </SafeAreaView>
     )
@@ -373,7 +369,7 @@ export default function QRScannerScreen() {
           </View>
 
           {/* Action buttons */}
-          <View className='flex-row space-x-3'>
+          <View className='flex-row gap-3'>
             {/* Manual input option */}
             <TouchableOpacity
               onPress={() => {

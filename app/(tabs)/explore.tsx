@@ -203,7 +203,7 @@ const Explore = () => {
     if (isValidUrl(searchQuery)) {
       // Navigate to browser with URL
       router.push({
-        pathname: '/(modals)/browser' as any,
+        pathname: '/(screens)/browser' as any,
         params: {
           url: searchQuery.startsWith('http')
             ? searchQuery
@@ -214,7 +214,7 @@ const Explore = () => {
       // Open Google search for the query
       const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}`
       router.push({
-        pathname: '/(modals)/browser' as any,
+        pathname: '/(screens)/browser' as any,
         params: {
           url: googleSearchUrl,
           title: `Search: ${searchQuery.trim()}`,
@@ -225,7 +225,7 @@ const Explore = () => {
 
   const openDApp = (dapp: DApp) => {
     router.push({
-      pathname: '/(modals)/browser' as any,
+      pathname: '/(screens)/browser' as any,
       params: { url: dapp.url, title: dapp.name },
     })
   }
@@ -372,7 +372,7 @@ const Explore = () => {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => router.push('/(modals)/browser' as any)}
+            onPress={() => router.push('/(screens)/browser' as any)}
             className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
           >
             <Ionicons name='add' size={20} color='#6366f1' />

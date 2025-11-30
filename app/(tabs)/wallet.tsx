@@ -87,7 +87,7 @@ export default function WalletScreen() {
             <TouchableOpacity
               onPress={() =>
                 router.push({
-                  pathname: '/(modals)/search',
+                  pathname: '/(screens)/search',
                   params: {
                     mode: 'navigate',
                     title: 'Search Tokens',
@@ -144,7 +144,7 @@ export default function WalletScreen() {
               icon='swap-horizontal'
               title='Swap'
               // gradient={true}
-              onPress={() => router.push('/(modals)/swap')}
+              onPress={() => router.push('/(screens)/swap')}
             />
             <ActionButton
               icon='add-circle-outline'

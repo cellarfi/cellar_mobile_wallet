@@ -19,7 +19,7 @@ export function TrendingCard({ token, onPress }: TrendingCardProps) {
       onPress()
     } else {
       router.push({
-        pathname: '/(modals)/token-detail',
+        pathname: '/(screens)/token-detail',
         params: {
           tokenAddress: token.address,
           symbol: token.symbol,

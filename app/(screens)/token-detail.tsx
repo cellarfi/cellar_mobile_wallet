@@ -273,7 +273,7 @@ Powered by Cellar Wallet`
   const handleSellPress = () => {
     if (portfolioToken) {
       router.push({
-        pathname: '/(modals)/swap' as any,
+        pathname: '/(screens)/swap' as any,
         params: {
           inputToken: JSON.stringify(portfolioToken),
         },
@@ -314,7 +314,7 @@ Powered by Cellar Wallet`
       }
 
       router.push({
-        pathname: '/(modals)/swap' as any,
+        pathname: '/(screens)/swap' as any,
         params: {
           outputToken: JSON.stringify(searchTokenResult),
         },
@@ -325,7 +325,7 @@ Powered by Cellar Wallet`
   const handleSwapPress = () => {
     if (portfolioToken) {
       router.push({
-        pathname: '/(modals)/swap' as any,
+        pathname: '/(screens)/swap' as any,
         params: {
           inputToken: JSON.stringify(portfolioToken),
         },
@@ -699,22 +699,47 @@ Powered by Cellar Wallet`
             </View>
 
             {/* Socials */}
-            <View className='px-6 mb-8'>
-              <Text className='text-white text-lg font-semibold mb-4'>
-                Socials
-              </Text>
-              <View className='items-center flex-row mb-8'>
-                {['website', 'twitter', 'telegram', 'discord', 'medium'].map(
-                  (key) => {
-                    const link =
-                      tokenOverview.extensions?.[
-                        key as keyof typeof tokenOverview.extensions
-                      ]
-                    return link ? <TokenSocials key={key} link={link} /> : null
-                  }
-                )}
-              </View>
-            </View>
+            {(() => {
+              const hasSocials = [
+                'website',
+                'twitter',
+                'telegram',
+                'discord',
+                'medium',
+              ].some(
+                (key) =>
+                  tokenOverview.extensions?.[
+                    key as keyof typeof tokenOverview.extensions
+                  ]
+              )
+
+              if (!hasSocials) return null
+
+              return (
+                <View className='px-6 mb-8'>
+                  <Text className='text-white text-lg font-semibold mb-4'>
+                    Socials
+                  </Text>
+                  <View className='items-center flex-row mb-8'>
+                    {[
+                      'website',
+                      'twitter',
+                      'telegram',
+                      'discord',
+                      'medium',
+                    ].map((key) => {
+                      const link =
+                        tokenOverview.extensions?.[
+                          key as keyof typeof tokenOverview.extensions
+                        ]
+                      return link ? (
+                        <TokenSocials key={key} link={link} />
+                      ) : null
+                    })}
+                  </View>
+                </View>
+              )
+            })()}
           </ScrollView>
         </View>
       </SafeAreaView>

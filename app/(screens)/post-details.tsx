@@ -6,6 +6,7 @@ import { commentsRequests } from '@/libs/api_requests/comments.request'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { formatAddress, formatNumber } from '@/libs/string.helpers'
 import { useAuthStore } from '@/store/authStore'
+import { usePostDetailsStore } from '@/store/socialEventsStore'
 import { Comment as ThreadComment } from '@/types/comment.interface'
 import { Post } from '@/types/posts.interface'
 import { Ionicons } from '@expo/vector-icons'
@@ -53,21 +54,21 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   </Text>
 )
 
-// router function to redirect to Send Modal with donation wallet address
+// router function to redirect to Donate Modal
 function handleDonation(
   address: string,
-  memo: string,
   postId: string,
-  selectedToken: string
+  currentAmount: string,
+  targetAmount: string
 ) {
   router.push({
-    pathname: '/(modals)/send',
+    pathname: '/(modals)/donate',
     params: {
-      recipient: address,
-      currentMemo: memo + 'Donation',
-      postId,
-      donation: 'true',
-      selectedToken,
+      postId: postId || '',
+      walletAddress: address,
+      campaignTitle: 'Donation Campaign',
+      currentAmount: currentAmount || '0',
+      targetAmount: targetAmount || '0',
     },
   })
 }
@@ -119,6 +120,8 @@ const PostDetailsModal = () => {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const { profile } = useAuthStore()
+  const refreshFeed = usePostDetailsStore((state) => state.refreshFeed)
+  const resetRefresh = usePostDetailsStore((state) => state.resetRefresh)
   const [showCommentInput, setShowCommentInput] = useState(false)
   const [comments, setComments] = useState<ThreadComment[]>([])
   const [posting, setPosting] = useState(false)
@@ -199,8 +202,9 @@ const PostDetailsModal = () => {
 
   const redirectToUserProfile = (tagName: string) => {
     router.push({
-      pathname: '/(modals)/user-profile',
-      params: { tagName },
+      // pathname: '/(screens)/user-profile/[tag_name]',
+      pathname: '/profile/[tag_name]',
+      params: { tag_name: tagName },
     })
   }
 
@@ -226,6 +230,14 @@ const PostDetailsModal = () => {
     console.log('Post ID ref', postIdRef.current)
     if (postIdRef.current) fetchPost()
   }, [postIdRef.current])
+
+  // Listen for refresh trigger (e.g., after donation)
+  useEffect(() => {
+    if (refreshFeed && postIdRef.current) {
+      fetchPost()
+      resetRefresh()
+    }
+  }, [refreshFeed])
 
   useEffect(() => {
     if (currentPage === 1) {
@@ -632,21 +644,24 @@ const PostDetailsModal = () => {
         <Text className='text-gray-400 text-xs mt-0.5'>
           Status: {post.funding_meta.status}
         </Text>
-        {/* Donate Button */}
-        <TouchableOpacity
-          className='bg-primary-500 rounded-xl py-2 px-6 self-start mt-4'
-          activeOpacity={0.92}
-          onPress={() =>
-            handleDonation(
-              post.funding_meta?.wallet_address || '',
-              post.content || '',
-              post.id || '',
-              post.funding_meta?.token_address || ''
-            )
-          }
-        >
-          <Text className='text-white font-bold'>Donate</Text>
-        </TouchableOpacity>
+        {/* Donate Button - Allow donations for ACTIVE and COMPLETED campaigns */}
+        {(post.funding_meta.status === 'ACTIVE' ||
+          post.funding_meta.status === 'COMPLETED') && (
+          <TouchableOpacity
+            className='bg-primary-500 rounded-xl py-2 px-6 self-start mt-4'
+            activeOpacity={0.92}
+            onPress={() =>
+              handleDonation(
+                post.funding_meta?.wallet_address || '',
+                post.id || '',
+                post.funding_meta?.current_amount || '0',
+                post.funding_meta?.target_amount || '0'
+              )
+            }
+          >
+            <Text className='text-white font-bold'>Donate</Text>
+          </TouchableOpacity>
+        )}
       </Card>
     )
   } else if (post.post_type === 'TOKEN_CALL' && post.token_meta) {
@@ -811,7 +826,7 @@ const PostDetailsModal = () => {
     tokenName: string
   ) {
     router.push({
-      pathname: '/(modals)/swap',
+      pathname: '/(screens)/swap',
       params: {
         outputToken: token ? JSON.stringify(token) : '',
         tokenSymbol,

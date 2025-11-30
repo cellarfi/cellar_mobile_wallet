@@ -4,7 +4,7 @@ import { Images } from '@/constants/Images'
 import { cn } from '@/libs/utils'
 import { router } from 'expo-router'
 import React, { useEffect, useState } from 'react'
-import { Image, Text, View } from 'react-native'
+import { Image, Linking, Text, View } from 'react-native'
 
 export default function WelcomeScreen() {
   const [progress, setProgress] = useState(0)
@@ -151,8 +151,19 @@ export default function WelcomeScreen() {
           {step === 0 && (
             <Text className='text-xs font-medium text-gray-100 text-center px-4 w-[246px]'>
               By continuing, you agree to our{' '}
-              <Text className='text-secondary'>Terms of Service</Text> and{' '}
-              <Text className='text-secondary'>Privacy Policy</Text>
+              <Text
+                className='text-secondary underline'
+                onPress={() => Linking.openURL('https://www.cellar.so/terms')}
+              >
+                Terms of Service
+              </Text>{' '}
+              and{' '}
+              <Text
+                className='text-secondary underline'
+                onPress={() => Linking.openURL('https://www.cellar.so/privacy')}
+              >
+                Privacy Policy
+              </Text>
             </Text>
           )}
         </View>

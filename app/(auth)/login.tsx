@@ -122,7 +122,8 @@ export default function LoginScreen() {
 
           {/* Sign In Button */}
           <CustomButton
-            text={isLoading ? 'Sending Code...' : 'Continue with Email'}
+            text={isLoading ? 'Sending Code...' : 'Continue'}
+            // text={isLoading ? 'Sending Code...' : 'Continue with Email'}
             onPress={handleLogin}
             type='primary'
             className='mt-6 mb-3'

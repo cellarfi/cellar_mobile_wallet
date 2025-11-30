@@ -7,24 +7,100 @@ import {
   JupiterQuoteOrderResponse,
 } from '../../types'
 import { apiResponse } from '../api.helpers'
+import {
+  NATIVE_SOL_ADDRESS,
+  NATIVE_SOL_MINT,
+  WRAPPED_SOL_MINT,
+} from '../solana.lib'
 
 const api: AxiosInstance = axios.create({
+  // baseURL: 'https://api.jup.ag/ultra/v1',
   baseURL: 'https://lite-api.jup.ag/ultra/v1',
+  headers: {
+    Accept: 'application/json',
+    // 'Content-Type': 'application/json',
+    // 'x-api-key': '9e318e1f-08ee-4243-aba0-c8206936ad12',
+  },
+  // paramsSerializer: {
+  //   serialize: (params) => {
+  //     // Simple query string serialization without encoding issues
+  //     return Object.entries(params)
+  //       .map(([key, value]) => `${key}=${value}`)
+  //       .join('&')
+  //   },
+  // },
 })
+
+/**
+ * Helper function to normalize SOL mint addresses
+ * Jupiter expects wrapped SOL mint, not native SOL addresses
+ */
+const normalizeSolMint = (mint: string): string => {
+  if (mint === NATIVE_SOL_ADDRESS || mint === NATIVE_SOL_MINT) {
+    return WRAPPED_SOL_MINT
+  }
+  return mint
+}
 
 export const jupiterRequests = {
   getOrder: async (params: JupiterOrderRequest) => {
     try {
+      // Validate required params
+      if (
+        !params.inputMint ||
+        !params.outputMint ||
+        !params.amount ||
+        !params.taker
+      ) {
+        const missing = []
+        if (!params.inputMint) missing.push('inputMint')
+        if (!params.outputMint) missing.push('outputMint')
+        if (!params.amount) missing.push('amount')
+        if (!params.taker) missing.push('taker')
+
+        throw new Error(`Missing required parameters: ${missing.join(', ')}`)
+      }
+
+      // Validate amount is a positive number (but keep as string for API)
+      const amountNum = Number(params.amount)
+      if (isNaN(amountNum) || amountNum <= 0) {
+        throw new Error(
+          `Invalid amount: ${params.amount}. Must be a positive number.`
+        )
+      }
+
+      // Normalize SOL mints: replace native SOL addresses with wrapped SOL
+      const inputMint = normalizeSolMint(params.inputMint)
+      const outputMint = normalizeSolMint(params.outputMint)
+
       const res = await api.get<JupiterQuoteOrderResponse>('/order', {
         params: {
-          inputMint: params.inputMint,
-          outputMint: params.outputMint,
+          inputMint: inputMint,
+          outputMint: outputMint,
           amount: params.amount,
           taker: params.taker,
-          referralAccount: 'HSKt4ztFYEDsTskHxmKqGD4nZjo3qLc5DcFAF3576HtT',
-          referralFee: 100, // In basis points (1%)
+          // referralFee: 100, // In basis points (1%)
+          // referralAccount: 'HSKt4ztFYEDsTskHxmKqGD4nZjo3qLc5DcFAF3576HtT',
+          // payer: params.taker,
+          // closeAuthority: params.taker,
         },
+        timeout: 15000, // 15 second timeout
       })
+
+      console.log('Jupiter API Response:', res.data)
+
+      console.log('✅ Jupiter API Success:', {
+        status: res.status,
+        requestId: res.data?.requestId,
+        inAmount: res.data?.inAmount,
+        outAmount: res.data?.outAmount,
+        hasTransaction: !!res.data?.transaction,
+        // transaction: res.data?.transaction,
+      })
+
+      if (!res.data) {
+        throw new Error('Jupiter API returned empty response')
+      }
 
       return apiResponse<JupiterQuoteOrderResponse>(
         true,
@@ -32,14 +108,50 @@ export const jupiterRequests = {
         res.data
       )
     } catch (err: any) {
-      console.log('Error fetching Jupiter order quote:', err?.response?.data)
+      // Enhanced error logging
+      const errorDetails = {
+        message: err?.message,
+        apiError: err?.response?.data,
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
+        requestParams: {
+          inputMint: params.inputMint,
+          outputMint: params.outputMint,
+          amount: params.amount,
+          taker: params.taker,
+          takerLength: params.taker?.length,
+        },
+        isNetworkError: !err?.response,
+        timeout: err?.code === 'ECONNABORTED',
+      }
+
+      console.error(
+        '❌ Jupiter API Error:',
+        JSON.stringify(errorDetails, null, 2)
+      )
+
+      // Return more specific error messages
+      let errorMessage = 'Failed to get Jupiter quote'
+
+      if (err?.response?.status === 400) {
+        errorMessage =
+          err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          'Invalid request parameters'
+      } else if (err?.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded. Please try again later.'
+      } else if (err?.code === 'ECONNABORTED') {
+        errorMessage = 'Request timeout. Please check your connection.'
+      } else if (!err?.response && err?.message) {
+        errorMessage = `Network error: ${err.message}`
+      } else if (err?.message) {
+        errorMessage = err.message
+      }
+
       return apiResponse<JupiterQuoteOrderResponse>(
         false,
-        err?.response?.data?.error ||
-          err?.response?.data?.message ||
-          err?.message ||
-          'Error occurred.',
-        err
+        errorMessage,
+        undefined
       )
     }
   },
@@ -48,6 +160,8 @@ export const jupiterRequests = {
     orderResponse: JupiterQuoteOrderResponse,
     signedTransaction: VersionedTransaction
   ) => {
+    console.log('Executing Jupiter order:', orderResponse)
+
     try {
       // Serialize the signed transaction to base64 format
       const serializedTransaction = Buffer.from(

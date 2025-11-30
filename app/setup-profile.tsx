@@ -177,18 +177,21 @@ const SetupProfile = () => {
       }
 
       const response = await userRequests.createUser(createUserData)
+      console.log('user response', response)
 
       if (response.success && response.data) {
         // Update profile in store
-        setProfile(response.data)
+        setProfile(response.data?.user)
+        console.log('profile set', response.data?.user)
 
         // Show success message
-        Alert.alert('Success!', 'Your profile has been created successfully.', [
-          {
-            text: 'Continue',
-            onPress: () => router.replace('/(tabs)'),
-          },
-        ])
+        // Alert.alert('Success!', 'Your profile has been created successfully.', [
+        //   {
+        //     text: 'Continue',
+        //     onPress: () => router.replace('/(tabs)'),
+        //   },
+        // ])
+        router.replace('/(tabs)')
       } else {
         Alert.alert(
           'Error',

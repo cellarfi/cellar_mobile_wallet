@@ -77,60 +77,68 @@ const TokenCallCard = React.memo(({ token_meta }: TokenCallCardProps) => {
     fetchCurrentPrice()
   }, [fetchCurrentPrice])
 
-  const handleBuyPress = () => {
+  const handleOpenedPress = () => {
     if (token_meta?.token_address) {
       router.push({
-        pathname: '/(modals)/swap',
+        pathname: '/(screens)/token-detail',
         params: {
-          outputToken: JSON.stringify({
-            name:
-              tokenOverview?.tokenOverview?.name ||
-              token_meta.token_name ||
-              'Token',
-            symbol:
-              tokenOverview?.tokenOverview?.symbol ||
-              token_meta.token_symbol ||
-              'TOKEN',
-            address: token_meta.token_address,
-            network: 'solana',
-            decimals: tokenOverview?.tokenOverview?.decimals || 9,
-            logo_uri:
-              tokenOverview?.tokenOverview?.logoURI ||
-              token_meta.logo_url ||
-              '',
-            verified: true,
-            fdv: tokenOverview?.tokenOverview?.fdv || 0,
-            market_cap:
-              tokenOverview?.tokenOverview?.marketCap ||
-              token_meta.market_cap ||
-              '0',
-            liquidity: tokenOverview?.tokenOverview?.liquidity || 0,
-            price: currentPrice,
-            price_change_24h_percent:
-              tokenOverview?.tokenOverview?.priceChange24hPercent ||
-              priceChange,
-            sell_24h: tokenOverview?.tokenOverview?.sell24h || 0,
-            sell_24h_change_percent:
-              tokenOverview?.tokenOverview?.sell24hChangePercent || 0,
-            buy_24h: tokenOverview?.tokenOverview?.buy24h || 0,
-            buy_24h_change_percent:
-              tokenOverview?.tokenOverview?.buy24hChangePercent || 0,
-            unique_wallet_24h:
-              tokenOverview?.tokenOverview?.uniqueWallet24h || 0,
-            unique_wallet_24h_change_percent:
-              tokenOverview?.tokenOverview?.uniqueWallet24hChangePercent || 0,
-            trade_24h: tokenOverview?.tokenOverview?.trade24h || 0,
-            trade_24h_change_percent:
-              tokenOverview?.tokenOverview?.trade24hChangePercent || 0,
-            volume_24h_change_percent: 0,
-            volume_24h_usd: 0,
-            last_trade_unix_time: 0,
-            last_trade_human_time: '',
-            supply: tokenOverview?.tokenOverview?.totalSupply || 0,
-            updated_time: 0,
-          }),
+          tokenAddress: token_meta.token_address,
+          symbol: token_meta.token_symbol,
+          name: token_meta.token_name,
         },
       })
+      // router.push({
+      //   pathname: '/(screens)/swap',
+      //   params: {
+      //     outputToken: JSON.stringify({
+      //       name:
+      //         tokenOverview?.tokenOverview?.name ||
+      //         token_meta.token_name ||
+      //         'Token',
+      //       symbol:
+      //         tokenOverview?.tokenOverview?.symbol ||
+      //         token_meta.token_symbol ||
+      //         'TOKEN',
+      //       address: token_meta.token_address,
+      //       network: 'solana',
+      //       decimals: tokenOverview?.tokenOverview?.decimals || 9,
+      //       logo_uri:
+      //         tokenOverview?.tokenOverview?.logoURI ||
+      //         token_meta.logo_url ||
+      //         '',
+      //       verified: true,
+      //       fdv: tokenOverview?.tokenOverview?.fdv || 0,
+      //       market_cap:
+      //         tokenOverview?.tokenOverview?.marketCap ||
+      //         token_meta.market_cap ||
+      //         '0',
+      //       liquidity: tokenOverview?.tokenOverview?.liquidity || 0,
+      //       price: currentPrice,
+      //       price_change_24h_percent:
+      //         tokenOverview?.tokenOverview?.priceChange24hPercent ||
+      //         priceChange,
+      //       sell_24h: tokenOverview?.tokenOverview?.sell24h || 0,
+      //       sell_24h_change_percent:
+      //         tokenOverview?.tokenOverview?.sell24hChangePercent || 0,
+      //       buy_24h: tokenOverview?.tokenOverview?.buy24h || 0,
+      //       buy_24h_change_percent:
+      //         tokenOverview?.tokenOverview?.buy24hChangePercent || 0,
+      //       unique_wallet_24h:
+      //         tokenOverview?.tokenOverview?.uniqueWallet24h || 0,
+      //       unique_wallet_24h_change_percent:
+      //         tokenOverview?.tokenOverview?.uniqueWallet24hChangePercent || 0,
+      //       trade_24h: tokenOverview?.tokenOverview?.trade24h || 0,
+      //       trade_24h_change_percent:
+      //         tokenOverview?.tokenOverview?.trade24hChangePercent || 0,
+      //       volume_24h_change_percent: 0,
+      //       volume_24h_usd: 0,
+      //       last_trade_unix_time: 0,
+      //       last_trade_human_time: '',
+      //       supply: tokenOverview?.tokenOverview?.totalSupply || 0,
+      //       updated_time: 0,
+      //     }),
+      //   },
+      // })
     }
   }
 
@@ -204,10 +212,11 @@ const TokenCallCard = React.memo(({ token_meta }: TokenCallCardProps) => {
       {/* Buy Button */}
       <TouchableOpacity
         className='bg-primary-500 rounded-xl py-3 px-6 items-center mt-4 flex-row justify-center'
-        onPress={handleBuyPress}
+        onPress={handleOpenedPress}
       >
-        <Ionicons name='trending-up' size={18} color='#ffffff' />
-        <Text className='text-white font-bold text-base ml-2'>Buy</Text>
+        <Ionicons name='open-outline' size={18} color='#ffffff' />
+        {/* <Ionicons name='trending-up' size={18} color='#ffffff' /> */}
+        <Text className='text-white font-bold text-base ml-2'>Open</Text>
       </TouchableOpacity>
     </View>
   )

@@ -439,7 +439,10 @@ export default function SocialScreen() {
   )
 
   const UserCard = ({ user }: { user: SuggestedAccounts }) => (
-    <View className='bg-secondary-light rounded-2xl p-4 mr-3 w-48'>
+    <TouchableOpacity
+      className='bg-secondary-light rounded-2xl p-4 mr-3 w-48'
+      onPress={() => router.push(`/profile/${user.tag_name}` as any)}
+    >
       <View className='flex-row items-center justify-between mb-3'>
         <View className='w-12 h-12 bg-primary-500/20 rounded-full justify-center items-center'>
           {user.profile_picture_url ? (
@@ -458,7 +461,10 @@ export default function SocialScreen() {
           className={`px-3 py-1 rounded-xl ${
             user.following ? 'bg-gray-600' : 'bg-secondary'
           }`}
-          onPress={() => handleFollow(user.id)}
+          onPress={(e) => {
+            e.stopPropagation()
+            handleFollow(user.id)
+          }}
         >
           <Text className='text-white text-sm font-medium'>
             {user.following ? 'Following' : 'Follow'}
@@ -474,7 +480,7 @@ export default function SocialScreen() {
       <Text className='text-gray-500 text-xs'>
         {user._count?.followers ?? 0} followers
       </Text>
-    </View>
+    </TouchableOpacity>
   )
 
   const renderPostItem = ({ item }: { item: Post }) => (

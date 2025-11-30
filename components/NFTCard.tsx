@@ -29,7 +29,7 @@ export function NFTCard({
     } else {
       // Pass the asset ID to the detail page
       router.push({
-        pathname: '/(modals)/nft-detail',
+        pathname: '/(screens)/nft-detail',
         params: { id: asset.id },
       })
     }

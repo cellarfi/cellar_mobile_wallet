@@ -137,7 +137,12 @@ const LeaderboardScreen = () => {
         className={`flex-row items-center p-4 border-b border-dark-300 ${
           isCurrentUser ? 'bg-primary-500/10' : ''
         }`}
-        onPress={() => router.push(`/(modals)/user-profile/${item.tag_name}`)}
+        onPress={() =>
+          router.push({
+            pathname: '/profile/[tag_name]',
+            params: { tag_name: item.tag_name },
+          })
+        }
       >
         {/* Rank */}
         <View className='w-10 items-center'>
@@ -229,7 +234,7 @@ const LeaderboardScreen = () => {
   return (
     <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       {/* Header */}
-      <View className='flex-row items-center justify-between px-6 py-4'>
+      <View className='flex-row items-center justify-between py-4'>
         <View className='flex-row items-center gap-2'>
           <TouchableOpacity
             onPress={() => router.back()}

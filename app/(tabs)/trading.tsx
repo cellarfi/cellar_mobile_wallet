@@ -156,7 +156,7 @@ export default function TradingScreen() {
             <View className='mb-6'>
               <TouchableOpacity
                 className='bg-secondary-light rounded-2xl px-4 py-3 flex-row items-center'
-                onPress={() => router.push('/(modals)/search')}
+                onPress={() => router.push('/(screens)/search')}
               >
                 <Ionicons name='search' size={20} color='#666672' />
                 <Text className='flex-1 text-gray-400 ml-3 text-lg'>

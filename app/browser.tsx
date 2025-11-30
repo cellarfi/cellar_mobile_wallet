@@ -18,7 +18,7 @@ export default function BrowserRedirect() {
     if (url) {
       // Redirect to the modal browser with the same parameters
       router.replace({
-        pathname: '/(modals)/browser' as any,
+        pathname: '/(screens)/browser' as any,
         params: { url, title },
       })
     }

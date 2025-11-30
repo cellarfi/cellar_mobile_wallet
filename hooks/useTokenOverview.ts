@@ -1,13 +1,12 @@
 import { birdEyeRequests } from '@/libs/api_requests/birdeye.request'
+import { useNetworkStore } from '@/store/networkStore'
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { useTokenStore } from '@/store/tokenStore'
 import { BirdEyeTokenItem, BirdEyeTokenOverviewResponse } from '@/types'
-import NetInfo from '@react-native-community/netinfo'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
 
 export function useTokenOverview(tokenAddress: string) {
-  const [isOnline, setIsOnline] = useState(true)
+  const { isOnline } = useNetworkStore()
   const {
     tokens,
     setToken,
@@ -19,14 +18,6 @@ export function useTokenOverview(tokenAddress: string) {
   } = useTokenStore()
 
   const { portfolio } = usePortfolioStore()
-
-  // Check network status
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOnline(state.isConnected || false)
-    })
-    return unsubscribe
-  }, [])
 
   // Find user's holding of this token
   const userHolding: BirdEyeTokenItem | null =
@@ -45,6 +36,11 @@ export function useTokenOverview(tokenAddress: string) {
     queryFn: async (): Promise<BirdEyeTokenOverviewResponse> => {
       if (!tokenAddress) {
         throw new Error('No token address provided')
+      }
+
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - using cached data')
       }
 
       // Only set loading for initial loads, not for background refetches
@@ -75,16 +71,19 @@ export function useTokenOverview(tokenAddress: string) {
       setTokenLoading(tokenAddress, false)
       return updatedToken
     },
-    enabled: !!tokenAddress && isOnline,
-    staleTime: 30 * 1000, // 30 seconds
+    enabled: !!tokenAddress && isOnline !== false, // Only enable when online
+    staleTime: isOnline === false ? Infinity : 30 * 1000, // Never stale when offline
+    gcTime: 10 * 60 * 1000, // Keep cached data for 10 minutes
     // refetchInterval: isOnline ? 60 * 1000 : false, // Refetch every 60 seconds if online
     refetchIntervalInBackground: false,
     retry: (failureCount, error) => {
       // Don't retry if offline
-      if (!isOnline) return false
+      if (isOnline === false) return false
       return failureCount < 3
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: isOnline === true,
+    refetchOnReconnect: isOnline === true,
   })
 
   // Get stored token data

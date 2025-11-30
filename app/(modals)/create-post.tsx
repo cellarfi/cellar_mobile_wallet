@@ -1,21 +1,21 @@
-import PostComposer from '@/components/core/social/PostComposer';
-import { PostsRequests } from '@/libs/api_requests/posts.request';
-import { isValidSolanaAddress, USDC_METADATA } from '@/libs/solana.lib';
-import { useAuthStore } from '@/store/authStore';
-import { BirdEyeSearchTokenResult } from '@/types';
-import { PostType } from '@/types/posts.interface';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { z } from 'zod';
+import PostComposer from '@/components/core/social/PostComposer'
+import { PostsRequests } from '@/libs/api_requests/posts.request'
+import { isValidSolanaAddress, USDC_METADATA } from '@/libs/solana.lib'
+import { useAuthStore } from '@/store/authStore'
+import { BirdEyeSearchTokenResult } from '@/types'
+import { PostType } from '@/types/posts.interface'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
+import { Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { z } from 'zod'
 
 // Zod schemas for validation (unchanged)
 const regularSchema = z.object({
   content: z.string().min(1, 'Content cannot be empty'),
   post_type: z.literal('REGULAR'),
   media: z.array(z.string()).optional(),
-});
+})
 const donationSchema = z.object({
   content: z.string().min(1, 'Content cannot be empty'),
   post_type: z.literal('DONATION'),
@@ -33,7 +33,7 @@ const donationSchema = z.object({
   token_symbol: z.string().optional(),
   token_address: z.string().optional(),
   deadline: z.string().datetime().optional(),
-});
+})
 const tokenCallSchema = z.object({
   content: z.string().min(1, 'Content cannot be empty'),
   post_type: z.literal('TOKEN_CALL'),
@@ -45,7 +45,7 @@ const tokenCallSchema = z.object({
   target_price: z.number().positive().optional(),
   initial_price: z.number().positive().optional(),
   market_cap: z.number().positive().optional(),
-});
+})
 
 const initialForm = {
   // Common
@@ -66,32 +66,32 @@ const initialForm = {
   targetPrice: '',
   marketCap: '',
   description: '',
-};
+}
 
 export default function CreatePostScreen() {
-  const router = useRouter();
-  const { activeWallet } = useAuthStore();
-  const [form, setForm] = useState(initialForm);
-  const [posting, setPosting] = useState(false);
-  const [postError, setPostError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const router = useRouter()
+  const { activeWallet } = useAuthStore()
+  const [form, setForm] = useState(initialForm)
+  const [posting, setPosting] = useState(false)
+  const [postError, setPostError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [selectedToken, setSelectedToken] =
-    useState<BirdEyeSearchTokenResult | null>(null);
+    useState<BirdEyeSearchTokenResult | null>(null)
 
   // Get parameters for token selection
   const { selectedToken: selectedTokenParam } = useLocalSearchParams<{
-    selectedToken?: string;
-  }>();
+    selectedToken?: string
+  }>()
 
   // Handle token selection from search modal
   useEffect(() => {
     if (selectedTokenParam && selectedTokenParam !== 'undefined') {
       try {
-        const token: BirdEyeSearchTokenResult = JSON.parse(selectedTokenParam);
-        console.log('Selected token for post composer:', token);
+        const token: BirdEyeSearchTokenResult = JSON.parse(selectedTokenParam)
+        console.log('Selected token for post composer:', token)
 
         // Set the selected token object
-        setSelectedToken(token);
+        setSelectedToken(token)
 
         // Populate form fields with token data
         setForm((prev) => ({
@@ -104,39 +104,39 @@ export default function CreatePostScreen() {
           // Auto-populate numeric fields from token data (convert to strings)
           marketCap: token.market_cap ? token.market_cap.toString() : '',
           initialPrice: token.price ? token.price.toString() : '',
-        }));
+        }))
 
         // Clear the parameter to avoid re-triggering
-        router.setParams({ selectedToken: undefined });
+        router.setParams({ selectedToken: undefined })
       } catch (error) {
-        console.error('Failed to parse selectedToken parameter:', error);
+        console.error('Failed to parse selectedToken parameter:', error)
       }
     }
-  }, [selectedTokenParam, router]);
+  }, [selectedTokenParam, router])
 
   const handleFieldChange = (field: string, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
+    setForm((prev) => ({ ...prev, [field]: value }))
+  }
 
   const handleTypeChange = (type: PostType) => {
-    setForm((prev) => ({ ...prev, postType: type }));
-  };
+    setForm((prev) => ({ ...prev, postType: type }))
+  }
 
   const handleCreatePost = async (media: string[]) => {
-    setPostError(null);
-    setFieldErrors({});
+    setPostError(null)
+    setFieldErrors({})
     // Build payload and validate
     let payload: any = {
       content: form.content,
       post_type: form.postType,
       media: media || form.media,
-    };
-    let schema: z.ZodTypeAny = regularSchema;
+    }
+    let schema: z.ZodTypeAny = regularSchema
     if (form.postType === 'DONATION') {
       // Check if user has an active wallet
       if (!activeWallet?.address) {
-        setPostError('You need to connect a wallet to create a donation post.');
-        return;
+        setPostError('You need to connect a wallet to create a donation post.')
+        return
       }
 
       // Auto-populate donation fields with defaults
@@ -148,8 +148,8 @@ export default function CreatePostScreen() {
         token_symbol: USDC_METADATA.symbol, // Default to USDC
         token_address: USDC_METADATA.address, // Default to USDC address
         deadline: form.deadline || undefined,
-      };
-      schema = donationSchema;
+      }
+      schema = donationSchema
     } else if (form.postType === 'TOKEN_CALL') {
       payload = {
         ...payload,
@@ -165,43 +165,43 @@ export default function CreatePostScreen() {
           ? parseFloat(form.initialPrice)
           : undefined,
         market_cap: form.marketCap ? parseFloat(form.marketCap) : undefined,
-      };
-      schema = tokenCallSchema;
+      }
+      schema = tokenCallSchema
     }
     // Validate
-    const result = schema.safeParse(payload);
+    const result = schema.safeParse(payload)
     if (!result.success) {
       // Map Zod errors to fieldErrors
-      const errors: Record<string, string> = {};
+      const errors: Record<string, string> = {}
       for (const err of result.error.errors) {
-        if (err.path[0]) errors[err.path[0] as string] = err.message;
+        if (err.path[0]) errors[err.path[0] as string] = err.message
       }
-      setFieldErrors(errors);
-      setPostError('Please fix the errors above.');
-      console.log('TOKEN_CALL errors', errors);
-      return;
+      setFieldErrors(errors)
+      setPostError('Please fix the errors above.')
+      console.log('TOKEN_CALL errors', errors)
+      return
     }
-    setPosting(true);
+    setPosting(true)
     try {
-      const res = await PostsRequests.createPost(payload);
+      const res = await PostsRequests.createPost(payload)
       if (res.success) {
-        router.replace('/social');
+        router.replace('/social')
       } else {
-        setPostError(res.message || 'Failed to create post');
+        setPostError(res.message || 'Failed to create post')
       }
     } catch (err: any) {
-      setPostError(err?.message || 'Failed to create post');
+      setPostError(err?.message || 'Failed to create post')
     } finally {
-      setPosting(false);
+      setPosting(false)
     }
-  };
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-main px-6 py-4">
-      <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-white text-2xl font-bold">Create Post</Text>
+    <SafeAreaView className='flex-1 bg-primary-main px-6 py-4'>
+      <View className='flex-row items-center justify-between mb-4'>
+        <Text className='text-white text-2xl font-bold'>Create Post</Text>
         <Text
-          className="text-secondary text-lg"
+          className='text-secondary text-lg'
           onPress={() => router.replace('/social')}
         >
           Cancel
@@ -218,5 +218,5 @@ export default function CreatePostScreen() {
         selectedToken={selectedToken}
       />
     </SafeAreaView>
-  );
+  )
 }

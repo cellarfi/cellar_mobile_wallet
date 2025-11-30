@@ -80,7 +80,7 @@ export default function CustomButton({
 
   const renderContent = () => {
     const content = (
-      <>
+      <View className='flex-row items-center justify-center'>
         {icon && iconPosition === 'left' && (
           <Ionicons
             name={icon}
@@ -118,7 +118,7 @@ export default function CustomButton({
             size='small'
           />
         )}
-      </>
+      </View>
     )
 
     if (type === 'secondary' || type === 'dark') {
