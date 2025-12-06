@@ -34,7 +34,7 @@ export function TokenCard({
     } else {
       // Pass token data as params when navigating
       router.push({
-        pathname: '/(modals)/token-detail',
+        pathname: '/(screens)/token-detail',
         params: {
           tokenAddress: token.address,
           symbol: token.symbol,

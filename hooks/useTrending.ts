@@ -1,9 +1,11 @@
 import { birdEyeRequests } from '@/libs/api_requests/birdeye.request'
+import { useNetworkStore } from '@/store/networkStore'
 import { useTrendingStore } from '@/store/trendingStore'
 import { BirdEyeTrendingTokens } from '@/types'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export function useTrending() {
+  const { isOnline } = useNetworkStore()
   const {
     trending,
     isLoading: storeLoading,
@@ -27,6 +29,11 @@ export function useTrending() {
   } = useQuery({
     queryKey: ['trending-tokens'],
     queryFn: async (): Promise<BirdEyeTrendingTokens> => {
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - using cached data')
+      }
+
       setLoading(true)
       setError(null)
 
@@ -46,11 +53,18 @@ export function useTrending() {
       setTrending(response.data)
       return response.data
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
+    enabled: isOnline !== false, // Only enable when online
+    staleTime: isOnline === false ? Infinity : 5 * 60 * 1000, // Never stale when offline
+    gcTime: 10 * 60 * 1000, // Keep cached data for 10 minutes
+    refetchInterval: isOnline === true ? 10 * 60 * 1000 : false, // Only refetch when online
     refetchIntervalInBackground: false,
-    retry: 3,
+    retry: (failureCount, error) => {
+      if (isOnline === false) return false
+      return failureCount < 3
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: isOnline === true,
+    refetchOnReconnect: isOnline === true,
   })
 
   // Handle errors
@@ -71,6 +85,7 @@ export function useTrending() {
 }
 
 export function useTrendingInfinite() {
+  const { isOnline } = useNetworkStore()
   const {
     trending,
     isLoading: storeLoading,
@@ -97,6 +112,11 @@ export function useTrendingInfinite() {
   } = useInfiniteQuery({
     queryKey: ['trending-tokens-infinite'],
     queryFn: async ({ pageParam = 0 }): Promise<BirdEyeTrendingTokens> => {
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - using cached data')
+      }
+
       if (pageParam === 0) {
         setLoading(true)
       } else {
@@ -125,6 +145,7 @@ export function useTrendingInfinite() {
 
       return response.data
     },
+    enabled: isOnline !== false, // Only enable when online
     getNextPageParam: (lastPage, allPages) => {
       // If we got less than 20 tokens, there's no next page
       if (lastPage.tokens.length < 20) {
@@ -134,9 +155,15 @@ export function useTrendingInfinite() {
       return allPages.length * 20
     },
     initialPageParam: 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3,
+    staleTime: isOnline === false ? Infinity : 5 * 60 * 1000, // Never stale when offline
+    gcTime: 10 * 60 * 1000, // Keep cached data for 10 minutes
+    retry: (failureCount, error) => {
+      if (isOnline === false) return false
+      return failureCount < 3
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: isOnline === true,
+    refetchOnReconnect: isOnline === true,
   })
 
   // Handle errors

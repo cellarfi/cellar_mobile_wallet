@@ -1,9 +1,10 @@
 import { z } from 'zod'
 
+// Client-side schema - user_id is NOT included because the server
+// extracts it from the authenticated user's token
 export const createSessionSchema = z.object({
-  user_id: z.string(),
   device_id: z.string(),
-  expo_push_token: z.string().max(500),
+  push_token: z.string().max(500), // Push notification token (FCM/APNs)
   platform: z.enum(['ios', 'android', 'web', 'desktop']),
   device_name: z.string().optional(),
   os_version: z.string().optional(),
@@ -17,10 +18,11 @@ export const createSessionSchema = z.object({
 })
 export type CreateSessionDto = z.infer<typeof createSessionSchema>
 
+// Client-side update schema - session_id is NOT included because
+// it's passed as a URL parameter
 export const updateSessionSchema = z
   .object({
-    session_id: z.string(),
-    expo_push_token: z.string().max(500).optional(),
+    push_token: z.string().max(500).optional(), // Push notification token (FCM/APNs)
     platform: z.enum(['ios', 'android', 'web', 'desktop']).optional(),
     device_name: z.string().optional(),
     os_version: z.string().optional(),
@@ -34,8 +36,7 @@ export const updateSessionSchema = z
   })
   .refine(
     (data) => {
-      const { session_id, ...updateFields } = data
-      return Object.values(updateFields).some((value) => value !== undefined)
+      return Object.values(data).some((value) => value !== undefined)
     },
     {
       message: 'At least one field must be provided for update',
@@ -43,8 +44,9 @@ export const updateSessionSchema = z
   )
 export type UpdateSessionDto = z.infer<typeof updateSessionSchema>
 
+// Client-side query schema - user_id is NOT included because
+// it's extracted from the auth token on the server
 export const sessionQuerySchema = z.object({
-  user_id: z.string(),
   device_id: z.string().optional(),
   status: z.enum(['ACTIVE', 'SIGNED_OUT', 'REVOKED']).optional(),
 })

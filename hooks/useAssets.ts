@@ -6,6 +6,7 @@ import {
 } from '@/libs/api_requests/aura.request'
 import { useAssetsStore } from '@/store/assetsStore'
 import { useAuthStore } from '@/store/authStore'
+import { useNetworkStore } from '@/store/networkStore'
 import {
   DasApiAsset,
   DasApiAssetList,
@@ -18,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react'
  */
 export function useAssets() {
   const { activeWallet } = useAuthStore()
+  const { isOnline } = useNetworkStore()
   const {
     assets,
     isLoading: storeLoading,
@@ -57,6 +59,11 @@ export function useAssets() {
     queryFn: async (): Promise<DasApiAssetList> => {
       if (!walletAddress) {
         throw new Error('No wallet address available')
+      }
+
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - using cached data')
       }
 
       setLoading(true)
@@ -150,12 +157,18 @@ export function useAssets() {
 
       return fetchedAssets || assets
     },
-    enabled: !!walletAddress,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    enabled: !!walletAddress && isOnline !== false, // Only enable when online
+    staleTime: isOnline === false ? Infinity : 5 * 60 * 1000, // Never stale when offline
+    gcTime: 10 * 60 * 1000, // Keep cached data for 10 minutes
+    refetchInterval: isOnline === true ? 5 * 60 * 1000 : false, // Only refetch when online
     refetchIntervalInBackground: false,
-    retry: 3,
+    retry: (failureCount, error) => {
+      if (isOnline === false) return false
+      return failureCount < 3
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: isOnline === true,
+    refetchOnReconnect: isOnline === true,
   })
 
   // Handle errors

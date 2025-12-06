@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cellar",
     "slug": "cellarfi",
-    "version": "1.0.0",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icons/adaptive-icon.png",
     "scheme": "cellarfi",
@@ -11,11 +11,14 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
-      "associatedDomains": ["webcredentials:cellar.so"],
+      "associatedDomains": ["webcredentials:cellar.so", "applinks:cellar.so"],
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "We use Face ID to securely unlock your wallet and protect your assets.",
+        "UIBackgroundModes": ["remote-notification"]
       },
       "icon": {
         "dark": "./assets/icons/ios-dark.png",
@@ -27,11 +30,34 @@
       "adaptiveIcon": {
         "backgroundColor": "#15162B"
       },
-      "package": "com.cellar.so"
+      "package": "com.cellar.so",
+      "versionCode": 5,
+      "permissions": [],
+      "googleServicesFile": "/Users/mira/ultra/solana/cellar_mobile/google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "cellar.so",
+              "pathPrefix": "/post"
+            },
+            {
+              "scheme": "https",
+              "host": "cellar.so",
+              "pathPrefix": "/token"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-local-authentication",
       "expo-apple-authentication",
       "expo-font",
       [
@@ -46,6 +72,16 @@
         "expo-image-picker",
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      "expo-video",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icons/notification-icon.png",
+          "color": "#15162B",
+          "sounds": [],
+          "defaultChannel": "default"
         }
       ]
     ],

@@ -1,8 +1,9 @@
 import { Post } from '@/types/posts.interface'
 import React from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import DonationCard from './DonationCard'
 import MediaGallery from './MediaGallery'
+import TextWithMentions from './TextWithMentions'
 import TokenCallCard from './TokenCallCard'
 
 interface PostContentProps {
@@ -12,7 +13,7 @@ interface PostContentProps {
 const PostContent = React.memo(({ post }: PostContentProps) => {
   const renderRegularPost = () => (
     <View className='mb-2'>
-      <Text className='text-gray-100 text-base'>{post.content}</Text>
+      <TextWithMentions content={post.content} />
       {post.media && post.media.length > 0 && (
         <View className='mt-2'>
           <MediaGallery media={post.media} />
@@ -24,7 +25,9 @@ const PostContent = React.memo(({ post }: PostContentProps) => {
   const renderDonationPost = () => (
     <View>
       {/* Post text content */}
-      <Text className='text-gray-100 text-base mb-3'>{post.content}</Text>
+      <View className='mb-3'>
+        <TextWithMentions content={post.content} />
+      </View>
       {/* Media gallery */}
       {post.media && post.media.length > 0 && (
         <View className='mb-3'>
@@ -32,14 +35,18 @@ const PostContent = React.memo(({ post }: PostContentProps) => {
         </View>
       )}
       {/* Donation Card */}
-      {post.funding_meta && <DonationCard funding_meta={post.funding_meta} />}
+      {post.funding_meta && (
+        <DonationCard funding_meta={post.funding_meta} postId={post.id} />
+      )}
     </View>
   )
 
   const renderTokenCallPost = () => (
     <View>
       {/* Post text content */}
-      <Text className='text-gray-100 text-base mb-3'>{post.content}</Text>
+      <View className='mb-3'>
+        <TextWithMentions content={post.content} />
+      </View>
       {/* Media gallery */}
       {post.media && post.media.length > 0 && (
         <View className='mb-3'>

@@ -1,4 +1,5 @@
 import { birdEyeRequests } from '@/libs/api_requests/birdeye.request'
+import { useNetworkStore } from '@/store/networkStore'
 import { useTokenStore } from '@/store/tokenStore'
 import { BirdEyeTimePeriod } from '@/types'
 import { useMutation } from '@tanstack/react-query'
@@ -7,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react'
 export type ChartType = 'line' | 'candlestick'
 
 export function useTokenChart(tokenAddress: string) {
+  const { isOnline } = useNetworkStore()
   const [chartType, setChartType] = useState<ChartType>('candlestick')
   const [activeTimeFrame, setActiveTimeFrame] =
     useState<BirdEyeTimePeriod>('1H')
@@ -19,6 +21,11 @@ export function useTokenChart(tokenAddress: string) {
   // OHLCV mutation for candlestick chart
   const ohlcvMutation = useMutation({
     mutationFn: async ({ timeFrame }: { timeFrame: BirdEyeTimePeriod }) => {
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - cannot fetch chart data')
+      }
+
       const response = await birdEyeRequests.tokenOHLCV(tokenAddress, {
         type: timeFrame,
       })
@@ -43,6 +50,11 @@ export function useTokenChart(tokenAddress: string) {
   // Historical price mutation for line chart
   const historicalPriceMutation = useMutation({
     mutationFn: async ({ timeFrame }: { timeFrame: BirdEyeTimePeriod }) => {
+      // Check if offline before making request
+      if (isOnline === false) {
+        throw new Error('Device is offline - cannot fetch chart data')
+      }
+
       const response = await birdEyeRequests.historicalPrice(tokenAddress, {
         type: timeFrame,
       })

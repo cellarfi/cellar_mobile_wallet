@@ -1,13 +1,19 @@
 import CustomButton from '@/components/ui/CustomButton'
 import { Keys } from '@/constants/App'
 import { Colors } from '@/constants/Colors'
+import { ipInfoRequests } from '@/libs/api_requests/ipinfo.request'
+import { sessionRequests } from '@/libs/api_requests/session.request'
 import { userRequests } from '@/libs/api_requests/user.request'
+import {
+  getDeviceInfoAsync,
+  registerForPushNotifications,
+} from '@/libs/notifications.lib'
 import { Ionicons } from '@expo/vector-icons'
 import { useIdentityToken, useLoginWithEmail } from '@privy-io/expo'
 import * as Clipboard from 'expo-clipboard'
 import { router, useLocalSearchParams } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   AppState,
@@ -30,6 +36,8 @@ export default function VerifyEmailScreen() {
   const [timer, setTimer] = useState(60)
   const inputRefs = useRef<TextInput[]>([])
   const appState = useRef(AppState.currentState)
+  const isVerifying = useRef(false)
+  const hasNavigated = useRef(false)
 
   // Function to handle pasted text
   const handlePaste = (text: string) => {
@@ -45,7 +53,7 @@ export default function VerifyEmailScreen() {
   }
 
   // Function to check clipboard for OTP - only if it's a 6-digit code
-  const checkClipboardForOTP = async () => {
+  const checkClipboardForOTP = useCallback(async () => {
     try {
       const text = await Clipboard.getStringAsync()
       // Only process if the text is exactly 6 digits
@@ -55,7 +63,8 @@ export default function VerifyEmailScreen() {
     } catch (error) {
       console.log('Error checking clipboard:', error)
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Handle app state changes - only check clipboard on resume
   useEffect(() => {
@@ -73,7 +82,7 @@ export default function VerifyEmailScreen() {
     return () => {
       subscription.remove()
     }
-  }, [])
+  }, [checkClipboardForOTP])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -158,12 +167,19 @@ export default function VerifyEmailScreen() {
   }
 
   const handleVerify = async (otpString?: string) => {
+    // Prevent multiple simultaneous verification attempts
+    if (isVerifying.current) {
+      console.log('Verification already in progress, skipping duplicate call')
+      return
+    }
+
     const code = otpString || otp.join('')
     if (code.length !== 6) {
       Alert.alert('Error', 'Please enter the complete verification code')
       return
     }
 
+    isVerifying.current = true
     setIsLoading(true)
     try {
       const session = await loginWithCode({
@@ -190,46 +206,122 @@ export default function VerifyEmailScreen() {
           console.log('Error getting/storing identity token:', tokenError)
         }
 
-        // Fetch user profile
+        // Register device session for push notifications
+        try {
+          const pushToken = await registerForPushNotifications()
+          console.log('Push token:', pushToken)
+          if (pushToken) {
+            const deviceInfo = await getDeviceInfoAsync()
+
+            // Fetch IP info for location data
+            const ipInfo = await ipInfoRequests.getIPInfo()
+
+            // Store device ID and push token for later use
+            await SecureStore.setItemAsync(Keys.DEVICE_ID, deviceInfo.deviceId)
+            await SecureStore.setItemAsync(Keys.PUSH_TOKEN, pushToken)
+
+            const sessionResponse = await sessionRequests.createSession({
+              device_id: deviceInfo.deviceId,
+              push_token: pushToken,
+              platform: deviceInfo.platform,
+              device_name: deviceInfo.deviceName || undefined,
+              device_model: deviceInfo.deviceModel || undefined,
+              os_version: deviceInfo.osVersion || undefined,
+              app_version: deviceInfo.appVersion,
+              ip_address: ipInfo.data?.ip,
+              country: ipInfo.data?.country,
+              city: ipInfo.data?.city,
+              status: 'ACTIVE',
+            })
+
+            if (sessionResponse.success) {
+              console.log('Device session registered successfully')
+              // Store session ID for later use
+              if (sessionResponse.data?.id) {
+                await SecureStore.setItemAsync(
+                  Keys.DEVICE_SESSION_ID,
+                  sessionResponse.data.id
+                )
+              }
+            } else {
+              console.log(
+                'Failed to register device session:',
+                sessionResponse.message
+              )
+            }
+          } else {
+            console.log(
+              'No push token available, skipping session registration'
+            )
+          }
+        } catch (sessionError) {
+          console.log('Error registering device session:', sessionError)
+          // Don't block login if session registration fails
+        }
+
+        // Fetch user profile and determine navigation
+        let shouldNavigateToProfileSetup = false
+        let shouldShowWarning = false
+
         try {
           const profileResponse = await userRequests.getProfile()
           console.log('Profile response:', profileResponse)
 
           if (profileResponse.success && profileResponse.data) {
-            // User profile exists, store it and navigate to main app
+            // User profile exists, store it
             setProfile(profileResponse.data)
             console.log('User profile stored successfully')
-            router.replace('/(tabs)')
+          } else if (profileResponse.message === 'User not found') {
+            // User needs to set up profile
+            console.log('User not found, redirecting to profile setup')
+            shouldNavigateToProfileSetup = true
           } else {
-            // Check if it's a "User not found" error
-            if (profileResponse.message === 'User not found') {
-              console.log('User not found, redirecting to profile setup')
-              router.replace('/setup-profile')
-            } else {
-              // Other error, show alert but still navigate to main app
-              console.log('Profile fetch failed:', profileResponse.message)
-              Alert.alert(
-                'Warning',
-                'Could not fetch profile data. You can set it up later.'
-              )
-              router.replace('/(tabs)')
-            }
+            // Other error, show warning but continue
+            console.log('Profile fetch failed:', profileResponse.message)
+            shouldShowWarning = true
           }
         } catch (profileError) {
           console.log('Error fetching profile:', profileError)
+          shouldShowWarning = true
+        }
+
+        // Show warning if needed
+        if (shouldShowWarning) {
           Alert.alert(
             'Warning',
             'Could not fetch profile data. You can set it up later.'
           )
+        }
+
+        // Navigate based on the outcome - ensure we only navigate once
+        if (hasNavigated.current) {
+          console.log(
+            'Navigation already triggered, skipping duplicate navigation'
+          )
+          return
+        }
+
+        hasNavigated.current = true
+
+        if (shouldNavigateToProfileSetup) {
+          router.replace('/setup-profile')
+        } else {
+          // Navigate to tabs - AuthProvider will handle biometric setup prompt
           router.replace('/(tabs)')
         }
       }
     } catch (error: any) {
       console.log('error', error?.message)
-      if (error?.message?.includes('Already logged in'))
-        router.replace('/(tabs)')
-      else Alert.alert('Error', 'Invalid verification code. Please try again.')
+      if (error?.message?.includes('Already logged in')) {
+        if (!hasNavigated.current) {
+          hasNavigated.current = true
+          router.replace('/(tabs)')
+        }
+      } else {
+        Alert.alert('Error', 'Invalid verification code. Please try again.')
+      }
     } finally {
+      isVerifying.current = false
       setIsLoading(false)
     }
   }
@@ -241,7 +333,7 @@ export default function VerifyEmailScreen() {
       })
       setTimer(60)
       Alert.alert('Success', 'Verification code sent!')
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to resend code. Please try again.')
     }
   }
@@ -327,7 +419,7 @@ export default function VerifyEmailScreen() {
 
             {/* Verify Button */}
             <CustomButton
-              text={isLoading ? 'Verifying...' : 'Verify & Continue'}
+              text={isLoading ? 'Verifying...' : 'Verify'}
               onPress={() => handleVerify()}
               disabled={isLoading || otp.join('').length !== 6}
               className=' mb-6'

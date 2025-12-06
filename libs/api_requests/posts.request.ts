@@ -37,6 +37,23 @@ export const PostsRequests = {
     }
   },
 
+  deletePost: async (id: string) => {
+    try {
+      const api = httpRequest()
+      const response = await api.delete(`/posts/${id}`)
+      return apiResponse(true, 'Post deleted', response.data)
+    } catch (err: any) {
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error while deleting post',
+        err
+      )
+    }
+  },
+
   getPosts: async (page: string) => {
     try {
       const api = httpRequest()
@@ -113,6 +130,31 @@ export const PostsRequests = {
     }
   },
 
+  getUserPosts: async (tagName: string, page: string = '1', pageSize: string = '10') => {
+    try {
+      const api = httpRequest()
+      const response = await api.get(
+        `/posts/user/${tagName}?${new URLSearchParams({ page, pageSize })}`
+      )
+      return apiResponse<Post[]>(
+        true,
+        'user posts fetched successfully',
+        response.data.data,
+        response.data.pagination
+      )
+    } catch (err: any) {
+      console.log('Error fetching user posts:', err?.response?.data)
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error fetching user posts',
+        err
+      )
+    }
+  },
+
   getPost: async (id: string, page: string) => {
     try {
       const api = httpRequest()
@@ -178,13 +220,13 @@ export const PostsRequests = {
   },
 
   unlikePost: async (id: string, post_id: string) => {
-    let payload = {
+    const payload = {
       id,
       post_id,
     }
     try {
       const api = httpRequest()
-      const response = await api.delete(`/posts/likes/`, { data: payload })
+      const response = await api.delete('/posts/likes', { data: payload })
       return apiResponse(true, 'post unliked successfully', response.data.data)
     } catch (err: any) {
       return apiResponse(
@@ -192,7 +234,26 @@ export const PostsRequests = {
         err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          'Error liking post',
+          'Error unliking post',
+        err
+      )
+    }
+  },
+
+  incrementFundingAmount: async (postId: string, amount: number) => {
+    try {
+      const api = httpRequest()
+      const response = await api.patch(`/posts/${postId}/increment-funding`, {
+        amount,
+      })
+      return apiResponse(true, 'Funding amount updated', response.data.data)
+    } catch (err: any) {
+      return apiResponse(
+        false,
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error updating funding amount',
         err
       )
     }

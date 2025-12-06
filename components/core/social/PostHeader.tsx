@@ -1,10 +1,11 @@
+import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { useAuthStore } from '@/store/authStore'
 import { Post } from '@/types/posts.interface'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Modal, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Modal, Text, TouchableOpacity, View } from 'react-native'
 import {
   Gesture,
   GestureDetector,
@@ -20,11 +21,13 @@ import Animated, {
 interface PostHeaderProps {
   post: Post
   onEdit?: () => void
+  onDelete?: () => void
 }
 
-const PostHeader = React.memo(({ post, onEdit }: PostHeaderProps) => {
+const PostHeader = React.memo(({ post, onEdit, onDelete }: PostHeaderProps) => {
   const { profile } = useAuthStore()
   const [showMenu, setShowMenu] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const translateY = useSharedValue(300)
   const opacity = useSharedValue(0)
   const isOwner = profile?.id === post.user_id
@@ -71,12 +74,45 @@ const PostHeader = React.memo(({ post, onEdit }: PostHeaderProps) => {
     onEdit?.()
   }
 
+  const handleDelete = () => {
+    closeMenu()
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true)
+            try {
+              const response = await PostsRequests.deletePost(post.id)
+              if (response.success) {
+                onDelete?.()
+              } else {
+                Alert.alert(
+                  'Error',
+                  response.message || 'Failed to delete post'
+                )
+              }
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Failed to delete post')
+            } finally {
+              setDeleting(false)
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const handleViewProfile = () => {
     closeMenu()
-    router.push({
-      pathname: '/(modals)/user-profile',
-      params: { tagName: post.user.tag_name },
-    })
+    router.push(`/profile/${post.user.tag_name}` as any)
   }
 
   const formatTimeAgo = (dateString: string) => {
@@ -156,17 +192,31 @@ const PostHeader = React.memo(({ post, onEdit }: PostHeaderProps) => {
                 {/* Menu Items */}
                 <View className='px-6'>
                   {isOwner && (
-                    <TouchableOpacity
-                      onPress={handleEdit}
-                      className='flex-row items-center py-4 border-b border-zinc-800'
-                    >
-                      <View className='w-10 h-10 bg-blue-500/20 rounded-full items-center justify-center mr-4'>
-                        <Ionicons name='pencil' size={18} color='#3b82f6' />
-                      </View>
-                      <Text className='text-gray-100 text-lg font-medium'>
-                        Edit Post
-                      </Text>
-                    </TouchableOpacity>
+                    <>
+                      <TouchableOpacity
+                        onPress={handleEdit}
+                        className='flex-row items-center py-4 border-b border-zinc-800'
+                      >
+                        <View className='w-10 h-10 bg-blue-500/20 rounded-full items-center justify-center mr-4'>
+                          <Ionicons name='pencil' size={18} color='#3b82f6' />
+                        </View>
+                        <Text className='text-gray-100 text-lg font-medium'>
+                          Edit Post
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleDelete}
+                        disabled={deleting}
+                        className='flex-row items-center py-4 border-b border-zinc-800'
+                      >
+                        <View className='w-10 h-10 bg-red-500/20 rounded-full items-center justify-center mr-4'>
+                          <Ionicons name='trash' size={18} color='#ef4444' />
+                        </View>
+                        <Text className='text-gray-100 text-lg font-medium'>
+                          {deleting ? 'Deleting...' : 'Delete Post'}
+                        </Text>
+                      </TouchableOpacity>
+                    </>
                   )}
                   <TouchableOpacity
                     onPress={handleViewProfile}

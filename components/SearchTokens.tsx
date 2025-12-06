@@ -7,7 +7,6 @@ import { isValidUrl } from '@/libs/string.helpers'
 import { BirdEyeSearchItem, BirdEyeSearchTokenResult } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
@@ -16,7 +15,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
 interface SearchResult {
   address: string
@@ -30,25 +28,26 @@ interface SearchResult {
   rank?: number
 }
 
-export default function SearchScreen() {
+interface SearchTokensProps {
+  mode?: 'navigate' | 'select'
+  onTokenSelect?: (token: SearchResult) => void
+  onUrlDetected?: (url: string) => void
+  title?: string
+  placeholder?: string
+}
+
+export default function SearchTokens({
+  mode = 'navigate',
+  onTokenSelect,
+  onUrlDetected,
+  title = 'Search Tokens',
+  placeholder = 'Search tokens or enter URL...',
+}: SearchTokensProps) {
   const { trending } = useTrending()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Get parameters for different behaviors
-  const {
-    mode = 'navigate', // 'navigate' or 'select'
-    returnTo,
-    returnParam,
-    title = 'Search Tokens',
-  } = useLocalSearchParams<{
-    mode?: 'navigate' | 'select'
-    returnTo?: string
-    returnParam?: string
-    title?: string
-  }>()
 
   const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -66,11 +65,8 @@ export default function SearchScreen() {
         finalUrl = 'https://' + finalUrl
       }
 
-      // Navigate to browser with the URL
-      router.push({
-        pathname: '/(modals)/browser' as any,
-        params: { url: finalUrl, title: 'Browser' },
-      })
+      // Call the URL handler if provided
+      onUrlDetected?.(finalUrl)
     } else {
       // If not a URL, perform regular token search
       performSearch(searchQuery)
@@ -197,52 +193,7 @@ export default function SearchScreen() {
   }
 
   const handleTokenPress = (token: SearchResult) => {
-    if (mode === 'navigate') {
-      // Navigate to token detail screen
-      router.push({
-        pathname: '/(modals)/token-detail',
-        params: { tokenAddress: token.address },
-      })
-    } else if (mode === 'select' && returnTo && returnParam) {
-      // Convert SearchResult to BirdEyeSearchTokenResult format for consistency
-      const tokenResult = {
-        name: token.name,
-        symbol: token.symbol,
-        address: token.address,
-        network: 'solana' as const,
-        decimals: 9, // Default decimals, will be updated by the receiving screen
-        logo_uri: token.logoURI,
-        verified: token.verified,
-        fdv: 0,
-        market_cap: token.marketCap,
-        liquidity: 0,
-        price: token.price,
-        price_change_24h_percent: token.priceChange24h,
-        sell_24h: 0,
-        sell_24h_change_percent: 0,
-        buy_24h: 0,
-        buy_24h_change_percent: 0,
-        unique_wallet_24h: 0,
-        unique_wallet_24h_change_percent: 0,
-        trade_24h: 0,
-        trade_24h_change_percent: 0,
-        volume_24h_change_percent: 0,
-        volume_24h_usd: 0,
-        last_trade_unix_time: 0,
-        last_trade_human_time: '',
-        supply: 0,
-        updated_time: 0,
-        rank: token.rank,
-      }
-
-      // Return to the calling screen with the selected token
-      router.back()
-
-      // Set the parameters after going back to preserve the existing state
-      setTimeout(() => {
-        router.setParams({ [returnParam]: JSON.stringify(tokenResult) })
-      }, 100)
-    }
+    onTokenSelect?.(token)
   }
 
   const renderToken = ({ item }: { item: SearchResult }) => (
@@ -418,84 +369,64 @@ export default function SearchScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
-      <View className='flex-1'>
-        {/* Header */}
-        <View className='flex-row items-center justify-between px-6 py-4'>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className='w-10 h-10 rounded-full justify-center items-center'
-          >
-            <Ionicons name='chevron-back' size={20} color='white' />
-          </TouchableOpacity>
-          <Text className='text-white text-lg font-semibold'>{title}</Text>
-          <View className='w-10' />
-        </View>
-
-        {/* Search Bar */}
-        <View className='px-6 mb-4'>
-          <CustomTextInput
-            value={searchQuery}
-            onChangeText={handleSearchChange}
-            onSubmitEditing={handleUrlSubmit}
-            autoFocus
-            placeholder='Search tokens or enter URL...'
-            icon='search'
-            autoCapitalize='none'
-            autoCorrect={false}
-            returnKeyType='go'
-            isSearch
-          />
-        </View>
-
-        {/* Results */}
-        <View className='flex-1 px-6'>
-          {/* Section Header */}
-          {!isLoading && tokensToShow.length > 0 && (
-            <View className='mb-3'>
-              <View className='flex-row items-center justify-between'>
-                <Text className='text-gray-400 text-sm font-medium'>
-                  {searchQuery.trim()
-                    ? isValidUrl(searchQuery.trim())
-                      ? 'Tokens • Enter URL to browse'
-                      : 'Search Results'
-                    : 'Trending Tokens'}
-                  {/* {tokensToShow.length > 0 && (
-                    <Text className='text-gray-500'>
-                      {' '}
-                      ({tokensToShow.length})
-                    </Text>
-                  )} */}
-                  {searchQuery.trim() && !isValidUrl(searchQuery.trim()) && (
-                    <Text className='text-gray-500'> • Verified first</Text>
-                  )}
-                </Text>
-                {!searchQuery.trim() && trending?.updateTime && (
-                  <Text className='text-gray-500 text-xs'>
-                    Updated{' '}
-                    {new Date(trending.updateTime).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
-                )}
-              </View>
-            </View>
-          )}
-
-          {tokensToShow.length > 0 ? (
-            <FlatList
-              data={tokensToShow}
-              renderItem={renderToken}
-              keyExtractor={(item) => item.address}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            />
-          ) : (
-            renderEmptyState()
-          )}
-        </View>
+    <View className='flex-1'>
+      {/* Search Bar */}
+      <View className='px-6 mb-4'>
+        <CustomTextInput
+          value={searchQuery}
+          onChangeText={handleSearchChange}
+          onSubmitEditing={handleUrlSubmit}
+          autoFocus
+          placeholder={placeholder}
+          icon='search'
+          autoCapitalize='none'
+          autoCorrect={false}
+          returnKeyType='go'
+          isSearch
+        />
       </View>
-    </SafeAreaView>
+
+      {/* Results */}
+      <View className='flex-1 px-6'>
+        {/* Section Header */}
+        {!isLoading && tokensToShow.length > 0 && (
+          <View className='mb-3'>
+            <View className='flex-row items-center justify-between'>
+              <Text className='text-gray-400 text-sm font-medium'>
+                {searchQuery.trim()
+                  ? isValidUrl(searchQuery.trim())
+                    ? 'Tokens • Enter URL to browse'
+                    : 'Search Results'
+                  : 'Trending Tokens'}
+                {searchQuery.trim() && !isValidUrl(searchQuery.trim()) && (
+                  <Text className='text-gray-500'> • Verified first</Text>
+                )}
+              </Text>
+              {!searchQuery.trim() && trending?.updateTime && (
+                <Text className='text-gray-500 text-xs'>
+                  Updated{' '}
+                  {new Date(trending.updateTime).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {tokensToShow.length > 0 ? (
+          <FlatList
+            data={tokensToShow}
+            renderItem={renderToken}
+            keyExtractor={(item) => item.address}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        ) : (
+          renderEmptyState()
+        )}
+      </View>
+    </View>
   )
 }

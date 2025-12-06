@@ -1,24 +1,23 @@
 import CommentInputCard from '@/components/core/social/CommentInputCard'
 import CommentThread from '@/components/core/social/CommentThread'
-import MediaGallery from '@/components/core/social/MediaGallery'
-import { useTokenOverview } from '@/hooks/useTokenOverview'
+import PostContent from '@/components/core/social/PostContent'
+import PostEngagement from '@/components/core/social/PostEngagement'
+import PostHeader from '@/components/core/social/PostHeader'
+import { likePost } from '@/hooks/usePostActions'
 import { commentsRequests } from '@/libs/api_requests/comments.request'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
-import { formatAddress, formatNumber } from '@/libs/string.helpers'
 import { useAuthStore } from '@/store/authStore'
+import { usePostDetailsStore } from '@/store/socialEventsStore'
 import { Comment as ThreadComment } from '@/types/comment.interface'
 import { Post } from '@/types/posts.interface'
 import { Ionicons } from '@expo/vector-icons'
-import * as Clipboard from 'expo-clipboard'
-import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  Image,
-  Pressable,
   RefreshControl,
   ScrollView,
+  Share,
   Text,
   TouchableOpacity,
   View,
@@ -47,69 +46,6 @@ const Card = ({
   </View>
 )
 
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <Text className='text-white text-lg font-bold mb-2 tracking-tight'>
-    {children}
-  </Text>
-)
-
-// router function to redirect to Send Modal with donation wallet address
-function handleDonation(
-  address: string,
-  memo: string,
-  postId: string,
-  selectedToken: string
-) {
-  router.push({
-    pathname: '/(modals)/send',
-    params: {
-      recipient: address,
-      currentMemo: memo + 'Donation',
-      postId,
-      donation: 'true',
-      selectedToken,
-    },
-  })
-}
-
-const DonationProgressBar = ({
-  current,
-  target,
-}: {
-  current: string
-  target: string
-}) => {
-  const currentNum = parseFloat(current || '0')
-  const targetNum = parseFloat(target || '1')
-  const percent = Math.min((currentNum / targetNum) * 100, 100)
-  const overFunded = currentNum > targetNum
-  return (
-    <View className='my-2'>
-      <View className='flex-row justify-between mb-1'>
-        <Text className='text-gray-200 font-bold text-xs'>
-          Raised: {formatNumber(Number(current))}
-        </Text>
-        <Text className='text-gray-200 font-bold text-xs'>
-          Target: {formatNumber(Number(target))}
-        </Text>
-      </View>
-      <View className='h-2 bg-dark-300 rounded-full w-full overflow-hidden'>
-        <View
-          style={{ width: `${percent}%` }}
-          className={`h-2 ${
-            overFunded ? 'bg-success-400' : 'bg-primary-500'
-          } rounded-full`}
-        />
-      </View>
-      {overFunded && (
-        <Text className='text-success-400 font-bold mt-1 text-xs'>
-          Overfunded by {formatNumber(currentNum - targetNum)}!
-        </Text>
-      )}
-    </View>
-  )
-}
-
 const PostDetailsModal = () => {
   const { postId: rawPostId } = useLocalSearchParams()
   const postIdRef = useRef(rawPostId)
@@ -117,8 +53,9 @@ const PostDetailsModal = () => {
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
   const { profile } = useAuthStore()
+  const refreshFeed = usePostDetailsStore((state) => state.refreshFeed)
+  const resetRefresh = usePostDetailsStore((state) => state.resetRefresh)
   const [showCommentInput, setShowCommentInput] = useState(false)
   const [comments, setComments] = useState<ThreadComment[]>([])
   const [posting, setPosting] = useState(false)
@@ -135,97 +72,33 @@ const PostDetailsModal = () => {
   const [hasMorePages, setHasMorePages] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Get token address from post if available
-  const tokenAddress = post?.token_meta?.token_address || ''
-  const { token: tokenData } = useTokenOverview(tokenAddress)
-
   // Update ref when postId changes
   useEffect(() => {
     postIdRef.current = rawPostId
   }, [rawPostId])
 
-  // function to like a post
+  // Use centralized like function
   const handleLike = async () => {
-    setPost((prev) =>
-      prev
-        ? {
-            ...prev,
-            like: {
-              ...prev.like,
-              status: !prev.like.status,
-            },
-            _count: {
-              ...prev._count,
-              like: prev.like.status
-                ? (prev._count.like || 0) - 1
-                : (post?._count.like || 0) + 1,
-            },
-          }
-        : null
-    )
-
+    if (!post) return
     try {
-      if (post?.like?.status) {
-        // Unlike the post
-        const response = await PostsRequests.unlikePost(post.like.id, post.id)
-        if (!response.success) {
-          throw new Error('Failed to unlike post')
-        }
-      } else {
-        // Like the post
-        const response = await PostsRequests.likePost(post?.id || '')
-        if (!response.success) {
-          throw new Error('Failed to like post')
-        }
-        // Update the like id with the response data
-        setPost((prev) =>
-          prev
-            ? {
-                ...prev,
-                like: { ...prev.like, id: response.data.id },
-              }
-            : null
-        )
-      }
-    } catch (error) {
-      console.log(error)
-      // Revert the changes if the API call fails
-      if (post) {
-        setPost(post)
-      }
+      await likePost(post, (updatedPost) => setPost(updatedPost))
+    } catch {
       alert('Failed to update like status')
     }
   }
-
-  const redirectToUserProfile = (tagName: string) => {
-    router.push({
-      pathname: '/(modals)/user-profile',
-      params: { tagName },
-    })
-  }
-
-  // Memoize the token object for swap
-  const token = tokenData
-    ? {
-        address: tokenData.tokenOverview.address,
-        name: tokenData.tokenOverview.name,
-        symbol: tokenData.tokenOverview.symbol,
-        decimals: tokenData.tokenOverview.decimals,
-        logoURI: tokenData.tokenOverview.logoURI,
-        price: tokenData.tokenOverview.price,
-        priceChange24hPercent:
-          tokenData.tokenOverview.priceChange24hPercent || 0,
-        v24hUSD: tokenData.tokenOverview.v24hUSD,
-        fdv: tokenData.tokenOverview.fdv,
-        marketCap: tokenData.tokenOverview.marketCap,
-        liquidity: tokenData.tokenOverview.liquidity,
-      }
-    : undefined
 
   useEffect(() => {
     console.log('Post ID ref', postIdRef.current)
     if (postIdRef.current) fetchPost()
   }, [postIdRef.current])
+
+  // Listen for refresh trigger (e.g., after donation)
+  useEffect(() => {
+    if (refreshFeed && postIdRef.current) {
+      fetchPost()
+      resetRefresh()
+    }
+  }, [refreshFeed])
 
   useEffect(() => {
     if (currentPage === 1) {
@@ -506,261 +379,13 @@ const PostDetailsModal = () => {
       </SafeAreaView>
     )
 
-  // User header
-  const userHeader = (
-    <Pressable
-      className='flex-row items-center mb-4'
-      onPress={() => redirectToUserProfile(post.user.tag_name)}
-    >
-      {post.user?.profile_picture_url ? (
-        <Image
-          source={{ uri: post.user.profile_picture_url }}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: '#23272f',
-            marginRight: 10,
-          }}
-        />
-      ) : (
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: '#23272f',
-            marginRight: 10,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 16 }}>
-            {post.user?.display_name?.[0]?.toUpperCase() ?? '?'}
-          </Text>
-        </View>
-      )}
-      <View className='flex-1'>
-        <Text className='flex-col text-white font-bold text-base leading-tight'>
-          {post.user?.display_name}
-          <Text className='text-gray-400 font-normal'>
-            {' '}
-            @{post.user.tag_name}
-          </Text>
-        </Text>
-        <Text className='text-gray-500 text-xs mt-0.5'>
-          {new Date(post.created_at).toLocaleString()}
-        </Text>
-      </View>
-      <Ionicons name='ellipsis-horizontal' size={22} color='#6366f1' />
-    </Pressable>
-  )
-
-  // Content rendering by type
-  let contentBlock = null
-  if (post.post_type === 'REGULAR') {
-    contentBlock = (
-      <View>
-        <SectionTitle>Post</SectionTitle>
-        <Text className='text-white text-base leading-relaxed mb-1'>
-          {post.content}
-        </Text>
-        {post.media?.length ? (
-          <View className='mt-3'>
-            <MediaGallery media={post.media} maxItems={4} />
-          </View>
-        ) : null}
-      </View>
-    )
-  } else if (post.post_type === 'DONATION' && post.funding_meta) {
-    const { wallet_address } = post.funding_meta || {}
-    contentBlock = (
-      <Card>
-        <SectionTitle>Donation</SectionTitle>
-        <Text className='text-white text-base leading-relaxed mb-2'>
-          {post.content}
-        </Text>
-        {post.media?.length ? (
-          <View className='mt-3'>
-            <MediaGallery media={post.media} maxItems={4} />
-          </View>
-        ) : null}
-        <DonationProgressBar
-          current={post.funding_meta.current_amount}
-          target={post.funding_meta.target_amount}
-        />
-        <View className='flex-row items-center mt-2'>
-          <Ionicons name='wallet-outline' size={18} color='#6366f1' />
-          <Text className='text-gray-400 text-xs ml-2'>
-            {post.funding_meta.token_symbol || 'Token'} on{' '}
-            {post.funding_meta.chain_type}
-          </Text>
-        </View>
-        {post.funding_meta.deadline && (
-          <Text className='text-gray-500 text-xs mt-1'>
-            Ends: {new Date(post.funding_meta.deadline).toLocaleDateString()}
-          </Text>
-        )}
-        <Divider />
-        <Text className='text-white font-bold text-sm mb-1'>
-          Funding Details
-        </Text>
-        {wallet_address ? (
-          <View className='flex-row justify-between items-center mb-1'>
-            <Text className='text-gray-400 text-xs'>Wallet:</Text>
-            <View className='flex-row items-center'>
-              <Text className='text-white text-xs font-mono mr-2'>
-                {formatAddress(wallet_address)}
-              </Text>
-              <TouchableOpacity
-                onPress={() => handleCopyWallet(wallet_address)}
-                className='p-1'
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={copied ? 'checkmark-outline' : 'copy-outline'}
-                  size={16}
-                  color='#6366f1'
-                />
-              </TouchableOpacity>
-              {copied && (
-                <Text className='text-success-400 text-xs ml-1'>Copied!</Text>
-              )}
-            </View>
-          </View>
-        ) : null}
-        <Text className='text-gray-400 text-xs mt-0.5'>
-          Status: {post.funding_meta.status}
-        </Text>
-        {/* Donate Button */}
-        <TouchableOpacity
-          className='bg-primary-500 rounded-xl py-2 px-6 self-start mt-4'
-          activeOpacity={0.92}
-          onPress={() =>
-            handleDonation(
-              post.funding_meta?.wallet_address || '',
-              post.content || '',
-              post.id || '',
-              post.funding_meta?.token_address || ''
-            )
-          }
-        >
-          <Text className='text-white font-bold'>Donate</Text>
-        </TouchableOpacity>
-      </Card>
-    )
-  } else if (post.post_type === 'TOKEN_CALL' && post.token_meta) {
-    contentBlock = (
-      <Card>
-        <SectionTitle>Token Call</SectionTitle>
-        <View className='flex-row items-center mb-2'>
-          {post.token_meta.logo_url && (
-            <Image
-              source={{ uri: post.token_meta.logo_url }}
-              className='w-14 h-14 rounded-full mr-3 bg-dark-300 border border-dark-300'
-            />
-          )}
-          <View>
-            <Text className='text-white font-bold text-base leading-tight'>
-              {post.token_meta.token_name}{' '}
-              <Text className='text-gray-400'>
-                ({post.token_meta.token_symbol})
-              </Text>
-            </Text>
-            {post.token_meta.launch_date && (
-              <Text className='text-gray-500 text-xs mt-0.5'>
-                Launch:{' '}
-                {new Date(post.token_meta.launch_date).toLocaleDateString()}
-              </Text>
-            )}
-          </View>
-        </View>
-        <Text className='text-white text-base leading-relaxed mb-1'>
-          {post.content}
-        </Text>
-        {post.media?.length ? (
-          <View className='mt-3'>
-            <MediaGallery media={post.media} maxItems={4} />
-          </View>
-        ) : null}
-        {post.token_meta.description && (
-          <Text className='text-gray-200 text-xs mb-1'>
-            {post.token_meta.description}
-          </Text>
-        )}
-        <View className='flex-row flex-wrap gap-2 mb-2'>
-          {post.token_meta.initial_price && (
-            <Text className='text-white text-xs mr-2'>
-              Initial: ${post.token_meta.initial_price}
-            </Text>
-          )}
-          {post.token_meta.target_price && (
-            <Text className='text-white text-xs mr-2'>
-              Target: ${post.token_meta.target_price}
-            </Text>
-          )}
-          {post.token_meta.market_cap && (
-            <Text className='text-white text-xs mr-2'>
-              MC: ${post.token_meta.market_cap}
-            </Text>
-          )}
-        </View>
-        <TouchableOpacity
-          className='bg-primary-500 rounded-xl py-2 px-6 self-start mt-2'
-          activeOpacity={0.92}
-          onPress={() =>
-            handleTokenSwap(
-              post.token_meta?.token_address || '',
-              post.token_meta?.token_symbol || '',
-              post.token_meta?.token_name || ''
-            )
-          }
-        >
-          <Text className='text-white font-bold'>Buy</Text>
-        </TouchableOpacity>
-      </Card>
-    )
+  // Handle tip
+  const handleTip = () => {
+    router.push({
+      pathname: '/(modals)/send',
+      params: { recipient: post.user.wallets?.address || '' },
+    })
   }
-
-  // Engagement row (likes, comments, share)
-  const engagementRow = (
-    <View className='flex-row items-center justify-between mt-2 mb-4'>
-      <View className='flex-row items-center'>
-        <TouchableOpacity className='flex-row items-center mr-4'>
-          <Ionicons
-            name={post.like?.status ? 'heart' : 'heart-outline'}
-            size={22}
-            color={post.like?.status ? '#ef4444' : '#475569'}
-            onPress={() => handleLike()}
-          />
-          <Text className='text-gray-400 text-xs ml-1'>{post._count.like}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className='flex-row items-center mr-4'>
-          <Ionicons name='chatbubble-outline' size={20} color='#475569' />
-          <Text className='text-gray-400 text-xs ml-1'>
-            {post._count.comment}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity className='flex-row items-center'>
-          <Ionicons name='arrow-redo-outline' size={20} color='#475569' />
-          <Text className='text-gray-400 text-xs ml-1'>Share</Text>
-        </TouchableOpacity>
-      </View>
-      <View>
-        <TouchableOpacity
-          onPress={() => {
-            router.push({
-              pathname: '/(modals)/send',
-              params: { recipient: post.user.wallets.address },
-            })
-          }}
-          className='flex-row items-center mr-2'
-        >
-          <Ionicons name='cash-outline' size={20} color='#475569' />
-        </TouchableOpacity>
-      </View>
-    </View>
-  )
 
   // render comments thread
   const CommentThreadRenderer = React.memo(() => {
@@ -790,34 +415,6 @@ const PostDetailsModal = () => {
         <ActivityIndicator color='#6366f1' />
       </View>
     )
-  }
-
-  // Copy wallet address handler
-  const handleCopyWallet = async (address: string) => {
-    try {
-      await Clipboard.setStringAsync(address)
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch (e) {
-      // Optionally handle error
-    }
-  }
-
-  // Router function to redirect to Swap Modal with token details
-  function handleTokenSwap(
-    tokenAddress: string,
-    tokenSymbol: string,
-    tokenName: string
-  ) {
-    router.push({
-      pathname: '/(modals)/swap',
-      params: {
-        outputToken: token ? JSON.stringify(token) : '',
-        tokenSymbol,
-        tokenName,
-      },
-    })
   }
 
   // Pull to refresh function
@@ -867,11 +464,29 @@ const PostDetailsModal = () => {
           <View className='w-10' />
         </View>
         <Card>
-          {userHeader}
-          {contentBlock}
+          <PostHeader post={post} />
+          <PostContent post={post} />
         </Card>
         <Divider />
-        {engagementRow}
+        <PostEngagement
+          post={post}
+          onLike={() => handleLike()}
+          onComment={handleShowCommentInput}
+          onShare={async () => {
+            try {
+              const postUrl = `https://cellar.so/post/${post.id}`
+              await Share.share({
+                message: postUrl,
+                url: postUrl,
+              })
+            } catch (error) {
+              console.error('Error sharing post:', error)
+            }
+          }}
+          onTip={handleTip}
+          showTip={true}
+          variant='compact'
+        />
         {/* Comment Input Card */}
         <View style={{ marginTop: 10 }}>
           {!showCommentInput ? (

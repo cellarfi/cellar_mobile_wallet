@@ -90,7 +90,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               onPress={() =>
                 router.push({
-                  pathname: '/(modals)/search',
+                  pathname: '/(screens)/search',
                   params: {
                     mode: 'navigate',
                     title: 'Search Tokens',
@@ -152,7 +152,7 @@ export default function HomeScreen() {
               icon='swap-horizontal'
               title='Swap'
               // gradient={true}
-              onPress={() => router.push('/(modals)/swap')}
+              onPress={() => router.push('/(screens)/swap')}
             />
             <QuickActionButton
               icon='rocket-outline'
@@ -191,7 +191,7 @@ export default function HomeScreen() {
                 <TokenCard key={`${token.address}-${index}`} token={token} />
               ))
           ) : (
-            <View className='bg-dark-200 rounded-2xl p-6 items-center'>
+            <View className='bg-secondary-light rounded-2xl p-6 items-center'>
               <Ionicons name='wallet-outline' size={48} color='#666672' />
               <Text className='text-gray-400 text-center mt-4'>
                 No tokens found in your wallet
@@ -261,7 +261,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Social Feed */}
-        <View className='px-6 mb-6'>
+        <View className='px-6 mb-6 hidden'>
           <View className='flex-row items-center justify-between mb-4'>
             <Text className='text-white text-xl font-bold'>
               Community Pulse

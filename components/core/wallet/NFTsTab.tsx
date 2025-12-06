@@ -72,7 +72,7 @@ export const NFTsTab = forwardRef<NFTsTabRef>((props, ref) => {
               asset={item}
               onPress={() =>
                 router.push({
-                  pathname: '/(modals)/nft-detail',
+                  pathname: '/(screens)/nft-detail',
                   params: { id: item.id },
                 })
               }

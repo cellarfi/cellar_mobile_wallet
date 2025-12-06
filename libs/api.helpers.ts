@@ -1,18 +1,20 @@
 import { Keys } from '@/constants/App'
 import { ENV } from '@/constants/Env'
-import { ApiResponseInterface } from '@/types/api_response'
-import axios, { AxiosRequestHeaders, type AxiosInstance } from 'axios'
+import { ApiResponseInterface, PaginationInfo } from '@/types/api_response'
+import axios, { type AxiosInstance } from 'axios'
 import * as SecureStore from 'expo-secure-store'
 
 export const apiResponse = <D = any>(
   success: boolean,
   message: string,
-  data?: D
+  data?: D,
+  pagination?: PaginationInfo
 ): ApiResponseInterface<D> => {
   return {
     success,
     message,
     data,
+    pagination,
   }
 }
 
@@ -30,9 +32,8 @@ export const httpRequest = (setLoading?: (loading: boolean) => void) => {
 
     const token = await SecureStore.getItemAsync(Keys.PRIVY_IDENTITY_TOKEN)
     if (token) {
-      config.headers = {
-        Authorization: `Bearer ${token}`,
-      } as AxiosRequestHeaders
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
     }
 
     // Log the full request URL
