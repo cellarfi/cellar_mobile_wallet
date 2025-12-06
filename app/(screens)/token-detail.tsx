@@ -240,7 +240,7 @@ export default function TokenDetailScreen() {
 
 📍 Contract: ${tokenAddress}
 
-🔗 View on Cellar: https://cellar.so/token/${tokenAddress}
+🔗 View on Cellar: https://cellar.so/token/${tokenAddress}?network=solana
 
 Powered by Cellar Wallet`
 

@@ -7,9 +7,17 @@ import { usePortfolio } from '@/hooks/usePortfolio'
 import { userRequests } from '@/libs/api_requests/user.request'
 import { useAuthStore } from '@/store/authStore'
 import { User } from '@/types'
+import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import {
+  ActivityIndicator,
+  Animated,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ProfileScreen() {
@@ -21,6 +29,9 @@ export default function ProfileScreen() {
   const [userProfile, setUserProfile] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showScrollToTop, setShowScrollToTop] = useState(false)
+  const scrollViewRef = useRef<ScrollView>(null)
+  const fadeAnim = useRef(new Animated.Value(0)).current
 
   // Determine if viewing own profile
   const isOwnProfile = !tag_name || tag_name === currentUserProfile?.tag_name
@@ -55,6 +66,24 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y
+    const shouldShow = offsetY > 300 // Show button after scrolling 300px
+
+    if (shouldShow !== showScrollToTop) {
+      setShowScrollToTop(shouldShow)
+      Animated.timing(fadeAnim, {
+        toValue: shouldShow ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start()
+    }
+  }
+
+  const scrollToTop = () => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   }
 
   if (loading) {
@@ -93,10 +122,18 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
-      <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
-        {/* Header */}
+      {/* Sticky Header */}
+      <View className='bg-primary-main z-10'>
         <ProfileHeader isOwnProfile={isOwnProfile} />
+      </View>
 
+      <ScrollView
+        ref={scrollViewRef}
+        className='flex-1'
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {/* Profile Card */}
         <ProfileCard
           profile={userProfile}
@@ -112,6 +149,34 @@ export default function ProfileScreen() {
         {/* User Posts */}
         <UserPosts tagName={userProfile.tag_name} isOwnProfile={isOwnProfile} />
       </ScrollView>
+
+      {/* Scroll to Top Button */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          opacity: fadeAnim,
+          zIndex: 1000,
+          pointerEvents: showScrollToTop ? 'auto' : 'none',
+        }}
+      >
+        <TouchableOpacity
+          onPress={scrollToTop}
+          disabled={!showScrollToTop}
+          className='w-14 h-14 bg-secondary rounded-full justify-center items-center shadow-lg'
+          activeOpacity={0.8}
+          style={{
+            shadowColor: '#00C2CB',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+        >
+          <Ionicons name='arrow-up' size={24} color='white' />
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   )
 }

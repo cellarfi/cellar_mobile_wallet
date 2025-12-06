@@ -78,10 +78,17 @@ export const pointsRequests = {
         params.set('offset', options.offset.toString());
 
       const response = await api.get(`/points/history?${params.toString()}`);
+
+      // Extract data and pagination from server response
+      const historyResponse: PointsHistoryResponse = {
+        data: response.data?.data || [],
+        pagination: response.data?.pagination || { total: 0, offset: 0, limit: 10 },
+      };
+
       return apiResponse<PointsHistoryResponse>(
         true,
         'Points history fetched successfully',
-        response.data
+        historyResponse
       );
     } catch (err: any) {
       console.log('Error fetching points history:', err?.response?.data?.data);

@@ -1,18 +1,20 @@
 import { Keys } from '@/constants/App'
 import { ENV } from '@/constants/Env'
-import { ApiResponseInterface } from '@/types/api_response'
+import { ApiResponseInterface, PaginationInfo } from '@/types/api_response'
 import axios, { type AxiosInstance } from 'axios'
 import * as SecureStore from 'expo-secure-store'
 
 export const apiResponse = <D = any>(
   success: boolean,
   message: string,
-  data?: D
+  data?: D,
+  pagination?: PaginationInfo
 ): ApiResponseInterface<D> => {
   return {
     success,
     message,
     data,
+    pagination,
   }
 }
 

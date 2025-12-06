@@ -232,7 +232,7 @@ export const userRequests = {
       const response = await api.get(
         `/users/search?query=${encodeURIComponent(query)}`
       )
-      return apiResponse<SearchUsers>(
+      return apiResponse<SearchUsers[]>(
         true,
         'Users found successfully',
         response.data?.data

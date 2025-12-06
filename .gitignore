@@ -8,6 +8,9 @@ node_modules/
 dist/
 web-build/
 
+google-services.json
+firebase-admin.json
+
 # Native
 *.orig.*
 *.jks

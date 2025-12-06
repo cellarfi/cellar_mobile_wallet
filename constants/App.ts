@@ -2,9 +2,16 @@ import { ENV } from './Env'
 
 export const Keys = {
   PRIVY_IDENTITY_TOKEN: 'privy_identity_token',
+  PRIVY_TOKEN_TIMESTAMP: 'privy_token_timestamp',
   BIOMETRIC_ENABLED: 'biometric_enabled',
   APP_LOCKED: 'app_locked',
+  DEVICE_SESSION_ID: 'device_session_id',
+  DEVICE_ID: 'device_id',
+  PUSH_TOKEN: 'push_token',
 }
+
+// Token refresh interval in milliseconds (1 hour)
+export const TOKEN_REFRESH_INTERVAL_MS = 60 * 60 * 1000
 
 // Number of days required between tag name updates
 export const TAG_NAME_UPDATE_RATE_LIMIT = 7

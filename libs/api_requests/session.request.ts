@@ -47,6 +47,25 @@ export const sessionRequests = {
   },
 
   /**
+   * Check if a session is still active (for remote logout detection)
+   */
+  checkSessionStatus: async (deviceId: string) => {
+    try {
+      const api = httpRequest()
+      const res = await api.get(`/sessions/status/${deviceId}`)
+
+      return apiResponse(true, 'Session status checked', res.data.data)
+    } catch (err: any) {
+      console.log('Error checking session status:', err?.response?.data)
+      return apiResponse(
+        false,
+        err?.response?.data?.error || err?.message || 'Error occurred.',
+        err
+      )
+    }
+  },
+
+  /**
    * Get a specific session by ID
    */
   getSession: async (sessionId: string) => {
@@ -67,6 +86,7 @@ export const sessionRequests = {
 
   /**
    * Create a new session (typically called when user logs in)
+   * Note: user_id is automatically extracted from the auth token on the server
    */
   createSession: async (sessionData: CreateSessionDto) => {
     try {
@@ -86,6 +106,7 @@ export const sessionRequests = {
 
   /**
    * Update an existing session
+   * Note: session_id is passed as a URL parameter, not in the body
    */
   updateSession: async (sessionId: string, updateData: UpdateSessionDto) => {
     try {
@@ -133,6 +154,50 @@ export const sessionRequests = {
       return apiResponse(true, 'Session signed out successfully', res.data)
     } catch (err: any) {
       console.log('Error signing out session:', err?.response?.data)
+      return apiResponse(
+        false,
+        err?.response?.data?.error || err?.message || 'Error occurred.',
+        err
+      )
+    }
+  },
+
+  /**
+   * Sign out a session by device ID (remote logout)
+   */
+  signOutByDeviceId: async (deviceId: string) => {
+    try {
+      const api = httpRequest()
+      const res = await api.post('/sessions/signout-device', {
+        device_id: deviceId,
+      })
+
+      return apiResponse(true, 'Device signed out successfully', res.data)
+    } catch (err: any) {
+      console.log('Error signing out device:', err?.response?.data)
+      return apiResponse(
+        false,
+        err?.response?.data?.error || err?.message || 'Error occurred.',
+        err
+      )
+    }
+  },
+
+  /**
+   * Sign out all sessions for the current user
+   */
+  signOutAllDevices: async () => {
+    try {
+      const api = httpRequest()
+      const res = await api.post('/sessions/signout-all')
+
+      return apiResponse(
+        true,
+        'All devices signed out successfully',
+        res.data.data
+      )
+    } catch (err: any) {
+      console.log('Error signing out all devices:', err?.response?.data)
       return apiResponse(
         false,
         err?.response?.data?.error || err?.message || 'Error occurred.',

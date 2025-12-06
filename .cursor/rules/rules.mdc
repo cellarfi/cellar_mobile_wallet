@@ -2,7 +2,8 @@
 alwaysApply: true
 ---
 - Use functional React components instead of class components.
-- Apply Tailwind CSS for styling; avoid inline styles.
+- Apply nativewind Tailwind CSS for styling over react native styles except component does not support nativewind.
+- Nativewind does not support space- class for spacing always gap example (gap-3)
 - Components should be modular and reusable.
 - Maintain a consistent and clear component structure.
 - api requests should be in /libs/api_requests

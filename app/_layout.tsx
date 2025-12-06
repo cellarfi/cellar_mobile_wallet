@@ -47,11 +47,15 @@ export default function RootLayout() {
         <Stack.Screen name='index' />
         <Stack.Screen name='(auth)' />
         <Stack.Screen name='(tabs)' />
+        <Stack.Screen name='(screens)' />
         <Stack.Screen name='(modals)' />
         <Stack.Screen name='browser' />
         <Stack.Screen name='setup-profile' />
         <Stack.Screen name='profile' />
         <Stack.Screen name='launch' />
+        {/* Deep link routes */}
+        <Stack.Screen name='post/[postId]' />
+        <Stack.Screen name='token/[tokenAddress]' />
         <Stack.Screen name='+not-found' />
       </Stack>
       <StatusBar style='light' backgroundColor='#0a0a0b' />

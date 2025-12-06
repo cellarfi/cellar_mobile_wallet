@@ -4,7 +4,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import TabBarBackground from '@/components/ui/TabBarBackground'
-import { Colors } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors'
 
 export default function TabLayout() {
   return (
@@ -34,7 +34,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name='index'
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
@@ -51,7 +51,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="wallet"
+        name='wallet'
         options={{
           title: 'Wallet',
           tabBarIcon: ({ color, focused }) => (
@@ -68,7 +68,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="trading"
+        name='trading'
         options={{
           title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
@@ -86,7 +86,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="social"
+        name='social'
         options={{
           title: 'Feed',
           tabBarIcon: ({ color, focused }) => (
@@ -103,7 +103,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name='explore'
         options={{
           title: 'Browse',
           tabBarIcon: ({ color, focused }) => (
@@ -120,5 +120,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  );
+  )
 }

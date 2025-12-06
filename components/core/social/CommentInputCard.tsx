@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
+import { SearchUsers } from '@/types/user.interface';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MentionSuggestions from './MentionSuggestions';
 
 const MAX_LENGTH = 280;
 
@@ -39,6 +41,50 @@ export default function CommentInputCard({
   const [showModal, setShowModal] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const [anim] = useState(new Animated.Value(0));
+
+  // Mention state
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [cursorPosition, setCursorPosition] = useState(0);
+
+  // Detect @mention while typing
+  const handleTextChange = useCallback((newText: string) => {
+    setText(newText);
+
+    // Find if we're typing a mention
+    const beforeCursor = newText.substring(0, cursorPosition + (newText.length - text.length));
+    const mentionMatch = beforeCursor.match(/@(\w*)$/);
+
+    if (mentionMatch) {
+      setMentionQuery(mentionMatch[1]);
+      setShowMentions(true);
+    } else {
+      setShowMentions(false);
+      setMentionQuery('');
+    }
+  }, [cursorPosition, text.length]);
+
+  // Handle user selection from mention suggestions
+  const handleMentionSelect = useCallback((user: SearchUsers) => {
+    // Find the @ position and replace with full mention
+    const beforeCursor = text.substring(0, cursorPosition);
+    const afterCursor = text.substring(cursorPosition);
+    const mentionMatch = beforeCursor.match(/@(\w*)$/);
+
+    if (mentionMatch) {
+      const beforeMention = beforeCursor.substring(0, mentionMatch.index);
+      const newText = `${beforeMention}@${user.tag_name} ${afterCursor}`;
+      setText(newText);
+      setCursorPosition(beforeMention.length + user.tag_name.length + 2); // +2 for @ and space
+    }
+
+    setShowMentions(false);
+    setMentionQuery('');
+  }, [text, cursorPosition]);
+
+  const handleSelectionChange = useCallback((event: any) => {
+    setCursorPosition(event.nativeEvent.selection.end);
+  }, []);
 
   // Animate in on mount
   React.useEffect(() => {
@@ -112,6 +158,17 @@ export default function CommentInputCard({
       }}
     >
       {quotedBlock}
+      {/* Mention Suggestions */}
+      {showMentions && (
+        <View style={{ marginBottom: 8 }}>
+          <MentionSuggestions
+            query={mentionQuery}
+            onSelect={handleMentionSelect}
+            onClose={() => setShowMentions(false)}
+            visible={showMentions}
+          />
+        </View>
+      )}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextInput
           ref={inputRef}
@@ -126,7 +183,8 @@ export default function CommentInputCard({
           placeholder="Post your reply"
           placeholderTextColor="#888"
           value={text}
-          onChangeText={setText}
+          onChangeText={handleTextChange}
+          onSelectionChange={handleSelectionChange}
           multiline={expanded}
           maxLength={MAX_LENGTH}
           editable={!loading}
@@ -226,6 +284,17 @@ export default function CommentInputCard({
           </Text>
         </View>
         {quotedBlock}
+        {/* Mention Suggestions in Modal */}
+        {showMentions && (
+          <View style={{ marginBottom: 8 }}>
+            <MentionSuggestions
+              query={mentionQuery}
+              onSelect={handleMentionSelect}
+              onClose={() => setShowMentions(false)}
+              visible={showMentions}
+            />
+          </View>
+        )}
         <TextInput
           ref={inputRef}
           style={{
@@ -242,7 +311,8 @@ export default function CommentInputCard({
           placeholder="What's happening?"
           placeholderTextColor="#888"
           value={text}
-          onChangeText={setText}
+          onChangeText={handleTextChange}
+          onSelectionChange={handleSelectionChange}
           multiline
           maxLength={MAX_LENGTH}
           editable={!loading}

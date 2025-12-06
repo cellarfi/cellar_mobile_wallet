@@ -2,18 +2,24 @@ import Header from '@/components/core/social/Header'
 import PostCard from '@/components/core/social/PostCard'
 import Tabs from '@/components/core/social/Tabs'
 import { Colors } from '@/constants/Colors'
+import { useMultiPostActions } from '@/hooks/usePostActions'
 import { followsRequests } from '@/libs/api_requests/follows.request'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { SocialFiRequests } from '@/libs/api_requests/socialfi.request'
 import { useAuthStore } from '@/store/authStore'
-import { useSocialEventsStore } from '@/store/socialEventsStore'
+import {
+  usePostDeleteStore,
+  usePostFundingUpdateStore,
+  useSocialEventsStore,
+} from '@/store/socialEventsStore'
 import { Post } from '@/types/posts.interface'
 import { SuggestedAccounts } from '@/types/socialfi.interface'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
   RefreshControl,
@@ -21,9 +27,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+
+const HEADER_HEIGHT = 64 // Height of the header
 
 export default function SocialScreen() {
+  const insets = useSafeAreaInsets()
   const [activeTab, setActiveTab] = useState<'feed' | 'trending' | 'following'>(
     'feed'
   )
@@ -69,6 +78,65 @@ export default function SocialScreen() {
   const refreshFeed = useSocialEventsStore((state) => state.refreshFeed)
   const resetRefresh = useSocialEventsStore((state) => state.resetRefresh)
   const triggerRefresh = useSocialEventsStore((state) => state.triggerRefresh)
+
+  // Listen for targeted post funding updates (e.g., after donations)
+  const pendingFundingUpdate = usePostFundingUpdateStore(
+    (state) => state.pendingUpdate
+  )
+  const clearPendingFundingUpdate = usePostFundingUpdateStore(
+    (state) => state.clearPendingUpdate
+  )
+
+  // Listen for post deletions
+  const pendingDeleteId = usePostDeleteStore((state) => state.pendingDeleteId)
+  const clearPendingDelete = usePostDeleteStore(
+    (state) => state.clearPendingDelete
+  )
+
+  // Header animation state
+  const scrollY = useRef(new Animated.Value(0)).current
+  const lastScrollY = useRef(0)
+  const headerTranslateY = useRef(new Animated.Value(0)).current
+  const isHeaderVisible = useRef(true)
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: any) => {
+        const currentScrollY = event.nativeEvent.contentOffset.y
+        const diff = currentScrollY - lastScrollY.current
+        const fullHeaderHeight = HEADER_HEIGHT + insets.top
+
+        // Only animate if scrolled more than 5px to avoid jitter
+        if (Math.abs(diff) > 5) {
+          if (
+            diff > 0 &&
+            isHeaderVisible.current &&
+            currentScrollY > fullHeaderHeight
+          ) {
+            // Scrolling down - hide header
+            isHeaderVisible.current = false
+            Animated.timing(headerTranslateY, {
+              toValue: -fullHeaderHeight,
+              duration: 200,
+              useNativeDriver: true,
+            }).start()
+          } else if (diff < 0 && !isHeaderVisible.current) {
+            // Scrolling up - show header
+            isHeaderVisible.current = true
+            Animated.timing(headerTranslateY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start()
+          }
+        }
+
+        lastScrollY.current = currentScrollY
+      },
+    }
+  )
 
   const fetchPosts = async (page = 1, append = false) => {
     if (page === 1) {
@@ -239,6 +307,50 @@ export default function SocialScreen() {
     }
   }, [activeTab, profile?.id])
 
+  // Handle targeted post funding updates (e.g., after donations)
+  // This updates only the specific post without refreshing the entire feed
+  useEffect(() => {
+    if (pendingFundingUpdate) {
+      const { postId, newAmount } = pendingFundingUpdate
+
+      // Update function to apply to all post lists
+      const updatePostFunding = (posts: Post[]): Post[] =>
+        posts.map((post) =>
+          post.id === postId && post.funding_meta
+            ? {
+                ...post,
+                funding_meta: {
+                  ...post.funding_meta,
+                  current_amount: newAmount.toString(),
+                },
+              }
+            : post
+        )
+
+      // Apply update to all post lists
+      setSocialPosts(updatePostFunding)
+      setTrendingPosts(updatePostFunding)
+      setPersonalizedPosts(updatePostFunding)
+
+      // Clear the pending update
+      clearPendingFundingUpdate()
+    }
+  }, [pendingFundingUpdate, clearPendingFundingUpdate])
+
+  // Handle post deletions - remove the post from all lists
+  useEffect(() => {
+    if (pendingDeleteId) {
+      const removePost = (posts: Post[]): Post[] =>
+        posts.filter((post) => post.id !== pendingDeleteId)
+
+      setSocialPosts(removePost)
+      setTrendingPosts(removePost)
+      setPersonalizedPosts(removePost)
+
+      clearPendingDelete()
+    }
+  }, [pendingDeleteId, clearPendingDelete])
+
   const getCurrentPosts = useCallback(() => {
     switch (activeTab) {
       case 'feed':
@@ -312,83 +424,22 @@ export default function SocialScreen() {
     }
   }, [activeTab, hasMorePages, isLoadingMore, currentPage])
 
-  const handleLike = async (postId: string) => {
-    console.log('Handle Like for', postId)
-    const currentPosts = getCurrentPosts()
-    const post = currentPosts.find((post) => post.id === postId)
-    if (!post) return
+  // Use centralized multi-list post actions hook
+  const postLists = useMemo(
+    () => [
+      { posts: socialPosts, setPosts: setSocialPosts },
+      { posts: trendingPosts, setPosts: setTrendingPosts },
+      { posts: personalizedPosts, setPosts: setPersonalizedPosts },
+    ],
+    [socialPosts, trendingPosts, personalizedPosts]
+  )
 
-    const updatedPost = {
-      ...post,
-      like: {
-        ...post?.like,
-        status: !post?.like?.status,
-      },
-      _count: {
-        ...post._count,
-        like: post?.like?.status ? post._count.like - 1 : post._count.like + 1,
-      },
-    }
+  const { handleLike } = useMultiPostActions({ postLists })
 
-    // Optimistically update the UI based on active tab
-    const updatePosts = (prevPosts: Post[]) =>
-      prevPosts.map((p) => (p.id === postId ? updatedPost : p))
-
-    if (activeTab === 'feed') {
-      setSocialPosts(updatePosts)
-    } else if (activeTab === 'trending') {
-      setTrendingPosts(updatePosts)
-    } else if (activeTab === 'following') {
-      setPersonalizedPosts(updatePosts)
-    }
-
-    try {
-      if (post?.like?.status) {
-        const response = await PostsRequests.unlikePost(post.like.id, postId)
-        if (!response.success) {
-          throw new Error('Failed to unlike post')
-        }
-      } else {
-        const response = await PostsRequests.likePost(postId)
-        if (!response.success) {
-          throw new Error('Failed to like post')
-        }
-
-        // Update the like id with the response data
-        const updateLikeId = (prevPosts: Post[]) =>
-          prevPosts.map((p) =>
-            p.id === postId
-              ? {
-                  ...p,
-                  like: { ...p.like, id: response.data.id },
-                }
-              : p
-          )
-
-        if (activeTab === 'feed') {
-          setSocialPosts(updateLikeId)
-        } else if (activeTab === 'trending') {
-          setTrendingPosts(updateLikeId)
-        } else if (activeTab === 'following') {
-          setPersonalizedPosts(updateLikeId)
-        }
-      }
-      triggerRefresh()
-    } catch (error) {
-      // Revert the changes if the API call fails
-      const revertPosts = (prevPosts: Post[]) =>
-        prevPosts.map((p) => (p.id === postId ? post : p))
-
-      if (activeTab === 'feed') {
-        setSocialPosts(revertPosts)
-      } else if (activeTab === 'trending') {
-        setTrendingPosts(revertPosts)
-      } else if (activeTab === 'following') {
-        setPersonalizedPosts(revertPosts)
-      }
-      alert('Failed to update like status')
-    }
-  }
+  // Handle post deletion - removes post from all lists via store
+  const handleDelete = useCallback((postId: string) => {
+    usePostDeleteStore.getState().deletePost(postId)
+  }, [])
 
   const handleFollow = async (userId: string) => {
     setSuggestedAccounts((prev) =>
@@ -484,7 +535,12 @@ export default function SocialScreen() {
   )
 
   const renderPostItem = ({ item }: { item: Post }) => (
-    <PostCard key={item.id} post={item} onLike={handleLike} />
+    <PostCard
+      key={item.id}
+      post={item}
+      onLike={handleLike}
+      onDelete={handleDelete}
+    />
   )
 
   const renderFooter = () => {
@@ -632,24 +688,40 @@ export default function SocialScreen() {
     )
   }
 
+  const totalHeaderHeight = HEADER_HEIGHT + insets.top
+
   return (
-    <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
-      <Header
-        title='Social'
-        onSearch={() => router.push('/(modals)/find-posts')}
-        activeFilter={postTypeFilter}
-        onFilter={(filter) => setPostTypeFilter(filter)}
-      />
+    <View className='flex-1 bg-primary-main'>
+      {/* Animated Header */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          transform: [{ translateY: headerTranslateY }],
+          backgroundColor: '#15162B', // primary-main color
+          paddingTop: insets.top, // Safe area top padding
+        }}
+      >
+        <Header
+          title='Social'
+          onSearch={() => router.push('/(modals)/find-posts')}
+          activeFilter={postTypeFilter}
+          onFilter={(filter) => setPostTypeFilter(filter)}
+        />
+      </Animated.View>
 
       {data.length === 0 ? (
-        <View className='px-6 flex-1'>
+        <View className='px-6 flex-1' style={{ paddingTop: totalHeaderHeight }}>
           {renderListHeader()}
           <View className='flex-1 justify-center items-center'>
             <Text className='text-white'>{emptyMessage}</Text>
           </View>
         </View>
       ) : (
-        <FlatList
+        <Animated.FlatList
           data={data}
           className='px-6 mb-4'
           renderItem={renderPostItem}
@@ -659,6 +731,8 @@ export default function SocialScreen() {
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.1}
           showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -669,9 +743,12 @@ export default function SocialScreen() {
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{
+            paddingTop: totalHeaderHeight,
+            paddingBottom: 20,
+          }}
         />
       )}
-    </SafeAreaView>
+    </View>
   )
 }
