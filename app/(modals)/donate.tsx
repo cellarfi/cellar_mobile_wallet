@@ -16,7 +16,7 @@ import { SendSplToken } from '@/libs/spl.helpers'
 import { useAuthStore } from '@/store/authStore'
 import {
   usePostDetailsStore,
-  useSocialEventsStore,
+  usePostFundingUpdateStore,
 } from '@/store/socialEventsStore'
 import { Ionicons } from '@expo/vector-icons'
 import { formatWalletAddress, useEmbeddedSolanaWallet } from '@privy-io/expo'
@@ -46,9 +46,11 @@ export default function DonateModal() {
   const { refetchPortfolio } = useRefetchContext()
   const { activeWallet } = useAuthStore()
   const { wallets } = useEmbeddedSolanaWallet()
-  const triggerRefresh = useSocialEventsStore((state) => state.triggerRefresh)
   const triggerPostDetailsRefresh = usePostDetailsStore(
     (state) => state.triggerRefresh
+  )
+  const updatePostFunding = usePostFundingUpdateStore(
+    (state) => state.updatePostFunding
   )
 
   // Route parameters
@@ -236,9 +238,15 @@ export default function DonateModal() {
             numAmount
           )
           if (updateResponse.success) {
-            // Trigger refresh of social feed to update post stats
-            triggerRefresh()
-            // Also trigger refresh for post details if viewing a specific post
+            // Calculate the new total amount
+            const previousAmount = parseFloat(currentAmount || '0')
+            const newTotalAmount = previousAmount + numAmount
+
+            // Update the specific post in the feed without triggering a full refresh
+            // This preserves pagination state
+            updatePostFunding(postId, newTotalAmount)
+
+            // Trigger refresh for post details if viewing a specific post
             triggerPostDetailsRefresh()
           }
         } catch (error) {
@@ -528,7 +536,7 @@ export default function DonateModal() {
                 </Text>
               </View>
               <Text className='text-white font-bold text-lg'>
-                {usdcBalance.toFixed(2)} USDC
+                {usdcBalance.toFixed(2).toString()} USDC
               </Text>
             </View>
           </View>
@@ -579,7 +587,7 @@ export default function DonateModal() {
                   </Text>
                 </TouchableOpacity>
               ))}
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => {
                   setAmount(usdcBalance.toFixed(2))
                 }}
@@ -598,7 +606,7 @@ export default function DonateModal() {
                 >
                   Max
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
 

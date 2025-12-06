@@ -1,9 +1,8 @@
 import PostCard from '@/components/core/social/PostCard'
+import { usePostActions } from '@/hooks/usePostActions'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
-import { userRequests } from '@/libs/api_requests/user.request'
-import { useAuthStore } from '@/store/authStore'
+import { usePostDeleteStore } from '@/store/socialEventsStore'
 import { Post } from '@/types/posts.interface'
-import { UserProfile } from '@/types/user.interface'
 import { Ionicons } from '@expo/vector-icons'
 import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, View } from 'react-native'
@@ -17,13 +16,26 @@ export default function UserPosts({
   tagName,
   isOwnProfile = true,
 }: UserPostsProps) {
-  const [posts, setPosts] = useState<any[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMorePages, setHasMorePages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const { profile: currentUserProfile } = useAuthStore()
+
+  // Listen for post deletions
+  const pendingDeleteId = usePostDeleteStore((state) => state.pendingDeleteId)
+  const clearPendingDelete = usePostDeleteStore(
+    (state) => state.clearPendingDelete
+  )
+
+  // Handle post deletions
+  useEffect(() => {
+    if (pendingDeleteId) {
+      setPosts((prev) => prev.filter((post) => post.id !== pendingDeleteId))
+      clearPendingDelete()
+    }
+  }, [pendingDeleteId, clearPendingDelete])
 
   const fetchUserPosts = useCallback(
     async (page = 1, append = false) => {
@@ -37,71 +49,29 @@ export default function UserPosts({
       }
 
       try {
-        // For own profile, the backend might restrict getUserProfile endpoint
-        // so we fetch all posts and filter by current user
-        if (isOwnProfile && currentUserProfile) {
-          // Fetch user's posts from the general posts endpoint and filter
-          const response = await PostsRequests.getPosts(String(page))
-          if (response.success) {
-            const allPosts = response.data as Post[]
-            // Filter posts by current user
-            const userPosts = allPosts.filter(
-              (post) => post.user?.tag_name === currentUserProfile.tag_name
-            )
+        // Use the new paginated getUserPosts endpoint for all users
+        const response = await PostsRequests.getUserPosts(tagName, String(page), '10')
 
-            if (append) {
-              setPosts((prev) => [...prev, ...userPosts])
-            } else {
-              setPosts(userPosts)
-            }
+        if (response.success) {
+          const newPosts = response.data as Post[]
 
-            // Check pagination
-            if (response.data.pagination) {
-              setHasMorePages(page < response.data.pagination.totalPages)
-            } else {
-              setHasMorePages(false)
-            }
+          if (append) {
+            setPosts((prev) => [...prev, ...newPosts])
           } else {
-            // Fallback: show empty posts
-            if (!append) {
-              setPosts([])
-            }
+            setPosts(newPosts)
+          }
+
+          // Check pagination
+          if (response.pagination) {
+            setHasMorePages(page < response.pagination.totalPages)
+          } else {
             setHasMorePages(false)
           }
         } else {
-          // For other users, use getUserProfile endpoint (only supports page 1)
-          if (page === 1) {
-            const response = await userRequests.getUserProfile(tagName)
-
-            if (response.success) {
-              const userProfile = response.data as UserProfile
-              const simplePosts = userProfile?.user?.post || []
-
-              // Fetch full post details for each post
-              if (simplePosts.length > 0) {
-                const fullPostsPromises = simplePosts.map(
-                  async (simplePost) => {
-                    const postResponse = await PostsRequests.getPost(
-                      simplePost.id,
-                      '0'
-                    )
-                    return postResponse.success ? postResponse.data : null
-                  }
-                )
-
-                const fullPosts = await Promise.all(fullPostsPromises)
-                const validPosts = fullPosts.filter(
-                  (post): post is Post => post !== null
-                )
-                setPosts(validPosts)
-              } else {
-                setPosts([])
-              }
-            } else {
-              setError(response.message || 'Failed to fetch posts')
-            }
+          if (!append) {
+            setPosts([])
           }
-          // Note: getUserProfile doesn't support pagination
+          setError(response.message || 'Failed to fetch posts')
           setHasMorePages(false)
         }
       } catch (err: any) {
@@ -112,7 +82,7 @@ export default function UserPosts({
         setIsLoadingMore(false)
       }
     },
-    [tagName, isOwnProfile, currentUserProfile]
+    [tagName]
   )
 
   useEffect(() => {
@@ -122,47 +92,21 @@ export default function UserPosts({
   }, [fetchUserPosts])
 
   const handleEndReached = useCallback(() => {
-    // Only enable infinite scroll for own profile (uses getPosts endpoint with pagination)
-    if (isOwnProfile && hasMorePages && !isLoadingMore && !loading) {
+    // Enable infinite scroll for all users with pagination
+    if (hasMorePages && !isLoadingMore && !loading) {
       const nextPage = currentPage + 1
       setCurrentPage(nextPage)
       fetchUserPosts(nextPage, true)
     }
-  }, [
-    isOwnProfile,
-    hasMorePages,
-    isLoadingMore,
-    loading,
-    currentPage,
-    fetchUserPosts,
-  ])
+  }, [hasMorePages, isLoadingMore, loading, currentPage, fetchUserPosts])
 
-  const handleLike = async (postId: string) => {
-    try {
-      const response = await PostsRequests.likePost(postId)
-      if (response.success) {
-        // Update the post in the list
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
-            post.id === postId
-              ? {
-                  ...post,
-                  like: {
-                    ...post.like,
-                    status: !post.like?.status,
-                    count: post.like?.status
-                      ? (post.like?.count || 1) - 1
-                      : (post.like?.count || 0) + 1,
-                  },
-                }
-              : post
-          )
-        )
-      }
-    } catch (err: any) {
-      console.error('Failed to like post:', err)
-    }
-  }
+  // Use centralized post actions hook
+  const { handleLike } = usePostActions({ posts, setPosts })
+
+  // Handle post deletion
+  const handleDelete = useCallback((postId: string) => {
+    usePostDeleteStore.getState().deletePost(postId)
+  }, [])
 
   const renderFooter = () => {
     if (!isLoadingMore) return null
@@ -212,7 +156,7 @@ export default function UserPosts({
           data={posts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <PostCard post={item} onLike={handleLike} />
+            <PostCard post={item} onLike={handleLike} onDelete={handleDelete} />
           )}
           scrollEnabled={false}
           onEndReached={handleEndReached}

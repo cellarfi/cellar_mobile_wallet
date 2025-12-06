@@ -26,7 +26,9 @@ const PointsHistoryModal = () => {
   const [historyPage, setHistoryPage] = useState(0)
   const historyLimit = 10
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(true)
 
   // Get level thresholds
   const getLevelThresholds = (
@@ -50,61 +52,64 @@ const PointsHistoryModal = () => {
     return Math.max(0, Math.min(100, progress))
   }
 
-  // Define loadPointsHistory function with useCallback
-  const loadPointsHistory = useCallback(
-    async (resetPagination = true) => {
-      setIsLoadingHistory(true)
-      setError(null)
-      try {
-        if (resetPagination) {
-          setHistoryPage(0)
-        }
-
-        await fetchPointsHistory({
-          limit: historyLimit,
-          offset: resetPagination ? 0 : historyPage * historyLimit,
-        })
-      } catch (error) {
-        console.error('Error fetching points history:', error)
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to load points history'
-        )
-      } finally {
-        setIsLoadingHistory(false)
-      }
-    },
-    [fetchPointsHistory, historyPage]
-  )
-
-  // Load more points history (pagination)
-  const handleLoadMoreHistory = async () => {
-    if (isLoadingHistory || !pointsHistory) return
-
-    // Check if we've loaded all items
-    if ((historyPage + 1) * historyLimit >= pointsHistory.pagination.total)
-      return
-
+  // Initial load - only runs once on mount
+  const loadInitialHistory = useCallback(async () => {
     setIsLoadingHistory(true)
+    setError(null)
+    setHistoryPage(0)
+    setHasMore(true)
     try {
-      const nextPage = historyPage + 1
-      setHistoryPage(nextPage)
-      await fetchPointsHistory({
+      const result = await fetchPointsHistory({
         limit: historyLimit,
-        offset: nextPage * historyLimit,
-      })
+        offset: 0,
+      }, false) // false = replace, not append
+
+      // Check if there's more data
+      if (result.pagination) {
+        setHasMore(result.data.length < result.pagination.total)
+      }
     } catch (error) {
-      console.error('Error loading more history:', error)
+      console.error('Error fetching points history:', error)
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load points history'
+      )
     } finally {
       setIsLoadingHistory(false)
     }
-  }
+  }, [fetchPointsHistory])
 
-  // Load points history when the modal opens
+  // Load more points history (pagination)
+  const handleLoadMoreHistory = useCallback(async () => {
+    if (isLoadingMore || isLoadingHistory || !hasMore) return
+
+    setIsLoadingMore(true)
+    try {
+      const nextPage = historyPage + 1
+      const result = await fetchPointsHistory({
+        limit: historyLimit,
+        offset: nextPage * historyLimit,
+      }, true) // true = append to existing data
+
+      setHistoryPage(nextPage)
+
+      // Check if there's more data
+      if (result.pagination && pointsHistory) {
+        const totalLoaded = (nextPage + 1) * historyLimit
+        setHasMore(totalLoaded < result.pagination.total)
+      }
+    } catch (error) {
+      console.error('Error loading more history:', error)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [isLoadingMore, isLoadingHistory, hasMore, historyPage, fetchPointsHistory, pointsHistory])
+
+  // Load points history when the modal opens - only once
   useEffect(() => {
-    loadPointsHistory(true)
-  }, [loadPointsHistory])
+    loadInitialHistory()
+  }, []) // Empty dependency array - only run once on mount
 
   // Early return with basic UI if there's a critical error
   if (!fetchPointsHistory) {
@@ -216,7 +221,7 @@ const PointsHistoryModal = () => {
               <Text className='text-red-400 font-medium'>Error</Text>
               <Text className='text-red-300 text-sm mt-1'>{error}</Text>
               <TouchableOpacity
-                onPress={() => loadPointsHistory(true)}
+                onPress={loadInitialHistory}
                 className='mt-3 bg-red-500/20 rounded-lg px-3 py-2 self-start'
               >
                 <Text className='text-red-300 text-sm font-medium'>Retry</Text>
@@ -226,7 +231,7 @@ const PointsHistoryModal = () => {
         )}
 
         {/* Points History List */}
-        {isLoadingHistory && !pointsHistory ? (
+        {isLoadingHistory && !pointsHistory?.data?.length ? (
           <View className='flex-1 items-center justify-center'>
             <ActivityIndicator color='#6366f1' size='large' />
             <Text className='text-white mt-4'>Loading points history...</Text>
@@ -248,7 +253,7 @@ const PointsHistoryModal = () => {
                     transaction.metadata?.description ||
                     POINT_SOURCES[
                       transaction.source as keyof typeof POINT_SOURCES
-                    ].label ||
+                    ]?.label ||
                     'Points transaction'
 
                   return (
@@ -278,11 +283,15 @@ const PointsHistoryModal = () => {
               </View>
             )}
             onEndReached={handleLoadMoreHistory}
-            onEndReachedThreshold={0.5}
+            onEndReachedThreshold={0.3}
             ListFooterComponent={
-              isLoadingHistory ? (
+              isLoadingMore ? (
                 <View className='py-4 items-center'>
                   <ActivityIndicator color='#6366f1' size='small' />
+                </View>
+              ) : !hasMore && pointsHistory?.data?.length ? (
+                <View className='py-4 items-center'>
+                  <Text className='text-gray-400 text-sm'>No more history</Text>
                 </View>
               ) : null
             }

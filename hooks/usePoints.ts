@@ -64,7 +64,8 @@ export function usePoints() {
 
   // Function to fetch points history
   const fetchPointsHistory = async (
-    options?: PointsHistoryFilterOptions
+    options?: PointsHistoryFilterOptions,
+    append = false
   ): Promise<PointsHistoryResponse> => {
     try {
       const response = await pointsRequests.getPointsHistory(options)
@@ -73,7 +74,7 @@ export function usePoints() {
         throw new Error(response.message || 'Failed to fetch points history')
       }
 
-      setPointsHistory(response.data)
+      setPointsHistory(response.data, append)
       return response.data
     } catch (error: any) {
       setError(error.message || 'Failed to fetch points history')

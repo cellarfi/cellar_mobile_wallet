@@ -5,7 +5,14 @@ import { Comment as ThreadComment } from '@/types/comment.interface'
 import { Post } from '@/types/posts.interface'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {
+  Modal,
+  Share,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import CommentInputCard from './CommentInputCard'
 import CommentThread from './CommentThread'
 import PostContent from './PostContent'
@@ -134,9 +141,16 @@ const PostCard = ({ post, onLike, onDelete }: PostCardProps) => {
         post={post}
         onLike={onLike}
         onComment={() => setShowCommentInput(true)}
-        onShare={() => {
-          // Handle share logic
-          console.log('Share post:', post.id)
+        onShare={async () => {
+          try {
+            const postUrl = `https://cellar.so/post/${post.id}`
+            await Share.share({
+              message: postUrl,
+              url: postUrl, // iOS uses url, Android uses message
+            })
+          } catch (error) {
+            console.error('Error sharing post:', error)
+          }
         }}
       />
 

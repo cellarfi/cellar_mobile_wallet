@@ -1,7 +1,13 @@
 import CustomButton from '@/components/ui/CustomButton'
 import { Keys } from '@/constants/App'
 import { Colors } from '@/constants/Colors'
+import { ipInfoRequests } from '@/libs/api_requests/ipinfo.request'
+import { sessionRequests } from '@/libs/api_requests/session.request'
 import { userRequests } from '@/libs/api_requests/user.request'
+import {
+  getDeviceInfoAsync,
+  registerForPushNotifications,
+} from '@/libs/notifications.lib'
 import { Ionicons } from '@expo/vector-icons'
 import { useIdentityToken, useLoginWithEmail } from '@privy-io/expo'
 import * as Clipboard from 'expo-clipboard'
@@ -198,6 +204,59 @@ export default function VerifyEmailScreen() {
           }
         } catch (tokenError) {
           console.log('Error getting/storing identity token:', tokenError)
+        }
+
+        // Register device session for push notifications
+        try {
+          const pushToken = await registerForPushNotifications()
+          console.log('Push token:', pushToken)
+          if (pushToken) {
+            const deviceInfo = await getDeviceInfoAsync()
+
+            // Fetch IP info for location data
+            const ipInfo = await ipInfoRequests.getIPInfo()
+
+            // Store device ID and push token for later use
+            await SecureStore.setItemAsync(Keys.DEVICE_ID, deviceInfo.deviceId)
+            await SecureStore.setItemAsync(Keys.PUSH_TOKEN, pushToken)
+
+            const sessionResponse = await sessionRequests.createSession({
+              device_id: deviceInfo.deviceId,
+              push_token: pushToken,
+              platform: deviceInfo.platform,
+              device_name: deviceInfo.deviceName || undefined,
+              device_model: deviceInfo.deviceModel || undefined,
+              os_version: deviceInfo.osVersion || undefined,
+              app_version: deviceInfo.appVersion,
+              ip_address: ipInfo.data?.ip,
+              country: ipInfo.data?.country,
+              city: ipInfo.data?.city,
+              status: 'ACTIVE',
+            })
+
+            if (sessionResponse.success) {
+              console.log('Device session registered successfully')
+              // Store session ID for later use
+              if (sessionResponse.data?.id) {
+                await SecureStore.setItemAsync(
+                  Keys.DEVICE_SESSION_ID,
+                  sessionResponse.data.id
+                )
+              }
+            } else {
+              console.log(
+                'Failed to register device session:',
+                sessionResponse.message
+              )
+            }
+          } else {
+            console.log(
+              'No push token available, skipping session registration'
+            )
+          }
+        } catch (sessionError) {
+          console.log('Error registering device session:', sessionError)
+          // Don't block login if session registration fails
         }
 
         // Fetch user profile and determine navigation

@@ -116,6 +116,7 @@ export interface SearchedPost {
   id: string
   content: string
   user_id: string
+  media?: string[]
   post_type: PostType
   created_at: string
   updated_at: string
@@ -128,6 +129,9 @@ export interface SearchedPost {
     tag_name: string
     display_name: string
     profile_picture_url: string | null
+    wallets?: {
+      address: string
+    }
   }
   funding_meta: {
     target_amount: number

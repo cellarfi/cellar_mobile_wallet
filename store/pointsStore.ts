@@ -1,29 +1,25 @@
-import {
-  LeaderboardResponse,
-  PointsHistoryResponse,
-  UserPoint,
-} from '@/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { LeaderboardResponse, PointsHistoryResponse, UserPoint } from '@/types'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 interface PointsState {
   // Points data
-  userPoints: UserPoint | null;
-  pointsHistory: PointsHistoryResponse | null;
-  leaderboard: LeaderboardResponse | null;
-  isLoading: boolean;
-  lastFetch: number | null;
-  error: string | null;
+  userPoints: UserPoint | null
+  pointsHistory: PointsHistoryResponse | null
+  leaderboard: LeaderboardResponse | null
+  isLoading: boolean
+  lastFetch: number | null
+  error: string | null
 
   // Actions
-  setUserPoints: (points: UserPoint) => void;
-  setPointsHistory: (history: PointsHistoryResponse) => void;
-  setLeaderboard: (leaderboard: LeaderboardResponse) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  clearPoints: () => void;
-  updateLastFetch: () => void;
+  setUserPoints: (points: UserPoint) => void
+  setPointsHistory: (history: PointsHistoryResponse, append?: boolean) => void
+  setLeaderboard: (leaderboard: LeaderboardResponse) => void
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  clearPoints: () => void
+  updateLastFetch: () => void
 }
 
 export const usePointsStore = create<PointsState>()(
@@ -43,29 +39,43 @@ export const usePointsStore = create<PointsState>()(
           userPoints,
           error: null,
           lastFetch: Date.now(),
-        });
+        })
       },
 
-      setPointsHistory: (pointsHistory) => {
-        set({
-          pointsHistory,
-          error: null,
-        });
+      setPointsHistory: (pointsHistory, append = false) => {
+        const currentHistory = get().pointsHistory
+
+        if (append && currentHistory) {
+          // Append new data to existing history
+          set({
+            pointsHistory: {
+              ...pointsHistory,
+              data: [...currentHistory.data, ...pointsHistory.data],
+            },
+            error: null,
+          })
+        } else {
+          // Replace history
+          set({
+            pointsHistory,
+            error: null,
+          })
+        }
       },
 
       setLeaderboard: (leaderboard) => {
         set({
           leaderboard,
           error: null,
-        });
+        })
       },
 
       setLoading: (isLoading) => {
-        set({ isLoading });
+        set({ isLoading })
       },
 
       setError: (error) => {
-        set({ error, isLoading: false });
+        set({ error, isLoading: false })
       },
 
       clearPoints: () => {
@@ -75,11 +85,11 @@ export const usePointsStore = create<PointsState>()(
           leaderboard: null,
           error: null,
           lastFetch: null,
-        });
+        })
       },
 
       updateLastFetch: () => {
-        set({ lastFetch: Date.now() });
+        set({ lastFetch: Date.now() })
       },
     }),
     {
@@ -92,4 +102,4 @@ export const usePointsStore = create<PointsState>()(
       }),
     }
   )
-);
+)

@@ -1,11 +1,8 @@
 import OnboardingBase from '@/components/OnboardingBase'
 import { Images } from '@/constants/Images'
-import { useAuthContext } from '@/contexts/AuthProvider'
 import { Image, View } from 'react-native'
 
 const Index = () => {
-  const { isInitialized, isLoading } = useAuthContext()
-
   // Show loading screen while AuthProvider determines auth state and navigates
   // if (!isInitialized || isLoading) {
   return (

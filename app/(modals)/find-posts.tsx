@@ -1,7 +1,8 @@
-import SearchPostCard from '@/components/core/social/SearchPostCard'
+import PostCard from '@/components/core/social/PostCard'
+import { usePostActions } from '@/hooks/usePostActions'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { userRequests } from '@/libs/api_requests/user.request'
-import { SearchedPost } from '@/types/posts.interface'
+import { Post, SearchedPost } from '@/types/posts.interface'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
@@ -17,6 +18,36 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+// Transform SearchedPost to Post for compatibility with PostCard
+const transformSearchedPostToPost = (searchedPost: SearchedPost): Post => ({
+  ...searchedPost,
+  media: searchedPost.media || [],
+  comment: [],
+  user: {
+    ...searchedPost.user,
+    wallets: searchedPost.user.wallets || { address: '' },
+  },
+  funding_meta: searchedPost.funding_meta
+    ? {
+        ...searchedPost.funding_meta,
+        target_amount: String(searchedPost.funding_meta.target_amount),
+        current_amount: String(searchedPost.funding_meta.current_amount),
+      }
+    : null,
+  token_meta: searchedPost.token_meta
+    ? {
+        ...searchedPost.token_meta,
+        initial_price: null,
+      }
+    : null,
+  pagination: {
+    page: searchedPost.pagination?.page || 1,
+    pageSize: searchedPost.pagination?.pageSize || 10,
+    totalComments: 0,
+    totalPages: searchedPost.pagination?.totalPages || 1,
+  },
+})
+
 const FILTER_OPTIONS = [
   { label: 'Users', value: 'USERS' },
   { label: 'All Posts', value: 'ALL_POSTS' },
@@ -31,9 +62,16 @@ export default function FindPostsModal() {
   >('ALL_POSTS')
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilter, setShowFilter] = useState(false)
-  const [results, setResults] = useState<any[]>([])
+  const [postResults, setPostResults] = useState<Post[]>([])
+  const [userResults, setUserResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Use centralized post actions hook
+  const { handleLike } = usePostActions({
+    posts: postResults,
+    setPosts: setPostResults,
+  })
 
   // Search posts when query or type changes
   React.useEffect(() => {
@@ -45,7 +83,8 @@ export default function FindPostsModal() {
         searchType === 'TOKEN_CALL'
       ) {
         if (!searchQuery.trim()) {
-          setResults([])
+          setPostResults([])
+          setUserResults([])
           setError(null)
           setLoading(false)
           return
@@ -58,20 +97,26 @@ export default function FindPostsModal() {
             searchType === 'ALL_POSTS' ? undefined : searchType
           )
           if (res.success && res.data) {
-            setResults(res.data as SearchedPost[])
+            // Transform SearchedPost[] to Post[]
+            const posts = (res.data as SearchedPost[]).map(
+              transformSearchedPostToPost
+            )
+            setPostResults(posts)
+            setUserResults([])
           } else {
-            setResults([])
+            setPostResults([])
             setError(res.message || 'No results found')
           }
         } catch (e: any) {
-          setResults([])
+          setPostResults([])
           setError(e?.message || 'Search failed')
         } finally {
           setLoading(false)
         }
       } else if (searchType === 'USERS') {
         if (!searchQuery.trim()) {
-          setResults([])
+          setPostResults([])
+          setUserResults([])
           setError(null)
           setLoading(false)
           return
@@ -81,27 +126,29 @@ export default function FindPostsModal() {
         try {
           const res = await userRequests.searchUsers(searchQuery.trim())
           if (res.success && res.data) {
-            setResults(res.data)
+            setUserResults(res.data)
+            setPostResults([])
           } else {
-            setResults([])
+            setUserResults([])
             setError(res.message || 'No users found')
           }
         } catch (e: any) {
-          setResults([])
+          setUserResults([])
           setError(e?.message || 'User search failed')
         } finally {
           setLoading(false)
         }
       } else {
-        setResults([])
+        setPostResults([])
+        setUserResults([])
       }
     }
     doSearch()
   }, [searchQuery, searchType])
 
-  // Render a post result
-  const renderPost = ({ item }: { item: SearchedPost }) => (
-    <SearchPostCard post={item} />
+  // Render a post result using the shared PostCard
+  const renderPost = ({ item }: { item: Post }) => (
+    <PostCard post={item} onLike={handleLike} />
   )
 
   // Render a user result
@@ -234,7 +281,7 @@ export default function FindPostsModal() {
       ) : (
         <FlatList
           className='px-6'
-          data={results}
+          data={searchType === 'USERS' ? userResults : postResults}
           keyExtractor={(item) => item.id}
           renderItem={searchType === 'USERS' ? renderUser : renderPost}
           ListEmptyComponent={
