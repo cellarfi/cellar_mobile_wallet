@@ -11,18 +11,18 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
-  ActivityIndicator,
-  Animated,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Animated,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ProfileScreen() {
   const { tag_name } = useLocalSearchParams()
-  const { profile: currentUserProfile } = useAuthStore()
+  const { profile: currentUserProfile, isAuthenticated } = useAuthStore()
   const { portfolio } = usePortfolio()
   const { userPoints, isLoading: isLoadingPoints } = usePoints()
 
@@ -38,7 +38,11 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (!currentUserProfile) {
-      router.replace('/setup-profile')
+      // Only redirect to setup profile if user is authenticated
+      // If not authenticated (e.g. logging out), let AuthProvider handle navigation
+      if (isAuthenticated) {
+        router.replace('/setup-profile')
+      }
       return
     }
 
@@ -49,7 +53,7 @@ export default function ProfileScreen() {
       // Use current user's profile
       setUserProfile(currentUserProfile)
     }
-  }, [tag_name, currentUserProfile, isOwnProfile])
+  }, [tag_name, currentUserProfile, isOwnProfile, isAuthenticated])
 
   const fetchUserProfile = async (tagName: string) => {
     setLoading(true)
