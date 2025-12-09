@@ -2,9 +2,11 @@ import app from '@/app.json'
 import { useAuthContext } from '@/contexts/AuthProvider'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import React, { useState } from 'react'
 import {
   Alert,
+  Linking,
   ScrollView,
   Switch,
   Text,
@@ -89,14 +91,19 @@ const menuSections = [
   {
     title: 'Support',
     items: [
-      { icon: 'help-circle-outline', title: 'Help Center', action: 'help' },
+      // { icon: 'help-circle-outline', title: 'Help Center', action: 'help' },
       { icon: 'mail-outline', title: 'Contact Support', action: 'support' },
       {
         icon: 'document-text-outline',
-        title: 'Terms & Privacy',
+        title: 'Terms & Conditions',
         action: 'terms',
       },
-      { icon: 'information-circle-outline', title: 'About', action: 'about' },
+      {
+        icon: 'shield-checkmark-outline',
+        title: 'Privacy Policy',
+        action: 'privacy',
+      },
+      // { icon: 'information-circle-outline', title: 'About', action: 'about' },
     ],
   },
 ]
@@ -105,7 +112,7 @@ export default function SettingsScreen() {
   const [preferences, setPreferences] = useState(userData.preferences)
   const { logout } = useAuthContext()
 
-  const handleMenuAction = (action: string) => {
+  const handleMenuAction = async (action: string) => {
     switch (action) {
       case 'profile-edit':
         router.push('/(modals)/edit-profile')
@@ -124,6 +131,22 @@ export default function SettingsScreen() {
         break
       case 'leaderboard':
         router.push('/leaderboard' as any)
+        break
+      case 'support':
+        try {
+          await Linking.openURL('mailto:contact@micro1.dev')
+        } catch (error) {
+          Alert.alert(
+            'Error',
+            'Could not open email client. Please email us at contact@micro1.dev'
+          )
+        }
+        break
+      case 'terms':
+        await WebBrowser.openBrowserAsync('https://cellar.so/terms')
+        break
+      case 'privacy':
+        await WebBrowser.openBrowserAsync('https://cellar.so/privacy')
         break
       default:
         Alert.alert('Coming Soon', `${action} feature will be available soon!`)

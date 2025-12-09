@@ -22,6 +22,7 @@ import {
   Animated,
   FlatList,
   Image,
+  Platform,
   RefreshControl,
   Text,
   TouchableOpacity,
@@ -738,13 +739,25 @@ export default function SocialScreen() {
               refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor='#6366f1'
+              progressViewOffset={totalHeaderHeight}
             />
           }
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
+          contentInset={
+            Platform.OS === 'ios' ? { top: totalHeaderHeight } : undefined
+          }
+          contentOffset={
+            Platform.OS === 'ios'
+              ? { x: 0, y: -totalHeaderHeight }
+              : { x: 0, y: 0 }
+          }
+          scrollIndicatorInsets={
+            Platform.OS === 'ios' ? { top: totalHeaderHeight } : undefined
+          }
           contentContainerStyle={{
-            paddingTop: totalHeaderHeight,
+            paddingTop: Platform.OS === 'android' ? totalHeaderHeight : 0,
             paddingBottom: 20,
           }}
         />

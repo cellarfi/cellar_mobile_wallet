@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cellar",
     "slug": "cellarfi",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/icons/adaptive-icon.png",
     "scheme": "cellarfi",
@@ -11,6 +11,7 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
+      "buildNumber": "7",
       "associatedDomains": ["webcredentials:cellar.so", "applinks:cellar.so"],
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -31,7 +32,7 @@
         "backgroundColor": "#15162B"
       },
       "package": "com.cellar.so",
-      "versionCode": 5,
+      "versionCode": 7,
       "permissions": [],
       "googleServicesFile": "/Users/mira/ultra/solana/cellar_mobile/google-services.json",
       "intentFilters": [

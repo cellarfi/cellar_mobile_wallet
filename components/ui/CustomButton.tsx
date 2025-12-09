@@ -3,12 +3,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import React from 'react'
 import {
-  ActivityIndicator,
-  ColorValue,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    ActivityIndicator,
+    ColorValue,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from 'react-native'
 
 interface CustomButtonProps {
@@ -24,6 +24,7 @@ interface CustomButtonProps {
   iconColor?: string
   style?: ViewStyle
   children?: React.ReactNode
+  loadingText?: string
   shallowGradient?: boolean
 }
 
@@ -33,6 +34,7 @@ export default function CustomButton({
   type = 'primary',
   icon,
   loading = false,
+  loadingText,
   disabled = false,
   className = '',
   iconPosition = 'left',
@@ -101,7 +103,7 @@ export default function CustomButton({
             // type === 'dark' ? 'font-medium' : 'text-lg font-semibold'
           )}
         >
-          {loading ? 'Loading...' : text}
+          {loading ? (loadingText || 'Loading...') : text}
         </Text>
         {icon && iconPosition === 'right' && (
           <Ionicons

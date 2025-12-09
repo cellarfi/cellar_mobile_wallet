@@ -90,10 +90,10 @@ export const useSessionManager = (isAuthenticated: boolean) => {
 
   // Refresh token when app becomes active (checks staleness internally)
   const refreshTokenIfNeeded = useCallback(async () => {
-    if (isAuthenticated && privyIsReady && privyUser) {
+    if (isAuthenticated && privyIsReady) {
       await getPrivyIdentityToken(false) // Will only refresh if stale
     }
-  }, [isAuthenticated, privyIsReady, privyUser, getPrivyIdentityToken])
+  }, [isAuthenticated, privyIsReady, getPrivyIdentityToken])
 
   // Sync Privy state with Zustand store whenever Privy state changes
   useEffect(() => {
@@ -110,6 +110,25 @@ export const useSessionManager = (isAuthenticated: boolean) => {
       getPrivyIdentityToken(true) // Force refresh on login
     }
   }, [privyUser, privyIsReady, updateFromPrivy, getPrivyIdentityToken])
+
+  // Periodic token refresh check (every 5 minutes)
+  useEffect(() => {
+    if (!isAuthenticated || !privyIsReady) return
+
+    console.log('Setting up periodic token refresh check')
+    const intervalId = setInterval(
+      () => {
+        console.log('Periodic token refresh check triggered')
+        refreshTokenIfNeeded()
+      },
+      5 * 60 * 1000
+    ) // Check every 5 minutes
+
+    return () => {
+      console.log('Clearing periodic token refresh check')
+      clearInterval(intervalId)
+    }
+  }, [isAuthenticated, privyIsReady, refreshTokenIfNeeded])
 
   // Enhanced logout function that clears both Privy and local state
   const logout = async () => {
@@ -134,7 +153,7 @@ export const useSessionManager = (isAuthenticated: boolean) => {
       clearAssets()
       clearPoints()
       // Clear other stores...
-      
+
       // 3. Clear only user-specific AsyncStorage data (not app settings)
       // Note: settings-storage is intentionally excluded to preserve user preferences
       const userDataKeys = [

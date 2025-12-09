@@ -1113,11 +1113,18 @@ export default function SwapScreen() {
               className='mt-auto mb-6'
               type='primary'
               text={
-                jupiterQuote && !quoteError ? 'Confirm Swap' : 'Quote Required'
+                isGettingQuote
+                  ? 'Fetching Quote...'
+                  : jupiterQuote && !quoteError
+                    ? 'Confirm Swap'
+                    : 'Quote Required'
               }
               onPress={executeSwap}
-              disabled={!jupiterQuote || isSwapping || !!quoteError}
-              loading={isSwapping}
+              disabled={
+                !jupiterQuote || isSwapping || !!quoteError || isGettingQuote
+              }
+              loading={isSwapping || isGettingQuote}
+              loadingText={isGettingQuote ? 'Fetching Quote...' : undefined}
             />
             {/* <TouchableOpacity
               className={`rounded-2xl p-4 mt-auto mb-6 ${

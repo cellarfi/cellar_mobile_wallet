@@ -339,10 +339,10 @@ Powered by Cellar Wallet`
   const ActionButton = ({ icon, title, onPress, color = '#6366f1' }: any) => (
     <TouchableOpacity
       onPress={onPress}
-      className='flex-1 bg-secondary-light rounded-2xl p-4 items-center mx-1'
+      className='flex-1 bg-secondary-light rounded-2xl p-3 flex-row justify-center items-center mx-1'
     >
-      <Ionicons name={icon} size={24} color={color} />
-      <Text className='text-white font-medium text-sm mt-2'>{title}</Text>
+      <Ionicons name={icon} size={18} color={color} />
+      <Text className='text-white font-medium text-xs ml-2'>{title}</Text>
     </TouchableOpacity>
   )
 
@@ -405,6 +405,7 @@ Powered by Cellar Wallet`
                 tintColor='#6366f1'
               />
             }
+            contentContainerStyle={{ paddingBottom: 120 }}
           >
             {/* Token Info */}
             <View className='px-6 mb-6'>
@@ -596,45 +597,7 @@ Powered by Cellar Wallet`
             {/* Chart */}
             <TokenChart tokenAddress={tokenAddress || ''} />
 
-            {/* Actions */}
-            <View className='px-6 mb-6'>
-              <Text className='text-white text-lg font-semibold mb-4'>
-                Actions
-              </Text>
-              <View className='flex-row'>
-                {/* Only show sell and send buttons if token is in portfolio */}
-                {isTokenInPortfolio && (
-                  <ActionButton
-                    icon='arrow-up'
-                    title='Sell'
-                    color='#ef4444'
-                    onPress={handleSellPress}
-                  />
-                )}
-                {/* Buy button always visible */}
-                <ActionButton
-                  icon='arrow-down'
-                  title='Buy'
-                  color='#10b981'
-                  onPress={handleBuyPress}
-                />
-                {/* Swap button always visible */}
-                {/* <ActionButton
-                  icon='swap-horizontal'
-                  title='Swap'
-                  onPress={handleSwapPress}
-                /> */}
 
-                {/* Send button */}
-                {isTokenInPortfolio && (
-                  <ActionButton
-                    icon='paper-plane'
-                    title='Send'
-                    onPress={handleSendPress}
-                  />
-                )}
-              </View>
-            </View>
 
             {/* Market Stats */}
             <View className='px-6 mb-6'>
@@ -741,6 +704,37 @@ Powered by Cellar Wallet`
               )
             })()}
           </ScrollView>
+
+          {/* Fixed Actions Bar */}
+          <View className='absolute bottom-0 left-0 right-0 px-6 py-2 bg-primary-main border-t border-secondary-light'>
+            <View className='flex-row'>
+              {/* Only show sell and send buttons if token is in portfolio */}
+              {isTokenInPortfolio && (
+                <ActionButton
+                  icon='arrow-up'
+                  title='Sell'
+                  color='#ef4444'
+                  onPress={handleSellPress}
+                />
+              )}
+              {/* Buy button always visible */}
+              <ActionButton
+                icon='arrow-down'
+                title='Buy'
+                color='#10b981'
+                onPress={handleBuyPress}
+              />
+
+              {/* Send button */}
+              {isTokenInPortfolio && (
+                <ActionButton
+                  icon='paper-plane'
+                  title='Send'
+                  onPress={handleSendPress}
+                />
+              )}
+            </View>
+          </View>
         </View>
       </SafeAreaView>
     </GestureHandlerRootView>
