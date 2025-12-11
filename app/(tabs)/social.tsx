@@ -8,6 +8,7 @@ import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { SocialFiRequests } from '@/libs/api_requests/socialfi.request'
 import { useAuthStore } from '@/store/authStore'
 import {
+  useBlockedUserStore,
   usePostDeleteStore,
   usePostFundingUpdateStore,
   useSocialEventsStore,
@@ -92,6 +93,12 @@ export default function SocialScreen() {
   const pendingDeleteId = usePostDeleteStore((state) => state.pendingDeleteId)
   const clearPendingDelete = usePostDeleteStore(
     (state) => state.clearPendingDelete
+  )
+
+  // Listen for blocked users
+  const blockedUserId = useBlockedUserStore((state) => state.blockedUserId)
+  const clearBlockedUser = useBlockedUserStore(
+    (state) => state.clearBlockedUser
   )
 
   // Header animation state
@@ -351,6 +358,20 @@ export default function SocialScreen() {
       clearPendingDelete()
     }
   }, [pendingDeleteId, clearPendingDelete])
+
+  // Handle blocked users - remove all posts by that user from all lists
+  useEffect(() => {
+    if (blockedUserId) {
+      const removeBlockedUserPosts = (posts: Post[]): Post[] =>
+        posts.filter((post) => post.user_id !== blockedUserId)
+
+      setSocialPosts(removeBlockedUserPosts)
+      setTrendingPosts(removeBlockedUserPosts)
+      setPersonalizedPosts(removeBlockedUserPosts)
+
+      clearBlockedUser()
+    }
+  }, [blockedUserId, clearBlockedUser])
 
   const getCurrentPosts = useCallback(() => {
     switch (activeTab) {

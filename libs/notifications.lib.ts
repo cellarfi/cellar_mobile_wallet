@@ -1,9 +1,9 @@
 import * as Application from 'expo-application'
+import Constants from 'expo-constants'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
-import { Platform } from 'react-native'
-import Constants from 'expo-constants'
 import { router } from 'expo-router'
+import { Platform } from 'react-native'
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -40,9 +40,10 @@ export interface NotificationData {
 export function getDeviceInfo(): DeviceInfo {
   // Generate a unique device ID based on device properties
   // This is synchronous and provides a consistent ID across app restarts
-  const deviceId = Device.osInternalBuildId || 
+  const deviceId =
+    Device.osInternalBuildId ||
     `${Platform.OS}-${Device.modelId || 'unknown'}-${Device.deviceYearClass || 'unknown'}`
-  
+
   const platform = Platform.OS as 'ios' | 'android' | 'web'
 
   return {
@@ -60,7 +61,7 @@ export function getDeviceInfo(): DeviceInfo {
  */
 export async function getDeviceInfoAsync(): Promise<DeviceInfo> {
   let deviceId = 'unknown'
-  
+
   if (Platform.OS === 'android') {
     try {
       const androidId = await Application.getAndroidId()
@@ -72,7 +73,7 @@ export async function getDeviceInfoAsync(): Promise<DeviceInfo> {
     // For iOS, we use a combination of device info
     deviceId = Device.osInternalBuildId || `ios-${Device.modelId || 'unknown'}`
   }
-  
+
   const platform = Platform.OS as 'ios' | 'android' | 'web'
 
   return {
@@ -117,7 +118,10 @@ export async function registerForPushNotifications(): Promise<string | null> {
     const tokenData = await Notifications.getDevicePushTokenAsync()
     const token = tokenData.data
 
-    console.log('[Notifications] Push token obtained:', token.substring(0, 20) + '...')
+    console.log(
+      '[Notifications] Push token obtained:',
+      token.substring(0, 20) + '...'
+    )
 
     // Set up notification channel for Android
     if (Platform.OS === 'android') {
@@ -141,7 +145,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
  * Handle notification navigation based on notification data
  */
 export function handleNotificationNavigation(data: NotificationData) {
-  const { screen, postId, commentId, userId } = data
+  const { screen, postId, commentId, userId, tagName } = data
 
   switch (screen) {
     case 'post-details':
@@ -153,10 +157,12 @@ export function handleNotificationNavigation(data: NotificationData) {
       }
       break
     case 'profile':
-      if (userId) {
+      // Use tagName if available, otherwise fall back to userId
+      const profileId = tagName || userId
+      if (profileId) {
         router.push({
           pathname: '/profile/[tag_name]',
-          params: { tag_name: userId },
+          params: { tag_name: profileId },
         })
       }
       break
@@ -172,7 +178,9 @@ export function handleNotificationNavigation(data: NotificationData) {
  */
 export function setupNotificationListeners(
   onNotificationReceived?: (notification: Notifications.Notification) => void,
-  onNotificationResponse?: (response: Notifications.NotificationResponse) => void
+  onNotificationResponse?: (
+    response: Notifications.NotificationResponse
+  ) => void
 ): () => void {
   // Listener for notifications received while app is foregrounded
   const notificationListener = Notifications.addNotificationReceivedListener(
@@ -183,17 +191,17 @@ export function setupNotificationListeners(
   )
 
   // Listener for user interaction with notification
-  const responseListener = Notifications.addNotificationResponseReceivedListener(
-    (response) => {
+  const responseListener =
+    Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('[Notifications] Response:', response)
-      const data = response.notification.request.content.data as NotificationData
-      
+      const data = response.notification.request.content
+        .data as NotificationData
+
       // Handle navigation based on notification data
       handleNotificationNavigation(data)
-      
+
       onNotificationResponse?.(response)
-    }
-  )
+    })
 
   // Return cleanup function
   return () => {
@@ -214,13 +222,13 @@ export async function getInitialNotification(): Promise<Notifications.Notificati
  */
 export async function handleInitialNotification(): Promise<boolean> {
   const response = await getInitialNotification()
-  
+
   if (response) {
     const data = response.notification.request.content.data as NotificationData
     handleNotificationNavigation(data)
     return true
   }
-  
+
   return false
 }
 
@@ -281,4 +289,3 @@ export async function cancelScheduledNotification(
 export async function cancelAllScheduledNotifications(): Promise<void> {
   await Notifications.cancelAllScheduledNotificationsAsync()
 }
-

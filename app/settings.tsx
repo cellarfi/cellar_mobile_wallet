@@ -86,6 +86,7 @@ const menuSections = [
       { icon: 'trophy-outline', title: 'Achievements', action: 'achievements' },
       { icon: 'gift-outline', title: 'Referral Program', action: 'referral' },
       { icon: 'chatbubble-outline', title: 'Community', action: 'community' },
+      { icon: 'ban-outline', title: 'Blocked Users', action: 'blocked-users' },
     ],
   },
   {
@@ -131,6 +132,9 @@ export default function SettingsScreen() {
         break
       case 'leaderboard':
         router.push('/leaderboard' as any)
+        break
+      case 'blocked-users':
+        router.push('/(screens)/blocked-users' as any)
         break
       case 'support':
         try {

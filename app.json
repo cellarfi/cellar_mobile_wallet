@@ -49,6 +49,11 @@
               "scheme": "https",
               "host": "cellar.so",
               "pathPrefix": "/token"
+            },
+            {
+              "scheme": "https",
+              "host": "cellar.so",
+              "pathPrefix": "/profile"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -67,6 +72,12 @@
           "image": "./assets/icons/splash-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#15162B"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "The app accesses your camera to let you scan QR codes."
         }
       ],
       [

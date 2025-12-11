@@ -233,7 +233,7 @@ export default function QRScannerScreen() {
           <View className='flex-row items-center justify-between w-full mb-8'>
             <TouchableOpacity
               onPress={() => router.back()}
-              className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
+              className='w-10 h-10 bg-secondary-light rounded-full justify-center items-center'
             >
               <Ionicons name='arrow-back' size={20} color='white' />
             </TouchableOpacity>
@@ -254,7 +254,7 @@ export default function QRScannerScreen() {
             </Text>
 
             <CustomButton
-              text='Grant Camera Access'
+              text='Continue'
               onPress={requestPermission}
               type='primary'
             />

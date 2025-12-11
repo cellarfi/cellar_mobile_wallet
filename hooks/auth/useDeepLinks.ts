@@ -1,13 +1,17 @@
-import { router } from 'expo-router';
-import { useCallback, useEffect } from 'react';
-import { Linking } from 'react-native';
+import { router } from 'expo-router'
+import { useCallback, useEffect } from 'react'
+import { Linking } from 'react-native'
 
 export const useDeepLinks = (
   isAuthenticated: boolean,
   user: any,
   isNavigating: boolean,
   isInitialized: boolean,
-  pendingDeepLink: { type: string; id: string; params?: Record<string, string> } | null,
+  pendingDeepLink: {
+    type: string
+    id: string
+    params?: Record<string, string>
+  } | null,
   setPendingDeepLink: (link: any) => void
 ) => {
   // Internal state removed, using props instead
@@ -37,6 +41,12 @@ export const useDeepLinks = (
           id: tokenMatch[1],
           params: { network },
         }
+      }
+
+      // Handle https://cellar.so/profile/{tag_name}
+      const profileMatch = urlObj.pathname.match(/^\/profile\/([^/]+)$/)
+      if (profileMatch) {
+        return { type: 'profile' as const, id: profileMatch[1] }
       }
 
       return null
@@ -104,9 +114,21 @@ export const useDeepLinks = (
           pathname: '/(screens)/browser',
           params: { url: pendingDeepLink.id },
         })
+      } else if (pendingDeepLink.type === 'profile') {
+        router.push({
+          pathname: '/profile/[tag_name]',
+          params: { tag_name: pendingDeepLink.id },
+        })
       }
 
       setPendingDeepLink(null)
     }
-  }, [pendingDeepLink, isAuthenticated, user, isNavigating, isInitialized, setPendingDeepLink])
+  }, [
+    pendingDeepLink,
+    isAuthenticated,
+    user,
+    isNavigating,
+    isInitialized,
+    setPendingDeepLink,
+  ])
 }

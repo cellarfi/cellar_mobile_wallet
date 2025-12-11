@@ -1,11 +1,11 @@
 import { useClipboard } from '@/libs/clipboard'
 import { useAuthStore } from '@/store/authStore'
 import { Ionicons } from '@expo/vector-icons'
-import { formatWalletAddress } from '@privy-io/expo'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import {
   Image,
+  Linking,
   ScrollView,
   Share,
   Text,
@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 export default function ShareProfileModal() {
   const { profile, activeWallet } = useAuthStore()
   const { copyToClipboard, copiedField, setCopiedField } = useClipboard()
-  const profileLink = `https://cellar.so/profile/${profile?.id || 'anonymous'}`
+  const profileLink = `https://cellar.so/profile/${profile?.tag_name || 'anonymous'}`
 
   const handleCopy = async (text: string, field: string) => {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -28,11 +28,58 @@ export default function ShareProfileModal() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out my Cellar profile: ${profileLink}`,
+        message: profileLink,
         title: 'My Cellar Profile',
       })
     } catch (error) {
       console.error('Error sharing:', error)
+    }
+  }
+
+  const handleSocialShare = async (platform: string) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    const encodedMessage = encodeURIComponent(profileLink)
+    const encodedUrl = encodeURIComponent(profileLink)
+
+    let url = ''
+
+    switch (platform) {
+      case 'logo-twitter':
+        // X/Twitter - works with both app and web
+        url = `https://twitter.com/intent/tweet?text=${encodedMessage}`
+        break
+      case 'logo-facebook':
+        // Facebook share
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
+        break
+      case 'logo-instagram':
+        // Instagram doesn't have direct share URL, fall back to native share
+        await handleShare()
+        return
+      case 'logo-linkedin':
+        // LinkedIn share
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
+        break
+      case 'logo-whatsapp':
+        // WhatsApp - works with app
+        url = `whatsapp://send?text=${encodedMessage}`
+        break
+      default:
+        await handleShare()
+        return
+    }
+
+    try {
+      const canOpen = await Linking.canOpenURL(url)
+      if (canOpen) {
+        await Linking.openURL(url)
+      } else {
+        // Fallback to native share for apps that aren't installed
+        await handleShare()
+      }
+    } catch (error) {
+      console.error('Error opening social app:', error)
+      await handleShare()
     }
   }
 
@@ -87,32 +134,6 @@ export default function ShareProfileModal() {
               @{profile.tag_name}
             </Text>
           )}
-
-          {activeWallet?.address && (
-            <TouchableOpacity
-              onPress={() => handleCopy(activeWallet?.address, 'address')}
-              className='flex-row items-center active:opacity-70'
-              activeOpacity={0.7}
-            >
-              <Text className='text-white/60 text-sm font-mono'>
-                {formatWalletAddress(activeWallet?.address)}{' '}
-              </Text>
-
-              <Ionicons
-                name={
-                  copiedField === 'address'
-                    ? 'checkmark-outline'
-                    : 'copy-outline'
-                }
-                size={15}
-                color={
-                  copiedField === 'address'
-                    ? '#10b981'
-                    : 'rgba(255,255,255,0.6)'
-                }
-              />
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Profile Link */}
@@ -160,6 +181,7 @@ export default function ShareProfileModal() {
             {socialIcons.map((icon) => (
               <TouchableOpacity
                 key={icon.name}
+                onPress={() => handleSocialShare(icon.name)}
                 className='w-12 h-12 bg-secondary-light rounded-full items-center justify-center'
               >
                 <Ionicons name={icon.name} size={24} color={icon.color} />

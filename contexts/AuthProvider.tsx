@@ -3,6 +3,7 @@ import { useBiometricLock } from '@/hooks/auth/useBiometricLock'
 import { useDeepLinks } from '@/hooks/auth/useDeepLinks'
 import { useSessionManager } from '@/hooks/auth/useSessionManager'
 import { useUserProfile } from '@/hooks/auth/useUserProfile'
+import { useNotifications, usePushTokenRefresh } from '@/hooks/useNotifications'
 import { useAuthStore } from '@/store/authStore'
 import { useNetworkStore } from '@/store/networkStore'
 import { usePrivy } from '@privy-io/expo'
@@ -59,12 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const { isReady: privyIsReady } = usePrivy()
 
   // Zustand stores
-  const {
-    user,
-    isAuthenticated,
-    isReady: authReady,
-    lastSync,
-  } = useAuthStore()
+  const { user, isAuthenticated, isReady: authReady, lastSync } = useAuthStore()
   const { isOnline, connectionType, isInternetReachable } = useNetworkStore()
 
   // Local state
@@ -112,6 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     pendingDeepLink,
     setPendingDeepLink
   )
+
+  // Notification Hooks
+  useNotifications()
+  usePushTokenRefresh()
 
   // Auth Navigation Hook
   useAuthNavigation(

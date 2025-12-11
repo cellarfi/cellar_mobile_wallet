@@ -10,11 +10,13 @@ import { ActivityIndicator, FlatList, Text, View } from 'react-native'
 interface UserPostsProps {
   tagName: string
   isOwnProfile?: boolean
+  refreshTrigger?: number
 }
 
 export default function UserPosts({
   tagName,
   isOwnProfile = true,
+  refreshTrigger = 0,
 }: UserPostsProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,7 +44,11 @@ export default function UserPosts({
       if (!tagName) return
 
       if (page === 1) {
-        setLoading(true)
+        // Only show full loading state if we have no posts (initial load)
+        // For refresh (posts exist), we rely on parent's RefreshControl
+        if (posts.length === 0) {
+          setLoading(true)
+        }
         setError(null)
       } else {
         setIsLoadingMore(true)
@@ -50,7 +56,11 @@ export default function UserPosts({
 
       try {
         // Use the new paginated getUserPosts endpoint for all users
-        const response = await PostsRequests.getUserPosts(tagName, String(page), '10')
+        const response = await PostsRequests.getUserPosts(
+          tagName,
+          String(page),
+          '10'
+        )
 
         if (response.success) {
           const newPosts = response.data as Post[]
@@ -89,7 +99,7 @@ export default function UserPosts({
     setCurrentPage(1)
     setHasMorePages(true)
     fetchUserPosts(1, false)
-  }, [fetchUserPosts])
+  }, [fetchUserPosts, refreshTrigger])
 
   const handleEndReached = useCallback(() => {
     // Enable infinite scroll for all users with pagination

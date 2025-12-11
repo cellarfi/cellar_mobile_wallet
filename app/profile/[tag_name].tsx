@@ -9,14 +9,15 @@ import { useAuthStore } from '@/store/authStore'
 import { User } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
-    ActivityIndicator,
-    Animated,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -28,6 +29,8 @@ export default function ProfileScreen() {
 
   const [userProfile, setUserProfile] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [showScrollToTop, setShowScrollToTop] = useState(false)
   const scrollViewRef = useRef<ScrollView>(null)
@@ -35,6 +38,33 @@ export default function ProfileScreen() {
 
   // Determine if viewing own profile
   const isOwnProfile = !tag_name || tag_name === currentUserProfile?.tag_name
+
+  /* 
+     Wrap in useCallback to stabilize reference 
+     forceRefetch allows bypassing the existing-profile check
+  */
+  const fetchUserProfile = useCallback(
+    async (tagName: string, forceRefetch = false) => {
+      // Only set main loading state if we don't have a profile yet and aren't forcing a refresh
+      if (!userProfile && !forceRefetch) {
+        setLoading(true)
+      }
+      setError(null)
+      try {
+        const response = await userRequests.getUserByTagName(tagName)
+        if (response.success) {
+          setUserProfile(response.data || null)
+        } else {
+          setError(response.message || 'Failed to fetch user profile')
+        }
+      } catch (err: any) {
+        setError(err?.message || 'Failed to fetch user profile')
+      } finally {
+        if (!forceRefetch) setLoading(false)
+      }
+    },
+    [userProfile]
+  )
 
   useEffect(() => {
     if (!currentUserProfile) {
@@ -53,22 +83,31 @@ export default function ProfileScreen() {
       // Use current user's profile
       setUserProfile(currentUserProfile)
     }
-  }, [tag_name, currentUserProfile, isOwnProfile, isAuthenticated])
+  }, [
+    tag_name,
+    currentUserProfile,
+    isOwnProfile,
+    isAuthenticated,
+    fetchUserProfile,
+  ])
 
-  const fetchUserProfile = async (tagName: string) => {
-    setLoading(true)
-    setError(null)
+  const onRefresh = async () => {
+    setRefreshing(true)
     try {
-      const response = await userRequests.getUserByTagName(tagName)
-      if (response.success) {
-        setUserProfile(response.data || null)
-      } else {
-        setError(response.message || 'Failed to fetch user profile')
+      // Trigger post refresh
+      setRefreshTrigger((prev) => prev + 1)
+
+      // Refresh user profile
+      const targetTagName = (
+        isOwnProfile ? currentUserProfile?.tag_name : tag_name
+      ) as string
+      if (targetTagName) {
+        await fetchUserProfile(targetTagName)
       }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to fetch user profile')
     } finally {
-      setLoading(false)
+      // Small delay to allow post refresh to start/complete visually
+      // In a real app we might want to wait for posts too, but this provides good feedback
+      setTimeout(() => setRefreshing(false), 500)
     }
   }
 
@@ -128,7 +167,10 @@ export default function ProfileScreen() {
     <SafeAreaView className='flex-1 bg-primary-main' edges={['top']}>
       {/* Sticky Header */}
       <View className='bg-primary-main z-10'>
-        <ProfileHeader isOwnProfile={isOwnProfile} />
+        <ProfileHeader
+          isOwnProfile={isOwnProfile}
+          userProfile={isOwnProfile ? undefined : userProfile}
+        />
       </View>
 
       <ScrollView
@@ -137,6 +179,13 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor='#6366f1'
+          />
+        }
       >
         {/* Profile Card */}
         <ProfileCard
@@ -148,10 +197,17 @@ export default function ProfileScreen() {
         />
 
         {/* Quick Actions */}
-        <QuickActions isOwnProfile={isOwnProfile} />
+        <QuickActions
+          isOwnProfile={isOwnProfile}
+          userProfile={isOwnProfile ? undefined : userProfile}
+        />
 
         {/* User Posts */}
-        <UserPosts tagName={userProfile.tag_name} isOwnProfile={isOwnProfile} />
+        <UserPosts
+          tagName={userProfile.tag_name}
+          isOwnProfile={isOwnProfile}
+          refreshTrigger={refreshTrigger}
+        />
       </ScrollView>
 
       {/* Scroll to Top Button */}

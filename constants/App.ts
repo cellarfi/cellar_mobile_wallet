@@ -11,7 +11,7 @@ export const Keys = {
 }
 
 // Token refresh interval in milliseconds (1 hour)
-export const TOKEN_REFRESH_INTERVAL_MS = 60 * 60 * 1000
+export const TOKEN_REFRESH_INTERVAL_MS = 10 * 60 * 1000
 
 // Number of days required between tag name updates
 export const TAG_NAME_UPDATE_RATE_LIMIT = 7
