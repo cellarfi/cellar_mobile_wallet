@@ -104,6 +104,7 @@ export interface Post {
     status: boolean
     id: string
   }
+  is_following?: boolean
   pagination: {
     page: number
     pageSize: number

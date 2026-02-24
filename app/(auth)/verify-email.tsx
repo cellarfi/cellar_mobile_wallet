@@ -5,8 +5,8 @@ import { ipInfoRequests } from '@/libs/api_requests/ipinfo.request'
 import { sessionRequests } from '@/libs/api_requests/session.request'
 import { userRequests } from '@/libs/api_requests/user.request'
 import {
-  getDeviceInfoAsync,
-  registerForPushNotifications,
+    getDeviceInfoAsync,
+    registerForPushNotifications,
 } from '@/libs/notifications.lib'
 import { Ionicons } from '@expo/vector-icons'
 import { useIdentityToken, useLoginWithEmail } from '@privy-io/expo'
@@ -15,15 +15,15 @@ import { router, useLocalSearchParams } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Alert,
-  AppState,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    AppState,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -307,7 +307,11 @@ export default function VerifyEmailScreen() {
           router.replace('/setup-profile')
         } else {
           // Navigate to tabs - AuthProvider will handle biometric setup prompt
-          router.replace('/(tabs)')
+          // router.replace('/(tabs)')
+          // FIX: Do NOT navigate manually here. AuthProvider detects the auth state change
+          // and handles navigation to /(tabs). This prevents race conditions where
+          // both this component and AuthProvider try to navigate or show modals.
+          console.log('Login successful, waiting for AuthProvider to navigate...')
         }
       }
     } catch (error: any) {
@@ -315,7 +319,8 @@ export default function VerifyEmailScreen() {
       if (error?.message?.includes('Already logged in')) {
         if (!hasNavigated.current) {
           hasNavigated.current = true
-          router.replace('/(tabs)')
+          // router.replace('/(tabs)')
+          console.log('Already logged in, waiting for AuthProvider to navigate...')
         }
       } else {
         Alert.alert('Error', 'Invalid verification code. Please try again.')

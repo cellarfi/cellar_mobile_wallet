@@ -130,7 +130,11 @@ export const PostsRequests = {
     }
   },
 
-  getUserPosts: async (tagName: string, page: string = '1', pageSize: string = '10') => {
+  getUserPosts: async (
+    tagName: string,
+    page: string = '1',
+    pageSize: string = '10'
+  ) => {
     try {
       const api = httpRequest()
       const response = await api.get(

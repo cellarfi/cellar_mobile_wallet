@@ -1,3 +1,4 @@
+import { User } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import React from 'react'
@@ -5,12 +6,31 @@ import { Text, TouchableOpacity, View } from 'react-native'
 
 interface QuickActionsProps {
   isOwnProfile?: boolean
+  userProfile?: User | null
 }
 
 export default function QuickActions({
   isOwnProfile = true,
+  userProfile,
 }: QuickActionsProps) {
   if (!isOwnProfile) {
+    const handleTip = () => {
+      // Find Solana wallet address
+      const solanaWallet = userProfile?.wallets?.find(
+        (w) => w.chain_type === 'solana'
+      )
+
+      router.push({
+        pathname: '/(modals)/tip-user',
+        params: {
+          recipientStart: solanaWallet?.address,
+          recipientImage: userProfile?.profile_picture_url,
+          recipientName: userProfile?.display_name || userProfile?.tag_name,
+          recipientTagName: userProfile?.tag_name,
+        },
+      })
+    }
+
     // Show different quick actions for other users
     return (
       <View className='px-6 mb-6'>
@@ -26,7 +46,7 @@ export default function QuickActions({
             <Text className='text-white font-medium text-sm mt-2'>Send</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => router.push('/(modals)/tip-user')}
+            onPress={handleTip}
             className='flex-1 bg-secondary-light rounded-2xl p-4 items-center'
           >
             <Ionicons name='gift-outline' size={24} color='#6366f1' />

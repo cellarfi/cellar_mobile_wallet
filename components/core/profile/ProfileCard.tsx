@@ -7,7 +7,7 @@ import { User } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
 import { format } from 'date-fns'
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 
 interface ProfileCardProps {
@@ -34,22 +34,48 @@ export default function ProfileCard({
 }: ProfileCardProps) {
   const { settings } = useSettingsStore()
   const { hidePortfolioBalance } = settings
-  const [isFollowing, setIsFollowing] = useState(false)
-  const [followLoading, setFollowLoading] = useState(false)
+  /* Initialize with profile value, defaulting to false */
+  /* Using key prop on component or useEffect might be safer if profile can change while mounted, 
+     but assuming clean mount because of parent loading state */
+
+  const [isFollowing, setIsFollowing] = useState(profile?.is_following || false)
+  const [followersCount, setFollowersCount] = useState(
+    profile?._count?.followers || 0
+  )
+  const [loading, setLoading] = useState(false)
+
+  /* Update isFollowing and followersCount when profile changes (e.g. refreshing) */
+  useEffect(() => {
+    setIsFollowing(profile?.is_following || false)
+    setFollowersCount(profile?._count?.followers || 0)
+  }, [profile])
+
+  const walletsCount = profile?.wallets?.length || 1
+  const followingCount = profile?._count?.following || 0
+  const postsCount = profile?._count?.post || 0
 
   const handleFollow = async () => {
-    setFollowLoading(true)
+    if (!profile?.id) return
+
+    setLoading(true)
     try {
       const response = await followsRequests.followUser(profile.id)
       if (response.success) {
-        setIsFollowing(!isFollowing)
+        const newStatus = response.data.following
+        setIsFollowing(newStatus)
+        // Optimistically update follower count
+        setFollowersCount((prev) =>
+          newStatus ? prev + 1 : Math.max(0, prev - 1)
+        )
       }
     } catch (err: any) {
       console.error('Failed to follow/unfollow:', err)
     } finally {
-      setFollowLoading(false)
+      setLoading(false)
     }
   }
+
+  console.log('profile', profile._count)
 
   return (
     <View className='px-6 mb-6'>
@@ -105,13 +131,13 @@ export default function ProfileCard({
             {!isOwnProfile && (
               <TouchableOpacity
                 onPress={handleFollow}
-                disabled={followLoading}
+                disabled={loading}
                 className={`mt-4 px-6 py-2 rounded-xl ${
                   isFollowing ? 'bg-gray-600' : 'bg-primary-500'
                 }`}
               >
                 <Text className='text-white text-base font-medium'>
-                  {followLoading
+                  {loading
                     ? 'Loading...'
                     : isFollowing
                       ? 'Following'
@@ -123,7 +149,7 @@ export default function ProfileCard({
         </View>
 
         {/* Stats */}
-        <View className='flex-row justify-around'>
+        {/* <View className='flex-row justify-around flex-wrap'>
           {isOwnProfile && portfolio ? (
             <StatCard
               label='Portfolio'
@@ -134,9 +160,24 @@ export default function ProfileCard({
               }
             />
           ) : (
-            <StatCard label='Posts' value={'0'} />
+            <StatCard label='Posts' value={postsCount} />
+          )} */}
+
+        <View className='flex-row justify-around flex-wrap'>
+          {isOwnProfile && portfolio && (
+            <StatCard
+              label='Portfolio'
+              value={
+                hidePortfolioBalance
+                  ? '••••••'
+                  : '$' + formatNumber(portfolio?.totalUsd || 0)
+              }
+            />
           )}
-          {isOwnProfile ? (
+
+          <StatCard label='Posts' value={postsCount} />
+
+          {/* {isOwnProfile ? (
             <View className='items-center'>
               {isLoading ? (
                 <Text className='text-white text-xl font-bold'>...</Text>
@@ -148,14 +189,22 @@ export default function ProfileCard({
               <Text className='text-gray-400 text-sm'>Level</Text>
             </View>
           ) : (
-            <StatCard label='Following' value={'0'} />
-          )}
+            <StatCard label='Following' value={followingCount} />
+          )} */}
+
           {isOwnProfile ? (
-            <StatCard label='Wallets' value={userData.stats.wallets} />
+            // Show Following for own profile instead of Wallets (or maybe both if space?)
+            // User asked to show these stats. Let's show Following instead of Wallets as it's more social
+            // But let's check previous code: showed Wallets.
+            // I'll show Following here.
+            <StatCard label='Following' value={followingCount} />
           ) : (
-            <StatCard label='Followers' value={'0'} />
+            <StatCard label='Followers' value={followersCount} />
           )}
-          {isOwnProfile && <StatCard label='Followers' value={'0'} />}
+
+          {isOwnProfile && (
+            <StatCard label='Followers' value={followersCount} />
+          )}
         </View>
       </LinearGradient>
     </View>

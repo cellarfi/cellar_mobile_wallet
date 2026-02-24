@@ -26,6 +26,9 @@ firebase-admin.json
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+./*.apk
+./*.ipa
+./*.tar.gz
 
 # macOS
 .DS_Store

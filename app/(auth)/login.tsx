@@ -1,16 +1,13 @@
 import CustomButton from '@/components/ui/CustomButton'
 import CustomTextInput from '@/components/ui/CustomTextInput'
 import { Colors } from '@/constants/Colors'
-import { Images } from '@/constants/Images'
 import { Ionicons } from '@expo/vector-icons'
 import { useLoginWithEmail } from '@privy-io/expo'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   ScrollView,
   Text,
@@ -51,7 +48,7 @@ export default function LoginScreen() {
         console.log('login error', error)
         Alert.alert(
           'Error',
-          'Failed to send verification code. Please try again.'
+          'Failed to send verification code. Please try again.',
         )
       }
     } finally {
@@ -131,7 +128,7 @@ export default function LoginScreen() {
           />
 
           {/* Sign Up Link */}
-          <View className='flex-row justify-center items-center mb-8'>
+          {/* <View className='flex-row justify-center items-center mb-8'>
             <Text className='text-gray-400'>Protected by </Text>
             <TouchableOpacity
               className='flex-row items-center'
@@ -143,7 +140,7 @@ export default function LoginScreen() {
                 resizeMode='contain'
               />
             </TouchableOpacity>
-          </View>
+          </View> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

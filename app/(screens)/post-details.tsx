@@ -451,7 +451,7 @@ const PostDetailsModal = () => {
         }}
       >
         <View
-          className='flex-row items-center justify-between py-4 bg-primary-main z-10'
+          className='flex-row items-center py-4 bg-primary-main z-10'
           style={{ position: 'sticky', top: 0 }}
         >
           <TouchableOpacity
@@ -460,11 +460,10 @@ const PostDetailsModal = () => {
           >
             <Ionicons name='arrow-back' size={20} color='white' />
           </TouchableOpacity>
-          <Text className='text-white text-lg font-semibold'>Post Details</Text>
-          <View className='w-10' />
+          <Text className='text-white text-xl font-bold ml-2'>Post</Text>
         </View>
         <Card>
-          <PostHeader post={post} />
+          <PostHeader post={post} showFollowButton={true} />
           <PostContent post={post} />
         </Card>
         <Divider />
