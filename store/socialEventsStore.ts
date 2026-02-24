@@ -51,3 +51,16 @@ export const usePostDeleteStore = create<PostDeleteState>((set) => ({
   deletePost: (postId: string) => set({ pendingDeleteId: postId }),
   clearPendingDelete: () => set({ pendingDeleteId: null }),
 }))
+
+// Store for blocking users - removes all posts by that user from UI
+type BlockedUserState = {
+  blockedUserId: string | null
+  blockUser: (userId: string) => void
+  clearBlockedUser: () => void
+}
+
+export const useBlockedUserStore = create<BlockedUserState>((set) => ({
+  blockedUserId: null,
+  blockUser: (userId: string) => set({ blockedUserId: userId }),
+  clearBlockedUser: () => set({ blockedUserId: null }),
+}))

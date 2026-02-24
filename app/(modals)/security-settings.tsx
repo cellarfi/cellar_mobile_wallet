@@ -279,7 +279,7 @@ export default function SecuritySettingsModal() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-dark-50'>
+    <SafeAreaView className='flex-1 bg-primary-main'>
       {/* Header */}
       <View className='flex-row items-center justify-between p-4 border-b border-dark-200'>
         <TouchableOpacity
@@ -296,7 +296,7 @@ export default function SecuritySettingsModal() {
 
       <ScrollView className='flex-1 p-4'>
         {/* Authentication Section */}
-        <View className='bg-dark-100 rounded-xl p-4 mb-4 border border-dark-200'>
+        <View className='bg-secondary-light rounded-xl p-4 mb-4 border border-dark-200'>
           <Text className='text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3'>
             Authentication
           </Text>
@@ -322,7 +322,7 @@ export default function SecuritySettingsModal() {
         </View>
 
         {/* Auto-Lock Section */}
-        <View className='bg-dark-100 rounded-xl p-4 mb-4 border border-dark-200'>
+        <View className='bg-secondary-light rounded-xl p-4 mb-4 border border-dark-200'>
           <View className='flex-row items-center justify-between mb-4'>
             <View className='flex-1'>
               <Text className='text-gray-400 text-xs font-semibold uppercase tracking-wider'>
@@ -349,7 +349,7 @@ export default function SecuritySettingsModal() {
                       .slice(0, -1)
                       .some((opt) => opt.value === autoLockTimeout))
                     ? 'bg-secondary/10 border-secondary'
-                    : 'bg-dark-200 border-dark-300'
+                    : 'bg-primary-main border-dark-300'
                 }`}
                 onPress={() => handleAutoLockSelect(option.value)}
               >

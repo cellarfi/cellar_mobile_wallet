@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cellar",
     "slug": "cellarfi",
-    "version": "1.0.4",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icons/adaptive-icon.png",
     "scheme": "cellarfi",
@@ -11,6 +11,7 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.cellar.so",
+      "buildNumber": "10",
       "associatedDomains": ["webcredentials:cellar.so", "applinks:cellar.so"],
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -31,7 +32,7 @@
         "backgroundColor": "#15162B"
       },
       "package": "com.cellar.so",
-      "versionCode": 5,
+      "versionCode": 10,
       "permissions": [],
       "googleServicesFile": "/Users/mira/ultra/solana/cellar_mobile/google-services.json",
       "intentFilters": [
@@ -48,6 +49,11 @@
               "scheme": "https",
               "host": "cellar.so",
               "pathPrefix": "/token"
+            },
+            {
+              "scheme": "https",
+              "host": "cellar.so",
+              "pathPrefix": "/profile"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -66,6 +72,12 @@
           "image": "./assets/icons/splash-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#15162B"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "The app accesses your camera to let you scan QR codes."
         }
       ],
       [

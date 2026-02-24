@@ -4,6 +4,7 @@ import { Colors } from '@/constants/Colors'
 import { useDappMethods } from '@/hooks/useDappMethods'
 import { useRandomSecret } from '@/hooks/useRandomSecret'
 import { getInjectedScriptString } from '@/libs/dappScript'
+import { useRecentDappsStore } from '@/store/recentDappsStore'
 import { useWebviewStore } from '@/store/webviewStore'
 import { BrowserTab } from '@/types/app.interface'
 import { Ionicons } from '@expo/vector-icons'
@@ -40,6 +41,8 @@ export default function BrowserScreen() {
 
   const webViewRefs = useRef<{ [key: string]: WebView }>({})
   const { onMessage, disconnect } = useDappMethods(webViewRefs, secret)
+  const { addRecentDapp } = useRecentDappsStore()
+
   useEffect(() => {
     return () => {
       disconnect()
@@ -230,6 +233,20 @@ export default function BrowserScreen() {
                 }
                 onLoadEnd={() => {
                   updateTab(tab.id, { isLoading: false, progress: 1 })
+                  // Save to recent dApps
+                  if (tab.url && tab.url !== 'about:blank') {
+                    try {
+                      const urlObj = new URL(tab.url)
+                      addRecentDapp({
+                        url: tab.url,
+                        title: tab.title || urlObj.hostname,
+                        domain: urlObj.hostname,
+                        favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`,
+                      })
+                    } catch {
+                      // Invalid URL, skip saving
+                    }
+                  }
                 }}
                 onNavigationStateChange={(navState) => {
                   updateTab(tab.id, {
@@ -274,7 +291,7 @@ export default function BrowserScreen() {
                 // )}
               />
             ) : (
-              <View className='flex-1 justify-center items-center bg-dark-50'>
+              <View className='flex-1 justify-center items-center bg-primary-main'>
                 <Ionicons name='globe-outline' size={64} color='#666672' />
                 <Text className='text-gray-400 text-lg mt-4'>
                   Enter a URL to browse

@@ -8,6 +8,7 @@ import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { SocialFiRequests } from '@/libs/api_requests/socialfi.request'
 import { useAuthStore } from '@/store/authStore'
 import {
+  useBlockedUserStore,
   usePostDeleteStore,
   usePostFundingUpdateStore,
   useSocialEventsStore,
@@ -22,6 +23,7 @@ import {
   Animated,
   FlatList,
   Image,
+  Platform,
   RefreshControl,
   Text,
   TouchableOpacity,
@@ -91,6 +93,12 @@ export default function SocialScreen() {
   const pendingDeleteId = usePostDeleteStore((state) => state.pendingDeleteId)
   const clearPendingDelete = usePostDeleteStore(
     (state) => state.clearPendingDelete
+  )
+
+  // Listen for blocked users
+  const blockedUserId = useBlockedUserStore((state) => state.blockedUserId)
+  const clearBlockedUser = useBlockedUserStore(
+    (state) => state.clearBlockedUser
   )
 
   // Header animation state
@@ -350,6 +358,20 @@ export default function SocialScreen() {
       clearPendingDelete()
     }
   }, [pendingDeleteId, clearPendingDelete])
+
+  // Handle blocked users - remove all posts by that user from all lists
+  useEffect(() => {
+    if (blockedUserId) {
+      const removeBlockedUserPosts = (posts: Post[]): Post[] =>
+        posts.filter((post) => post.user_id !== blockedUserId)
+
+      setSocialPosts(removeBlockedUserPosts)
+      setTrendingPosts(removeBlockedUserPosts)
+      setPersonalizedPosts(removeBlockedUserPosts)
+
+      clearBlockedUser()
+    }
+  }, [blockedUserId, clearBlockedUser])
 
   const getCurrentPosts = useCallback(() => {
     switch (activeTab) {
@@ -738,13 +760,25 @@ export default function SocialScreen() {
               refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor='#6366f1'
+              progressViewOffset={totalHeaderHeight}
             />
           }
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
+          contentInset={
+            Platform.OS === 'ios' ? { top: totalHeaderHeight } : undefined
+          }
+          contentOffset={
+            Platform.OS === 'ios'
+              ? { x: 0, y: -totalHeaderHeight }
+              : { x: 0, y: 0 }
+          }
+          scrollIndicatorInsets={
+            Platform.OS === 'ios' ? { top: totalHeaderHeight } : undefined
+          }
           contentContainerStyle={{
-            paddingTop: totalHeaderHeight,
+            paddingTop: Platform.OS === 'android' ? totalHeaderHeight : 0,
             paddingBottom: 20,
           }}
         />

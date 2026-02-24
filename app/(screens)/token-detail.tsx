@@ -55,7 +55,7 @@ export default function TokenDetailScreen() {
 
   // Get chart functionality for manual refresh
   const { chartType, activeTimeFrame, fetchChartData } = useTokenChart(
-    tokenAddress || ''
+    tokenAddress || '',
   )
 
   // Check if token is in user's portfolio
@@ -63,7 +63,7 @@ export default function TokenDetailScreen() {
     if (!portfolio?.items || !tokenAddress) return false
 
     return portfolio.items.some(
-      (item: BirdEyeTokenItem) => item.address === tokenAddress
+      (item: BirdEyeTokenItem) => item.address === tokenAddress,
     )
   }, [portfolio?.items, tokenAddress])
 
@@ -72,7 +72,7 @@ export default function TokenDetailScreen() {
     if (!portfolio?.items || !tokenAddress) return null
 
     return portfolio.items.find(
-      (item: BirdEyeTokenItem) => item.address === tokenAddress
+      (item: BirdEyeTokenItem) => item.address === tokenAddress,
     )
   }, [portfolio?.items, tokenAddress])
 
@@ -111,12 +111,17 @@ export default function TokenDetailScreen() {
             {/* Header */}
             <View className='flex-row items-center justify-between px-6 py-4'>
               <TouchableOpacity
-                onPress={() => router.back()}
+                onPress={() => {
+                  console.log('backing out of token detail')
+                  router.back()
+                }}
                 className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
               >
                 <Ionicons name='arrow-back' size={20} color='white' />
               </TouchableOpacity>
-              <Text className='text-white text-lg font-semibold'>Token</Text>
+              <Text className='text-white text-lg font-semibold'>
+                Token Details
+              </Text>
               <View className='w-10' />
             </View>
 
@@ -339,10 +344,10 @@ Powered by Cellar Wallet`
   const ActionButton = ({ icon, title, onPress, color = '#6366f1' }: any) => (
     <TouchableOpacity
       onPress={onPress}
-      className='flex-1 bg-secondary-light rounded-2xl p-4 items-center mx-1'
+      className='flex-1 bg-secondary-light rounded-2xl p-3 flex-row justify-center items-center mx-1'
     >
-      <Ionicons name={icon} size={24} color={color} />
-      <Text className='text-white font-medium text-sm mt-2'>{title}</Text>
+      <Ionicons name={icon} size={18} color={color} />
+      <Text className='text-white font-medium text-xs ml-2'>{title}</Text>
     </TouchableOpacity>
   )
 
@@ -405,6 +410,7 @@ Powered by Cellar Wallet`
                 tintColor='#6366f1'
               />
             }
+            contentContainerStyle={{ paddingBottom: 120 }}
           >
             {/* Token Info */}
             <View className='px-6 mb-6'>
@@ -459,7 +465,7 @@ Powered by Cellar Wallet`
                 <Text className='text-white text-4xl font-bold'>
                   $
                   {tokenOverview.price.toFixed(
-                    tokenOverview.price >= 1 ? 2 : 6
+                    tokenOverview.price >= 1 ? 2 : 6,
                   )}
                 </Text>
                 <View className='flex-row items-center justify-between'>
@@ -482,7 +488,7 @@ Powered by Cellar Wallet`
                     >
                       (${priceChange24hValue >= 0 ? '+' : ''}
                       {Math.abs(priceChange24hValue).toFixed(
-                        tokenOverview.price >= 1 ? 2 : 6
+                        tokenOverview.price >= 1 ? 2 : 6,
                       )}
                       )
                     </Text>
@@ -568,7 +574,7 @@ Powered by Cellar Wallet`
                       <Text className='text-white font-semibold'>
                         $
                         {tokenOverview.price.toFixed(
-                          tokenOverview.price >= 1 ? 2 : 6
+                          tokenOverview.price >= 1 ? 2 : 6,
                         )}
                       </Text>
                     </View>
@@ -595,46 +601,6 @@ Powered by Cellar Wallet`
 
             {/* Chart */}
             <TokenChart tokenAddress={tokenAddress || ''} />
-
-            {/* Actions */}
-            <View className='px-6 mb-6'>
-              <Text className='text-white text-lg font-semibold mb-4'>
-                Actions
-              </Text>
-              <View className='flex-row'>
-                {/* Only show sell and send buttons if token is in portfolio */}
-                {isTokenInPortfolio && (
-                  <ActionButton
-                    icon='arrow-up'
-                    title='Sell'
-                    color='#ef4444'
-                    onPress={handleSellPress}
-                  />
-                )}
-                {/* Buy button always visible */}
-                <ActionButton
-                  icon='arrow-down'
-                  title='Buy'
-                  color='#10b981'
-                  onPress={handleBuyPress}
-                />
-                {/* Swap button always visible */}
-                {/* <ActionButton
-                  icon='swap-horizontal'
-                  title='Swap'
-                  onPress={handleSwapPress}
-                /> */}
-
-                {/* Send button */}
-                {isTokenInPortfolio && (
-                  <ActionButton
-                    icon='paper-plane'
-                    title='Send'
-                    onPress={handleSendPress}
-                  />
-                )}
-              </View>
-            </View>
 
             {/* Market Stats */}
             <View className='px-6 mb-6'>
@@ -710,7 +676,7 @@ Powered by Cellar Wallet`
                 (key) =>
                   tokenOverview.extensions?.[
                     key as keyof typeof tokenOverview.extensions
-                  ]
+                  ],
               )
 
               if (!hasSocials) return null
@@ -741,6 +707,37 @@ Powered by Cellar Wallet`
               )
             })()}
           </ScrollView>
+
+          {/* Fixed Actions Bar */}
+          <View className='absolute bottom-0 left-0 right-0 px-6 py-2 bg-primary-main border-t border-secondary-light'>
+            <View className='flex-row'>
+              {/* Only show sell and send buttons if token is in portfolio */}
+              {isTokenInPortfolio && (
+                <ActionButton
+                  icon='arrow-up'
+                  title='Sell'
+                  color='#ef4444'
+                  onPress={handleSellPress}
+                />
+              )}
+              {/* Buy button always visible */}
+              <ActionButton
+                icon='arrow-down'
+                title='Buy'
+                color='#10b981'
+                onPress={handleBuyPress}
+              />
+
+              {/* Send button */}
+              {isTokenInPortfolio && (
+                <ActionButton
+                  icon='paper-plane'
+                  title='Send'
+                  onPress={handleSendPress}
+                />
+              )}
+            </View>
+          </View>
         </View>
       </SafeAreaView>
     </GestureHandlerRootView>
