@@ -73,12 +73,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     params?: Record<string, string>
   } | null>(null)
 
+  // send token manually
+  // const { sendTransaction } = useSendManualTransaction()
+  // useEffect(() => {
+  //   // Call manually with your parameters
+  //   const sendTx = async () => {
+  //     const result = await sendTransaction({
+  //     token: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  //     recipientAddress: '5SEZmBS8s41cJ8g3gmLS1BexujHcNZHe5qznPJMdVUsh',
+  //     amount: 100,
+  //     walletAddress: 'HpfNcsSEDZQ8bi9mrPezsSQTEafuJwsWEcdyMG6G1z1q',
+  //     isSOLToken: false
+  //     })
+  //     console.log('result', result)
+  //   }
+  //   console.log('sending tx .......')
+  //   sendTx()
+  // }, [privyIsReady])
+
   // Timeout for Privy initialization
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!privyIsReady) {
         console.log(
-          'AuthProvider: Privy initialization timeout, proceeding to auth'
+          'AuthProvider: Privy initialization timeout, proceeding to auth',
         )
         setPrivyInitTimeout(true)
       }
@@ -106,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     isNavigating,
     isInitialized,
     pendingDeepLink,
-    setPendingDeepLink
+    setPendingDeepLink,
   )
 
   // Notification Hooks
@@ -123,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     pendingDeepLink,
     setPendingDeepLink,
     setIsNavigating,
-    setIsInitialized
+    setIsInitialized,
   )
 
   // Biometric Lock Hook
@@ -131,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     isAuthenticated,
     isInitialized,
     isNavigating,
-    refreshTokenIfNeeded
+    refreshTokenIfNeeded,
   )
 
   // User Profile Hook

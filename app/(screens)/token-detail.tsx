@@ -55,7 +55,7 @@ export default function TokenDetailScreen() {
 
   // Get chart functionality for manual refresh
   const { chartType, activeTimeFrame, fetchChartData } = useTokenChart(
-    tokenAddress || ''
+    tokenAddress || '',
   )
 
   // Check if token is in user's portfolio
@@ -63,7 +63,7 @@ export default function TokenDetailScreen() {
     if (!portfolio?.items || !tokenAddress) return false
 
     return portfolio.items.some(
-      (item: BirdEyeTokenItem) => item.address === tokenAddress
+      (item: BirdEyeTokenItem) => item.address === tokenAddress,
     )
   }, [portfolio?.items, tokenAddress])
 
@@ -72,7 +72,7 @@ export default function TokenDetailScreen() {
     if (!portfolio?.items || !tokenAddress) return null
 
     return portfolio.items.find(
-      (item: BirdEyeTokenItem) => item.address === tokenAddress
+      (item: BirdEyeTokenItem) => item.address === tokenAddress,
     )
   }, [portfolio?.items, tokenAddress])
 
@@ -111,12 +111,17 @@ export default function TokenDetailScreen() {
             {/* Header */}
             <View className='flex-row items-center justify-between px-6 py-4'>
               <TouchableOpacity
-                onPress={() => router.back()}
+                onPress={() => {
+                  console.log('backing out of token detail')
+                  router.back()
+                }}
                 className='w-10 h-10 bg-dark-200 rounded-full justify-center items-center'
               >
                 <Ionicons name='arrow-back' size={20} color='white' />
               </TouchableOpacity>
-              <Text className='text-white text-lg font-semibold'>Token</Text>
+              <Text className='text-white text-lg font-semibold'>
+                Token Details
+              </Text>
               <View className='w-10' />
             </View>
 
@@ -460,7 +465,7 @@ Powered by Cellar Wallet`
                 <Text className='text-white text-4xl font-bold'>
                   $
                   {tokenOverview.price.toFixed(
-                    tokenOverview.price >= 1 ? 2 : 6
+                    tokenOverview.price >= 1 ? 2 : 6,
                   )}
                 </Text>
                 <View className='flex-row items-center justify-between'>
@@ -483,7 +488,7 @@ Powered by Cellar Wallet`
                     >
                       (${priceChange24hValue >= 0 ? '+' : ''}
                       {Math.abs(priceChange24hValue).toFixed(
-                        tokenOverview.price >= 1 ? 2 : 6
+                        tokenOverview.price >= 1 ? 2 : 6,
                       )}
                       )
                     </Text>
@@ -569,7 +574,7 @@ Powered by Cellar Wallet`
                       <Text className='text-white font-semibold'>
                         $
                         {tokenOverview.price.toFixed(
-                          tokenOverview.price >= 1 ? 2 : 6
+                          tokenOverview.price >= 1 ? 2 : 6,
                         )}
                       </Text>
                     </View>
@@ -596,8 +601,6 @@ Powered by Cellar Wallet`
 
             {/* Chart */}
             <TokenChart tokenAddress={tokenAddress || ''} />
-
-
 
             {/* Market Stats */}
             <View className='px-6 mb-6'>
@@ -673,7 +676,7 @@ Powered by Cellar Wallet`
                 (key) =>
                   tokenOverview.extensions?.[
                     key as keyof typeof tokenOverview.extensions
-                  ]
+                  ],
               )
 
               if (!hasSocials) return null

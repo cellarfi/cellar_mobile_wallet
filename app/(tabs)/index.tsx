@@ -48,7 +48,7 @@ export default function HomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true)
     try {
-      await Promise.all([refetch(), refetchTrending(), refetchTransactions()])
+      // await Promise.all([refetch(), refetchTrending(), refetchTransactions()])
     } finally {
       setRefreshing(false)
     }

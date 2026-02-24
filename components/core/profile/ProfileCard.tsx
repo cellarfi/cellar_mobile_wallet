@@ -149,7 +149,7 @@ export default function ProfileCard({
         </View>
 
         {/* Stats */}
-        <View className='flex-row justify-around flex-wrap'>
+        {/* <View className='flex-row justify-around flex-wrap'>
           {isOwnProfile && portfolio ? (
             <StatCard
               label='Portfolio'
@@ -161,7 +161,21 @@ export default function ProfileCard({
             />
           ) : (
             <StatCard label='Posts' value={postsCount} />
+          )} */}
+
+        <View className='flex-row justify-around flex-wrap'>
+          {isOwnProfile && portfolio && (
+            <StatCard
+              label='Portfolio'
+              value={
+                hidePortfolioBalance
+                  ? '••••••'
+                  : '$' + formatNumber(portfolio?.totalUsd || 0)
+              }
+            />
           )}
+
+          <StatCard label='Posts' value={postsCount} />
 
           {/* {isOwnProfile ? (
             <View className='items-center'>

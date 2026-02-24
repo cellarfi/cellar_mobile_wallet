@@ -86,7 +86,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
             uri: item.uri,
             type: item.mimeType || 'image/jpeg',
             name: item.fileName || `file-${Date.now()}`,
-          }))
+          })),
         )
 
         if (success && data) {
@@ -104,7 +104,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
     setMediaItems((prev) => {
       // Filter out any duplicate URIs
       const newItems = items.filter(
-        (item) => !prev.some((existing) => existing.uri === item.uri)
+        (item) => !prev.some((existing) => existing.uri === item.uri),
       )
       return [...prev, ...newItems]
     })
@@ -115,7 +115,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
     if (mediaItems.length >= MAX_ATTACHMENTS) {
       Alert.alert(
         'Maximum attachments reached',
-        `You can only attach up to ${MAX_ATTACHMENTS} files.`
+        `You can only attach up to ${MAX_ATTACHMENTS} files.`,
       )
       return
     }
@@ -139,7 +139,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
         if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
           Alert.alert(
             'File too large',
-            `${asset.fileName || 'File'} exceeds the 10MB size limit.`
+            `${asset.fileName || 'File'} exceeds the 10MB size limit.`,
           )
           continue
         }
@@ -198,7 +198,7 @@ const PostComposer: React.FC<PostComposerProps> = ({
       console.error('Error uploading media:', error)
       Alert.alert(
         'Upload Error',
-        'Failed to upload one or more media files. Please try again.'
+        'Failed to upload one or more media files. Please try again.',
       )
     }
   }, [loading, uploading, uploadMedia, onSubmit])
@@ -242,7 +242,6 @@ const PostComposer: React.FC<PostComposerProps> = ({
         onTypeChange={onTypeChange}
         disabled={loading}
       />
-
       {/* Content Editor */}
       <View className='mb-4'>
         <ContentEditor

@@ -12,7 +12,7 @@ interface PostTypeSelectorProps {
 
 const POST_TYPES = [
   { label: 'Regular', value: 'REGULAR', icon: 'chatbubble-outline' },
-  { label: 'Donation', value: 'DONATION', icon: 'gift-outline' },
+  // { label: 'Donation', value: 'DONATION', icon: 'gift-outline' },
   { label: 'Token Call', value: 'TOKEN_CALL', icon: 'megaphone-outline' },
 ] as const
 
