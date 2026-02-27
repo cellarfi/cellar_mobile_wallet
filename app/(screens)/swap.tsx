@@ -7,6 +7,7 @@ import { usePortfolio } from '@/hooks/usePortfolio'
 import { usePrivySign } from '@/hooks/usePrivySign'
 import { useTrending } from '@/hooks/useTrending'
 import { jupiterRequests } from '@/libs/api_requests/jupiter.request'
+import { tapestryRequests } from '@/libs/api_requests/tapestry.request'
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '@/libs/solana.lib'
 import { getSplTokenAddress } from '@/libs/spl.helpers'
 import { formatNumber } from '@/libs/string.helpers'
@@ -455,6 +456,63 @@ export default function SwapScreen() {
 
         // Trigger background portfolio refresh
         refetchPortfolio()
+
+        // Best-effort Tapestry trade logging (non-blocking)
+        try {
+          const txSig = response.data?.signature || ''
+          const amountInHuman = parseFloat(inputAmount || '0')
+          const amountOutHuman = parseFloat(outputAmount || '0')
+
+          if (
+            inputToken &&
+            outputToken &&
+            txSig &&
+            !Number.isNaN(amountInHuman) &&
+            !Number.isNaN(amountOutHuman)
+          ) {
+            const isInputSol =
+              inputToken.address === NATIVE_SOL_MINT ||
+              inputToken.address === WRAPPED_SOL_MINT
+            const tradeType: 'buy' | 'sell' = isInputSol ? 'sell' : 'buy'
+            const usdValueIn = getInputUsdValue()
+            const usdValueOut = getOutputUsdValue()
+            const solPrice =
+              (isInputSol && 'priceUsd' in inputToken && inputToken.priceUsd
+                ? inputToken.priceUsd
+                : null) ??
+              (!isInputSol &&
+              outputToken &&
+              'price' in outputToken &&
+              outputToken.price
+                ? outputToken.price
+                : null)
+            const inputValueSol =
+              typeof solPrice === 'number' && solPrice > 0 && usdValueIn >= 0
+                ? usdValueIn / solPrice
+                : undefined
+            const outputValueSol =
+              typeof solPrice === 'number' && solPrice > 0 && usdValueOut >= 0
+                ? usdValueOut / solPrice
+                : undefined
+
+            void tapestryRequests.logTrade({
+              tokenInMint: inputToken.address,
+              tokenOutMint: outputToken.address,
+              amountIn: amountInHuman.toString(),
+              amountOut: amountOutHuman.toString(),
+              txSignature: txSig,
+              usdValueIn,
+              usdValueOut,
+              walletAddress: activeWallet?.address,
+              tradeType,
+              solPrice: solPrice ?? undefined,
+              inputValueSol,
+              outputValueSol,
+            })
+          }
+        } catch (e) {
+          console.error('Failed to log trade to Tapestry v2:', e)
+        }
       } else {
         // Failed - show error and hide loading modal
         setShowLoadingModal(false)
