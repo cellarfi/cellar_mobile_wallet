@@ -8,7 +8,7 @@ export const apiResponse = <D = any>(
   success: boolean,
   message: string,
   data?: D,
-  pagination?: PaginationInfo
+  pagination?: PaginationInfo,
 ): ApiResponseInterface<D> => {
   return {
     success,
@@ -35,6 +35,7 @@ export const httpRequest = (setLoading?: (loading: boolean) => void) => {
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${token}`
     }
+    console.log('token', token)
 
     // Log the full request URL
     // const fullUrl = `${config.baseURL}${config.url}`
@@ -62,7 +63,7 @@ export const httpRequest = (setLoading?: (loading: boolean) => void) => {
 
       // throw error
       return Promise.reject(error)
-    }
+    },
   )
 
   return api

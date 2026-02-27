@@ -1,6 +1,6 @@
 import PointsDisplay from '@/components/PointsDisplay'
 import StatCard from '@/components/core/profile/StatCard'
-import { followsRequests } from '@/libs/api_requests/follows.request'
+import { tapestryRequests } from '@/libs/api_requests/tapestry.request'
 import { formatNumber } from '@/libs/string.helpers'
 import { useSettingsStore } from '@/store/settingsStore'
 import { User } from '@/types'
@@ -54,22 +54,48 @@ export default function ProfileCard({
   const followingCount = profile?._count?.following || 0
   const postsCount = profile?._count?.post || 0
 
+  const credibilityScore =
+    typeof profile.credibility_score === 'number'
+      ? Math.round(profile.credibility_score)
+      : null
+
+  const credibilityLabel =
+    credibilityScore === null
+      ? 'Building'
+      : credibilityScore >= 70
+        ? 'High'
+        : credibilityScore >= 40
+          ? 'Medium'
+          : 'Low'
+
   const handleFollow = async () => {
-    if (!profile?.id) return
+    if (!profile?.tag_name) return
+
+    const tagName = profile.tag_name
+    const nextIsFollowing = !isFollowing
+
+    // Optimistic update
+    setIsFollowing(nextIsFollowing)
+    setFollowersCount((prev) =>
+      nextIsFollowing ? prev + 1 : Math.max(0, prev - 1)
+    )
 
     setLoading(true)
     try {
-      const response = await followsRequests.followUser(profile.id)
-      if (response.success) {
-        const newStatus = response.data.following
-        setIsFollowing(newStatus)
-        // Optimistically update follower count
-        setFollowersCount((prev) =>
-          newStatus ? prev + 1 : Math.max(0, prev - 1)
-        )
+      const res = nextIsFollowing
+        ? await tapestryRequests.followUser(tagName)
+        : await tapestryRequests.unfollowUser(tagName)
+
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to follow/unfollow')
       }
     } catch (err: any) {
       console.error('Failed to follow/unfollow:', err)
+      // Revert optimistic update on error
+      setIsFollowing(!nextIsFollowing)
+      setFollowersCount((prev) =>
+        nextIsFollowing ? Math.max(0, prev - 1) : prev + 1
+      )
     } finally {
       setLoading(false)
     }
@@ -193,10 +219,6 @@ export default function ProfileCard({
           )} */}
 
           {isOwnProfile ? (
-            // Show Following for own profile instead of Wallets (or maybe both if space?)
-            // User asked to show these stats. Let's show Following instead of Wallets as it's more social
-            // But let's check previous code: showed Wallets.
-            // I'll show Following here.
             <StatCard label='Following' value={followingCount} />
           ) : (
             <StatCard label='Followers' value={followersCount} />
@@ -204,6 +226,14 @@ export default function ProfileCard({
 
           {isOwnProfile && (
             <StatCard label='Followers' value={followersCount} />
+          )}
+
+          {credibilityScore !== null && (
+            <StatCard
+              label='Credibility'
+              value={`${credibilityScore}`}
+              extra={credibilityLabel}
+            />
           )}
         </View>
       </LinearGradient>

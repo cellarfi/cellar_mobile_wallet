@@ -10,7 +10,7 @@ import {
   VersionedTransaction,
 } from '@solana/web3.js'
 
-// Common Solana program IDs
+// Common Solana program IDs.
 const PROGRAM_IDS = {
   TOKEN_PROGRAM: TOKEN_PROGRAM_ID.toString(),
   ASSOCIATED_TOKEN_PROGRAM: ASSOCIATED_TOKEN_PROGRAM_ID.toString(),
@@ -57,7 +57,7 @@ export class TransactionAnalyzer {
   }
 
   async analyzeTransaction(
-    transaction: Transaction | VersionedTransaction
+    transaction: Transaction | VersionedTransaction,
   ): Promise<TransactionEffects> {
     const effects: TransactionEffects = {
       solChanges: [],
@@ -88,7 +88,7 @@ export class TransactionAnalyzer {
         simulation = await this.connection.simulateTransaction(
           transaction,
           [], // signers
-          true // includeAccounts
+          true, // includeAccounts
         )
       }
 
@@ -100,7 +100,7 @@ export class TransactionAnalyzer {
       console.log('simulation accounts', simulation.value.accounts)
       console.log(
         'simulation innerInstructions',
-        simulation.value.innerInstructions
+        simulation.value.innerInstructions,
       )
       console.log('simulation returnData', simulation.value.returnData)
       console.log('simulation unitsConsumed', simulation.value.unitsConsumed)
@@ -122,7 +122,7 @@ export class TransactionAnalyzer {
         await this.analyzeBalanceChanges(
           simulation.value.accounts,
           accountInfos,
-          effects
+          effects,
         )
       }
 
@@ -137,7 +137,7 @@ export class TransactionAnalyzer {
   }
 
   private getAccountKeys(
-    transaction: Transaction | VersionedTransaction
+    transaction: Transaction | VersionedTransaction,
   ): PublicKey[] {
     if (transaction instanceof VersionedTransaction) {
       return transaction.message.staticAccountKeys
@@ -186,7 +186,7 @@ export class TransactionAnalyzer {
   private async analyzeInstruction(
     instruction: any,
     effects: TransactionEffects,
-    accountInfos: Map<string, AccountInfo<Buffer> | null>
+    accountInfos: Map<string, AccountInfo<Buffer> | null>,
   ) {
     const programId = instruction.programId.toString()
 
@@ -211,14 +211,14 @@ export class TransactionAnalyzer {
         break
       default:
         effects.instructionTypes.push(
-          `Unknown Program: ${programId.slice(0, 8)}...`
+          `Unknown Program: ${programId.slice(0, 8)}...`,
         )
     }
   }
 
   private analyzeTokenInstruction(
     instruction: any,
-    effects: TransactionEffects
+    effects: TransactionEffects,
   ) {
     // This is simplified - you'd need to properly decode the instruction data
     // For a full implementation, you'd use @solana/spl-token to decode instructions
@@ -249,7 +249,7 @@ export class TransactionAnalyzer {
 
   private analyzeSystemInstruction(
     instruction: any,
-    effects: TransactionEffects
+    effects: TransactionEffects,
   ) {
     const data = instruction.data
     if (!data || data.length === 0) return
@@ -260,7 +260,7 @@ export class TransactionAnalyzer {
       case 0: // CreateAccount
         effects.instructionTypes.push('Create Account')
         effects.accountsCreated.push(
-          instruction.keys[1]?.pubkey?.toString() || ''
+          instruction.keys[1]?.pubkey?.toString() || '',
         )
         break
       case 2: // Transfer
@@ -275,7 +275,7 @@ export class TransactionAnalyzer {
   private async analyzeBalanceChanges(
     simulatedAccounts: any[],
     originalAccountInfos: Map<string, AccountInfo<Buffer> | null>,
-    effects: TransactionEffects
+    effects: TransactionEffects,
   ) {
     // This would compare pre and post simulation account states
     // to determine actual balance changes

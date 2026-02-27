@@ -3,9 +3,9 @@ import PostCard from '@/components/core/social/PostCard'
 import Tabs from '@/components/core/social/Tabs'
 import { Colors } from '@/constants/Colors'
 import { useMultiPostActions } from '@/hooks/usePostActions'
-import { followsRequests } from '@/libs/api_requests/follows.request'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
 import { SocialFiRequests } from '@/libs/api_requests/socialfi.request'
+import { tapestryRequests } from '@/libs/api_requests/tapestry.request'
 import { useAuthStore } from '@/store/authStore'
 import {
   useBlockedUserStore,
@@ -225,10 +225,21 @@ export default function SocialScreen() {
     setLoadingSuggestions(true)
     setErrorSuggestions(null)
     try {
-      const res = await followsRequests.getSuggestedAccounts()
-      if (res.success) {
-        setSuggestedAccounts(res.data || [])
-        setPaginationData(res.data.pagination || null)
+      const res = await tapestryRequests.getSuggestedProfiles()
+      if (res.success && res.data) {
+        // Map Tapestry suggested profiles into the existing SuggestedAccounts shape
+        const mapped: SuggestedAccounts[] = (res.data as any[]).map((item) => ({
+          id: item.id,
+          display_name: item.username,
+          tag_name: item.username,
+          profile_picture_url: item.image ?? null,
+          _count: {
+            followers: 0,
+            following: 0,
+          },
+          following: false,
+        }))
+        setSuggestedAccounts(mapped)
       } else {
         setErrorSuggestions(res.message || 'Failed to fetch suggestions')
       }
@@ -463,32 +474,43 @@ export default function SocialScreen() {
     usePostDeleteStore.getState().deletePost(postId)
   }, [])
 
-  const handleFollow = async (userId: string) => {
+  const handleFollow = async (tagName: string) => {
+    let nextIsFollowing = false
+
+    // Optimistic toggle
     setSuggestedAccounts((prev) =>
-      prev.map((user) =>
-        user.id === userId ? { ...user, following: !user.following } : user
-      )
+      prev.map((user) => {
+        if (user.tag_name === tagName) {
+          const updated = { ...user, following: !user.following }
+          nextIsFollowing = updated.following
+          return updated
+        }
+        return user
+      })
     )
+
     try {
-      const res = await followsRequests.followUser(userId)
+      const res = nextIsFollowing
+        ? await tapestryRequests.followUser(tagName)
+        : await tapestryRequests.unfollowUser(tagName)
+
       if (!res.success) {
-        setSuggestedAccounts((prev) =>
-          prev.map((user) =>
-            user.id === userId ? { ...user, following: !user.following } : user
-          )
-        )
-        alert(res.message || 'Failed to follow/unfollow')
-      } else {
-        fetchSuggestedAccounts()
-        fetchPersonalizedPosts()
+        throw new Error(res.message || 'Failed to follow/unfollow')
       }
+
+      // Refresh suggestions and personalized posts from server
+      fetchSuggestedAccounts()
+      fetchPersonalizedPosts()
     } catch (err: any) {
+      // Revert optimistic toggle
       setSuggestedAccounts((prev) =>
         prev.map((user) =>
-          user.id === userId ? { ...user, following: !user.following } : user
+          user.tag_name === tagName
+            ? { ...user, following: !user.following }
+            : user
         )
       )
-      alert('Failed to follow/unfollow')
+      alert(err?.message || 'Failed to follow/unfollow')
     }
   }
 
@@ -536,7 +558,7 @@ export default function SocialScreen() {
           }`}
           onPress={(e) => {
             e.stopPropagation()
-            handleFollow(user.id)
+            handleFollow(user.tag_name)
           }}
         >
           <Text className='text-white text-sm font-medium'>

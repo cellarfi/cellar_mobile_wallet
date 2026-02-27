@@ -15,6 +15,12 @@ export interface User {
     following: number
     post: number
   }
+  credibility_score?: number | null
+  credibility_breakdown?: {
+    call_accuracy: number | null
+    follower_credibility: number | null
+    engagement_quality: number | null
+  }
 }
 
 export interface Wallet {

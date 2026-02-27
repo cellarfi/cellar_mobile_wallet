@@ -1,3 +1,8 @@
+import {
+  SwapActivityItem,
+  SwapActivityMeta,
+  SwapActivityResponse,
+} from './activity.interface'
 import { AddressBookEntry, AddressBookResponse } from './address-book.interface'
 import { ApiResponseInterface } from './api_response'
 import {
@@ -54,6 +59,9 @@ export {
   AddressBookEntry,
   AddressBookResponse,
   ApiResponseInterface,
+  SwapActivityItem,
+  SwapActivityMeta,
+  SwapActivityResponse,
   BirdEyeBalanceChange,
   BirdEyeContractLabel,
   BirdEyeHistoricalPriceItem,
