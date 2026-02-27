@@ -1,4 +1,4 @@
-import ShortcutModule from '@/modules/shortcut'
+// import ShortcutModule from '@/modules/shortcut'
 import { BrowserTab } from '@/types/app.interface'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
@@ -102,7 +102,7 @@ const BrowserToolbar = ({
     setIsAddingToHomeScreen(true)
     try {
       console.log('Adding to home screen', activeTab.url)
-      await ShortcutModule.createShortcut(activeTab.url)
+      // await ShortcutModule.createShortcut(activeTab.url)
       // await ShortcutModule.createStandaloneWebApp(activeTab.url)
       setShowMenu(false)
     } catch (error) {

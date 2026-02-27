@@ -1,0 +1,517 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Main Users table
+model User {
+  id                  String  @id @unique
+  email               String  @unique
+  display_name        String
+  tag_name            String  @unique
+  profile_picture_url String?
+  about               String? @db.Text()
+  tapestry_profile_id String?
+
+  // Referral system fields
+  referral_code String? @unique // User's unique referral code
+  referred_by   String? // code of the user who referred this user
+
+  // All timestamps stored in UTC
+  tag_name_updated_at DateTime?
+  created_at          DateTime  @default(now()) @db.Timestamptz
+  updated_at          DateTime  @updatedAt @db.Timestamptz
+
+  // Relations
+  address_book AddressBook[]
+  sessions     Session[]
+  post         Post[]
+  comments     Comment[]
+  followers    Follower[]    @relation("UserFollowers")
+  following    Follower[]    @relation("UserFollowing")
+  like         Like[]
+  receivedTips Tip[]         @relation("UserReceivedTips")
+  givenTips    Tip[]         @relation("UserGivenTips")
+  wallets      Wallet[]
+  CommentLike  CommentLike[]
+  donations    Donation[] // Donations made by this user
+  points       Point[] // Points earned by this user
+  user_point   UserPoint? // User's consolidated point balance
+  mentions     Mention[] // Posts where this user is mentioned
+
+  // Credibility scoring
+  credibility_score CredibilityScore?
+
+  // Referral relations
+  referrer  User?  @relation("UserReferrals", fields: [referred_by], references: [referral_code])
+  referrals User[] @relation("UserReferrals")
+
+  // Notification relations
+  notifications      Notification[] @relation("NotificationRecipient")
+  actorNotifications Notification[] @relation("NotificationActor")
+
+  @@index([id, tag_name, display_name])
+  @@index([referral_code])
+  @@index([referred_by])
+  @@map("users")
+}
+
+model Follower {
+  id          String   @id @default(cuid())
+  user_id     String
+  follower_id String
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @updatedAt @db.Timestamptz
+
+  // Relations 
+  user     User @relation("UserFollowers", fields: [user_id], references: [id], onDelete: Cascade)
+  follower User @relation("UserFollowing", fields: [follower_id], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  id         String  @id @default(cuid())
+  user_id    String
+  chain_type String
+  address    String
+  is_default Boolean @default(false)
+
+  // All timestamps stored in UTC
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, chain_type, address])
+  @@index([user_id, chain_type])
+  @@map("wallets")
+}
+
+model Session {
+  id           String       @id @default(cuid())
+  user_id      String
+  device_id    String       @unique // Unique device identifier
+  push_token   String       @unique @db.VarChar(500) // Push notification token (FCM/APNs)
+  platform     String // 'ios', 'android', 'web', 'desktop'
+  device_name  String? // User-friendly device name
+  os_version   String? // Operating system version
+  app_version  String? // App version
+  device_model String? // Device model (iPhone 12, Samsung Galaxy S21, etc.)
+  agent        String? // Agent ID
+  ip_address   String? // IP address of the device
+  country      String? // Country of the device
+  city         String? // City of the device
+  status       DeviceStatus @default(ACTIVE)
+
+  // All timestamps stored in UTC
+  last_seen_at DateTime @default(now()) @db.Timestamptz
+  created_at   DateTime @default(now()) @db.Timestamptz
+  updated_at   DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, device_id, status])
+  @@index([user_id, status, last_seen_at])
+  @@index([push_token])
+  @@map("sessions")
+}
+
+model AddressBook {
+  id          String   @id @default(cuid())
+  user_id     String
+  name        String
+  address     String
+  description String?
+  network     String   @default("solana")
+  is_favorite Boolean  @default(false)
+  tags        String[]
+
+  // All timestamps stored in UTC
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, address, name])
+  @@index([user_id, name])
+  @@map("address_book")
+}
+
+model Post {
+  id      String   @id @default(cuid())
+  content String
+  user_id String?
+  media   String[]
+
+  // Keep post_type for easy filtering
+  post_type PostType @default(REGULAR)
+
+  tapestry_content_id String?
+
+  created_at DateTime @default(now()) @db.Timestamptz()
+  updated_at DateTime @updatedAt @db.Timestamptz()
+
+  // Relations
+  user         User?        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  like         Like[]
+  comment      Comment[]
+  donations    Donation[] // Track individual donations
+  funding_meta FundingMeta? // Optional fundraising metadata
+  token_meta   TokenMeta? // Optional token call metadata
+  mentions     Mention[] // User mentions in this post
+
+  @@map("posts")
+}
+
+// New model for fundraising metadata
+model FundingMeta {
+  id             String            @id @default(cuid())
+  post_id        String            @unique // One-to-one relationship with Post
+  target_amount  Decimal           @db.Decimal(18, 8) // Target amount for fundraising
+  current_amount Decimal           @default(0) @db.Decimal(18, 8) // Current raised amount
+  wallet_address String // Donation wallet address
+  chain_type     String // Blockchain network (solana, ethereum, etc.)
+  token_symbol   String? // Token symbol for the fundraising
+  token_address  String? // Token contract address
+  deadline       DateTime?         @db.Timestamptz // Fundraising deadline
+  status         FundraisingStatus @default(ACTIVE)
+
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@index([post_id])
+  @@index([status])
+  @@map("funding_meta")
+}
+
+// New model for token call metadata
+model TokenMeta {
+  id            String    @id @default(cuid())
+  post_id       String    @unique // One-to-one relationship with Post
+  token_name    String // Token name
+  token_symbol  String // Token symbol
+  token_address String // Token contract address
+  logo_url      String? // Token logo URL
+  chain_type    String // Blockchain network (solana, ethereum, etc.)
+  launch_date   DateTime? @db.Timestamptz // Token launch date
+  price         Decimal   @default(0) @db.Decimal(18, 8) // price when it was called
+  target_price  Decimal   @default(0) @db.Decimal(18, 8) // Price prediction/target
+  market_cap    Decimal   @default(0) @db.Decimal(18, 2) // Market cap when it was called
+  description   String?   @db.Text // Token/project description
+
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@index([post_id])
+  @@index([token_address])
+  @@index([chain_type])
+  @@map("token_meta")
+}
+
+// New model to track individual donations
+model Donation {
+  id             String  @id @default(cuid())
+  post_id        String
+  donor_user_id  String? // Optional: if donor is registered user
+  amount         Decimal @db.Decimal(18, 8)
+  token_symbol   String  @default("SOL")
+  transaction_id String? // Blockchain transaction hash
+  wallet_address String // Donor's wallet address
+  message        String? // Optional message from donor
+
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  post  Post  @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  donor User? @relation(fields: [donor_user_id], references: [id], onDelete: Cascade)
+
+  @@index([post_id])
+  @@index([donor_user_id])
+  @@map("donations")
+}
+
+model Like {
+  id      String @id @default(cuid())
+  post_id String
+  user_id String
+
+  created_at DateTime @default(now()) @db.Timestamptz()
+  updated_at DateTime @updatedAt @db.Timestamptz()
+
+  // Relations 
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("likes")
+}
+
+model CommentLike {
+  id         String @id @default(cuid())
+  comment_id String
+  user_id    String
+
+  created_at DateTime @default(now()) @db.Timestamptz()
+  updated_at DateTime @updatedAt @db.Timestamptz()
+
+  // Relations 
+  comment Comment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("comment_likes")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  user_id    String
+  post_id    String
+  content    String
+  media      String[] @default([])
+  tapestry_comment_id String?
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+  parentId   String?
+
+  // Relations 
+  user        User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post        Post          @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  CommentLike CommentLike[]
+
+  // Self-referential relation for nested comments
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Tip {
+  id         String   @id @default(cuid())
+  user_id    String
+  tipper_id  String
+  amount     Int
+  created_at DateTime @default(now()) @db.Timestamptz()
+
+  // Relations
+  user       User @relation("UserReceivedTips", fields: [user_id], references: [id], onDelete: Cascade)
+  tipperUser User @relation("UserGivenTips", fields: [tipper_id], references: [id], onDelete: Cascade)
+
+  @@map("tips")
+}
+
+enum DeviceStatus {
+  ACTIVE
+  SIGNED_OUT
+  REVOKED
+}
+
+enum PostType {
+  REGULAR
+  TOKEN_CALL
+  DONATION
+}
+
+enum FundraisingStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+// User Points system
+model Point {
+  id         String   @id @default(cuid())
+  user_id    String
+  amount     Decimal  @db.Decimal(18, 2)
+  action     String   @default("increment") // "increment" or "decrement"
+  source     String // Where the points came from (e.g., "post_creation", "referral", "daily_login")
+  metadata   Json? // Additional contextual information about the point transaction
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([source])
+  @@index([created_at])
+  @@map("points")
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  user_id       String?
+  amount        Decimal         @db.Decimal(18, 2)
+  token_address String
+  token_name    String
+  type          TransactionType @default(TRANSFER)
+  tx_hash       String
+  created_at    DateTime        @default(now()) @db.Timestamptz
+  updated_at    DateTime        @updatedAt @db.Timestamptz
+}
+
+enum TransactionType {
+  TRANSFER
+  SWAP
+  DONATION
+}
+
+model Mention {
+  id         String   @id @default(cuid())
+  post_id    String
+  user_id    String // The user who was mentioned
+  tag_name   String // The tag_name that was mentioned (for quick lookup)
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  // Tapestry v2 identifier for content-based mentions
+  tapestry_content_id String?
+
+  // Relations
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([post_id, user_id]) // Prevent duplicate mentions
+  @@index([user_id])
+  @@index([post_id])
+  @@index([tag_name])
+  @@map("mentions")
+}
+
+model UserPoint {
+  id         String   @id @default(cuid())
+  user_id    String   @unique
+  balance    Decimal  @default(0) @db.Decimal(18, 2)
+  level      Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([balance])
+  @@index([level])
+  @@map("user_points")
+}
+
+model CredibilityScore {
+  id                   String   @id @default(cuid())
+  user_id              String   @unique
+  score                Decimal  @db.Decimal(5, 2)
+  call_accuracy        Decimal? @db.Decimal(5, 2)
+  follower_credibility Decimal? @db.Decimal(5, 2)
+  engagement_quality   Decimal? @db.Decimal(5, 2)
+  window_start         DateTime @db.Timestamptz
+  window_end           DateTime @db.Timestamptz
+  computed_at          DateTime @default(now()) @db.Timestamptz
+  created_at           DateTime @default(now()) @db.Timestamptz
+  updated_at           DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("credibility_scores")
+}
+
+// Notifications system
+model Notification {
+  id         String           @id @default(cuid())
+  user_id    String // User who receives the notification
+  type       NotificationType
+  title      String
+  body       String
+  data       Json? // Additional data for navigation/context
+  is_read    Boolean          @default(false)
+  created_at DateTime         @default(now()) @db.Timestamptz
+  updated_at DateTime         @updatedAt @db.Timestamptz
+
+  // Optional references for different notification types
+  post_id    String? // Reference to related post
+  comment_id String? // Reference to related comment
+  actor_id   String? // User who triggered the notification (e.g., liker, commenter)
+
+  // Tapestry v2 identifiers
+  tapestry_content_id String?
+  tapestry_comment_id String?
+
+  // Relations
+  user  User  @relation("NotificationRecipient", fields: [user_id], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actor_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, is_read, created_at])
+  @@index([user_id, type])
+  @@index([actor_id])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  POST_LIKE // Someone liked your post
+  POST_COMMENT // Someone commented on your post
+  POST_MENTION // Someone mentioned you in a post
+  COMMENT_LIKE // Someone liked your comment
+  COMMENT_REPLY // Someone replied to your comment
+  NEW_FOLLOWER // Someone followed you
+  SYSTEM // System notification
+}
+
+// =============================================
+// Content Moderation Models (Apple Guideline 1.2)
+// =============================================
+
+model Block {
+  id         String   @id @default(cuid())
+  blocker_id String // User who initiated the block
+  blocked_id String // User who was blocked
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  @@unique([blocker_id, blocked_id])
+  @@index([blocker_id])
+  @@index([blocked_id])
+  @@map("blocks")
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporter_id String // User who submitted the report
+  target_type ReportType // POST or USER
+  target_id   String // post_id or user_id being reported
+  reason      String       @db.Text // Reason for the report
+  status      ReportStatus @default(PENDING)
+  created_at  DateTime     @default(now()) @db.Timestamptz
+  updated_at  DateTime     @updatedAt @db.Timestamptz
+
+  @@index([reporter_id])
+  @@index([target_type, target_id])
+  @@index([status])
+  @@map("reports")
+}
+
+enum ReportType {
+  POST
+  USER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
