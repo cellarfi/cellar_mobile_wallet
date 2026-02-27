@@ -1,5 +1,5 @@
 import PostComposer from '@/components/core/social/PostComposer'
-import { PostsRequests } from '@/libs/api_requests/posts.request'
+import { tapestryRequests } from '@/libs/api_requests/tapestry.request'
 import { isValidSolanaAddress, USDC_METADATA } from '@/libs/solana.lib'
 import { useAuthStore } from '@/store/authStore'
 import { BirdEyeSearchTokenResult } from '@/types'
@@ -183,7 +183,7 @@ export default function CreatePostScreen() {
     }
     setPosting(true)
     try {
-      const res = await PostsRequests.createPost(payload)
+      const res = await tapestryRequests.createPost(payload)
       if (res.success) {
         router.replace('/social')
       } else {

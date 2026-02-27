@@ -2,11 +2,14 @@ import OnboardingBase from '@/components/OnboardingBase'
 import CustomButton from '@/components/ui/CustomButton'
 import { Images } from '@/constants/Images'
 import { cn } from '@/libs/utils'
+// import { useMobileWallet } from '@wallet-ui/react-native-web3js'
 import { router } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { Image, Linking, Text, View } from 'react-native'
 
 export default function WelcomeScreen() {
+  // const { account, connect, disconnect } = useMobileWallet()
+
   const [progress, setProgress] = useState(0)
   const [step, setStep] = useState(0)
   const numOfSteps = 3
@@ -16,6 +19,10 @@ export default function WelcomeScreen() {
     if (step >= numOfSteps) {
       router.push('/(auth)/login')
     } else setStep(step + 1)
+  }
+
+  const handleWalletConnect = () => {
+    // connect()
   }
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export default function WelcomeScreen() {
           <View
             className={cn(
               'w-full max-w-[278px] h-[8px] bg-white rounded-full',
-              step === 0 && 'hidden'
+              step === 0 && 'hidden',
             )}
           >
             <View
@@ -131,6 +138,14 @@ export default function WelcomeScreen() {
         {/* End of steps */}
 
         <View className='flex-col gap-5 mb-12 w-full items-center'>
+          {/*           
+          <CustomButton
+            text='Wallet Connect'
+            onPress={handleWalletConnect}
+            className='w-full max-w-[358px]'
+          />
+          */}
+
           {/* Login Button */}
           <CustomButton
             text={step === 0 ? 'Get Started' : 'Next'}

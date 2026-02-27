@@ -1,5 +1,6 @@
 import { commentsRequests } from '@/libs/api_requests/comments.request'
 import { PostsRequests } from '@/libs/api_requests/posts.request'
+import { tapestryRequests } from '@/libs/api_requests/tapestry.request'
 import { useAuthStore } from '@/store/authStore'
 import { Comment as ThreadComment } from '@/types/comment.interface'
 import { Post } from '@/types/posts.interface'
@@ -79,6 +80,20 @@ const PostCard = ({ post, onLike, onDelete }: PostCardProps) => {
       if (response.success) {
         setComments((prev) => [...prev, response.data])
         setShowCommentInput(false)
+
+        // Mirror comment to Tapestry v2 when a Tapestry content id is available
+        const tapestryContentId =
+          (post as any).tapestry_content_id || (post as any).tapestryContentId
+        if (tapestryContentId) {
+          try {
+            await tapestryRequests.createComment({
+              postId: tapestryContentId,
+              text: comment,
+            })
+          } catch (e) {
+            console.error('Failed to mirror comment to Tapestry v2:', e)
+          }
+        }
       } else {
         setError(response.message || 'Failed to post comment')
       }

@@ -2,9 +2,11 @@ import ProfileCard from '@/components/core/profile/ProfileCard'
 import ProfileHeader from '@/components/core/profile/ProfileHeader'
 import QuickActions from '@/components/core/profile/QuickActions'
 import UserPosts from '@/components/core/profile/UserPosts'
+import UserSwapActivity from '@/components/core/profile/UserSwapActivity'
+import Tabs from '@/components/core/social/Tabs'
 import { usePoints } from '@/hooks/usePoints'
 import { usePortfolio } from '@/hooks/usePortfolio'
-import { userRequests } from '@/libs/api_requests/user.request'
+import { tapestryRequests } from '@/libs/api_requests/tapestry.request'
 import { useAuthStore } from '@/store/authStore'
 import { User } from '@/types'
 import { Ionicons } from '@expo/vector-icons'
@@ -33,6 +35,7 @@ export default function ProfileScreen() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [showScrollToTop, setShowScrollToTop] = useState(false)
+  const [activeTab, setActiveTab] = useState<'posts' | 'swaps'>('posts')
   const scrollViewRef = useRef<ScrollView>(null)
   const fadeAnim = useRef(new Animated.Value(0)).current
 
@@ -51,19 +54,20 @@ export default function ProfileScreen() {
       }
       setError(null)
       try {
-        const response = await userRequests.getUserByTagName(tagName)
+        const response = await tapestryRequests.getUserByTagNameV2(tagName)
         if (response.success) {
           setUserProfile(response.data || null)
         } else {
           setError(response.message || 'Failed to fetch user profile')
         }
+        console.log('response.data', response.data)
       } catch (err: any) {
         setError(err?.message || 'Failed to fetch user profile')
       } finally {
         if (!forceRefetch) setLoading(false)
       }
     },
-    [userProfile]
+    [userProfile],
   )
 
   useEffect(() => {
@@ -202,12 +206,26 @@ export default function ProfileScreen() {
           userProfile={isOwnProfile ? undefined : userProfile}
         />
 
-        {/* User Posts */}
-        <UserPosts
-          tagName={userProfile.tag_name}
-          isOwnProfile={isOwnProfile}
-          refreshTrigger={refreshTrigger}
-        />
+        {/* Posts / Swaps Tabs */}
+        <View className='px-6 mb-4'>
+          <Tabs
+            tabs={['posts', 'swaps']}
+            activeTab={activeTab}
+            onTabChange={(tab) => setActiveTab(tab as 'posts' | 'swaps')}
+          />
+        </View>
+
+        {/* Tab content: Posts (default) or Swaps (lazy-loaded when tab is selected) */}
+        {activeTab === 'posts' && (
+          <UserPosts
+            tagName={userProfile.tag_name}
+            isOwnProfile={isOwnProfile}
+            refreshTrigger={refreshTrigger}
+          />
+        )}
+        {activeTab === 'swaps' && (
+          <UserSwapActivity tagName={userProfile.tag_name} />
+        )}
       </ScrollView>
 
       {/* Scroll to Top Button */}

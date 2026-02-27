@@ -5,6 +5,7 @@ import {
   Inter_500Medium,
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter'
+import * as Device from 'expo-device'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -32,6 +33,14 @@ export default function RootLayout() {
 
   // Initialize network monitoring
   useEffect(() => {
+    console.log('Device.modelId', Device.modelId)
+    console.log('Device.modelName', Device.modelName)
+    console.log('Device.osVersion', Device.osVersion)
+    console.log('Device.osName', Device.osName)
+    console.log('Device.osBuildId', Device.osBuildId)
+    console.log('Device.deviceName', Device.deviceName)
+    console.log('Device.productName', Device.productName)
+
     const unsubscribe = initializeNetwork()
     return unsubscribe
   }, [initializeNetwork])
